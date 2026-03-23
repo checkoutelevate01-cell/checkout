@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obrigado — Elevate MedClub</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    :root {
+      --bg-ty:      #1a1a1a;
+      --bg-card:    rgba(255,255,255,0.05);
+      --border-ty:  rgba(255,255,255,0.08);
+      --text-ty:    #ffffff;
+      --text-mid-ty:rgba(255,255,255,0.60);
+      --text-soft-ty:rgba(255,255,255,0.35);
+      --accent-ty:  #C79F67;
+      --accent-dim-ty: rgba(199,159,103,0.12);
+      --glow-ty:    rgba(199,159,103,0.25);
+    }
+    [data-theme="light"] {
+      --bg-ty:      #f5f6f8;
+      --bg-card:    rgba(255,255,255,0.90);
+      --border-ty:  rgba(0,0,0,0.08);
+      --text-ty:    #111827;
+      --text-mid-ty:rgba(17,24,39,0.60);
+      --text-soft-ty:rgba(17,24,39,0.40);
+      --accent-ty:  #C79F67;
+      --accent-dim-ty: rgba(199,159,103,0.10);
+      --glow-ty:    rgba(199,159,103,0.18);
+    }
+    .theme-toggle-ty {
+      position: fixed; top: 16px; right: 16px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-ty);
+      background: var(--bg-card);
+      color: var(--text-soft-ty);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .theme-toggle-ty:hover { color: var(--text-ty); border-color: rgba(0,0,0,0.14); }
+    .theme-toggle-ty svg { width: 16px; height: 16px; }
+    .icon-sun  { display: none; }
+    .icon-moon { display: block; }
+    [data-theme="light"] .icon-sun  { display: block; }
+    [data-theme="light"] .icon-moon { display: none; }
+    /* ── Thank You page ──────────────────────────────────────── */
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, var(--glow-ty) 0%, transparent 70%),
+        var(--bg-ty);
+      color: var(--text-ty);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: clamp(32px, 6vw, 60px) 20px clamp(48px, 8vw, 80px);
+      min-height: 100vh;
+    }
+
+    .ty {
+      max-width: 520px;
+      width: 100%;
+      animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* Brand */
+    .ty-brand {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--accent-ty);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .ty-brand em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      color: var(--text-mid-ty);
+    }
+
+    /* Big check */
+    .ty-icon {
+      width: 88px;
+      height: 88px;
+      background: var(--accent-ty);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow:
+        0 0 0 14px rgba(199, 159, 103, 0.08),
+        0 0 0 28px rgba(199, 159, 103, 0.04),
+        0 0 48px rgba(199, 159, 103, 0.28);
+      animation: pop 0.5s 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    .ty-icon svg { width: 40px; height: 40px; }
+
+    /* Pending icon (PIX/boleto) */
+    .ty-icon.pending {
+      background: var(--accent-dim-ty);
+      border: 2px solid var(--accent-ty);
+      box-shadow:
+        0 0 0 14px rgba(199, 159, 103, 0.05),
+        0 0 32px rgba(199, 159, 103, 0.18);
+    }
+
+    /* Headings */
+    .ty-heading {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--text-ty);
+      text-align: center;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .ty-subtext {
+      text-align: center;
+      font-size: 15px;
+      color: var(--text-mid-ty);
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .ty-subtext strong { color: var(--accent-ty); }
+
+    /* Glass card */
+    .ty-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-ty);
+      border-radius: 18px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+    }
+
+    /* Order detail rows */
+    .ty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-ty);
+    }
+    .ty-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .ty-row:first-child { padding-top: 0; }
+
+    .ty-row-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-soft-ty);
+    }
+
+    .ty-row-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-ty);
+      text-align: right;
+      max-width: 60%;
+      word-break: break-all;
+    }
+
+    .ty-row-value.accent { color: var(--accent-ty); }
+
+    /* Steps section */
+    .ty-steps-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-soft-ty);
+      margin-bottom: 20px;
+    }
+
+    .ty-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .ty-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .ty-step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--accent-dim-ty);
+      border: 1px solid rgba(199, 159, 103, 0.22);
+      color: var(--accent-ty);
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: var(--font-sans);
+    }
+
+    .ty-step-body { padding-top: 2px; }
+
+    .ty-step-body strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-ty);
+      margin-bottom: 3px;
+    }
+
+    .ty-step-body p {
+      font-size: 13px;
+      color: var(--text-mid-ty);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    /* WhatsApp button */
+    .btn-whatsapp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      height: 52px;
+      background: #22C55E;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      text-decoration: none;
+      margin-bottom: 20px;
+      margin-top: 4px;
+      transition: background 0.15s, box-shadow 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-whatsapp:hover {
+      background: #16a34a;
+      box-shadow: 0 0 28px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-whatsapp svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+    /* Mentor circles at bottom */
+    .ty-mentors {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .ty-mentors .mentor-circle {
+      width: 54px;
+      height: 54px;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 40px 16px 60px; }
+      .ty-heading { font-size: 26px; }
+      .ty-card { padding: 22px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="theme-toggle-ty" id="btn-theme-ty" aria-label="Alternar tema">
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+  <div class="ty">
+
+    <!-- Brand -->
+    <div class="ty-brand">
+      ✦ ELEVATE <em>MedClub</em>
+    </div>
+
+    <!-- Icon (sucesso ou pendente) -->
+    <div class="ty-icon" id="ty-icon">
+      <!-- Preenchido via JS -->
+    </div>
+
+    <!-- Título -->
+    <h1 class="ty-heading" id="ty-heading">Bem-vindo(a)!</h1>
+    <p class="ty-subtext" id="ty-subtext">Sua inscrição foi registrada.</p>
+
+    <!-- Detalhes do pedido -->
+    <div class="ty-card">
+      <div class="ty-row">
+        <span class="ty-row-label">Nome</span>
+        <span class="ty-row-value" id="ty-name">—</span>
+      </div>
+      <div class="ty-row">
+        <span class="ty-row-label">Pedido</span>
+        <span class="ty-row-value" id="ty-order">—</span>
+      </div>
+      <div class="ty-row">
+        <span class="ty-row-label">Pagamento</span>
+        <span class="ty-row-value accent" id="ty-method">—</span>
+      </div>
+    </div>
+
+    <!-- Próximos passos -->
+    <div class="ty-card">
+      <p class="ty-steps-title">Próximos passos</p>
+      <div class="ty-steps">
+
+        <div class="ty-step">
+          <div class="ty-step-num">1</div>
+          <div class="ty-step-body">
+            <strong>Verifique seu e-mail</strong>
+            <p>Enviamos as instruções de acesso e boas-vindas para o seu e-mail.</p>
+          </div>
+        </div>
+
+        <div class="ty-step">
+          <div class="ty-step-num">2</div>
+          <div class="ty-step-body">
+            <strong>Aguarde o contato da nossa equipe</strong>
+            <p>Nossa equipe entrará em contato em até 24 horas úteis.</p>
+          </div>
+        </div>
+
+        <div class="ty-step">
+          <div class="ty-step-num">3</div>
+          <div class="ty-step-body">
+            <strong>Agende sua primeira sessão</strong>
+            <p>Você receberá o link para agendar o onboarding da mentoria.</p>
+          </div>
+        </div>
+
+        <div class="ty-step">
+          <div class="ty-step-num">4</div>
+          <div class="ty-step-body">
+            <strong>Acesse o grupo VIP</strong>
+            <p>Você será adicionado(a) ao grupo exclusivo no WhatsApp da turma.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CTA WhatsApp -->
+    <a href="#" class="btn-whatsapp" id="btn-wa">
+      <svg viewBox="0 0 24 24" fill="white">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </svg>
+      Falar com nossa equipe
+    </a>
+
+    <!-- Fotos -->
+    <div class="ty-mentors">
+      <div class="mentor-circle">
+        <img src="/images/mentor-woman.png" alt="" />
+      </div>
+      <div class="mentor-circle">
+        <img src="/images/mentor-man.png" alt="" />
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function () {
+      const p      = new URLSearchParams(window.location.search);
+      const name   = p.get('name')   || '';
+      const order  = p.get('order')  || '';
+      const method = p.get('method') || 'credit_card';
+      const wa     = p.get('wa')     || '';
+
+      const METHODS = {
+        credit_card: 'Cartão de crédito — aprovado ✓',
+        pix:         'PIX — aguardando pagamento',
+        boleto:      'Boleto gerado',
+      };
+
+      const isPending = method === 'pix' || method === 'boleto';
+      const firstName = name ? name.split(' ')[0] : '';
+
+      // Icon
+      const icon = document.getElementById('ty-icon');
+      if (isPending) {
+        icon.classList.add('pending');
+        icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#C79F67" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      } else {
+        icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#0D1A15" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      }
+
+      // Heading
+      document.getElementById('ty-heading').textContent = firstName
+        ? (isPending ? `Pedido registrado, ${firstName}!` : `Bem-vindo(a), ${firstName}!`)
+        : (isPending ? 'Pedido registrado!' : 'Bem-vindo(a)!');
+
+      // Subtext
+      document.getElementById('ty-subtext').innerHTML = isPending
+        ? (method === 'pix'
+            ? 'Efetue o pagamento via PIX para garantir sua vaga.<br/><strong>Verifique também seu e-mail.</strong>'
+            : 'Pague o boleto para confirmar sua vaga.<br/><strong>Vencimento em 3 dias corridos.</strong>')
+        : 'Sua vaga está garantida. <strong>Parabéns!</strong>';
+
+      // Order details
+      document.getElementById('ty-name').textContent   = name  || '—';
+      document.getElementById('ty-order').textContent  = order || '—';
+      document.getElementById('ty-method').textContent = METHODS[method] || method;
+
+      // WhatsApp button
+      const btnWA = document.getElementById('btn-wa');
+      if (wa) {
+        const clean = wa.replace(/\D/g, '');
+        btnWA.href = `https://wa.me/${clean.startsWith('55') ? clean : '55' + clean}`;
+      } else {
+        btnWA.style.display = 'none';
+      }
+    })();
+  </script>
+
+  <script>
+  (function() {
+    var btn = document.getElementById('btn-theme-ty');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      var current = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  })();
+  </script>
+
+</body>
+</html>

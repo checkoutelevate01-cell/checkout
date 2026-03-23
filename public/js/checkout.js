@@ -1,0 +1,627 @@
+/* ═══════════════════════════════════════════════════════════════
+   CHECKOUT MENTORIA — Frontend Logic
+   ═══════════════════════════════════════════════════════════════ */
+
+// ─── State ───────────────────────────────────────────────────────
+const state = {
+  offerSlug:        null,
+  couponCode:       null,
+  discount:         0,
+  config:           null,
+  method:           'credit_card',
+  pixCountdownTimer:null,
+  customerName:     '',
+  lastOrderId:      '',
+};
+
+// ─── DOM refs ────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const el = {
+  // Summary
+  mentorName:     $('mentor-name'),
+  productName:    $('product-name'),
+  priceDisplay:   $('price-display'),
+  installDisplay: $('install-display'),
+  pixPrice:       $('pix-price'),
+  boletoPrice:    $('boleto-price'),
+  mobileProduct:  $('mobile-product') || $('mobile-brand'),
+  mobilePrice:    $('mobile-price'),
+
+  // Form — personal
+  name:    $('f-name'),
+  email:   $('f-email'),
+  cpf:     $('f-cpf'),
+  phone:   $('f-phone'),
+
+  // Form — card
+  cardNumber:  $('f-card-number'),
+  cardName:    $('f-card-name'),
+  cardExpiry:  $('f-card-expiry'),
+  cardCvv:     $('f-card-cvv'),
+  installments:$('f-installments'),
+
+  // Card visual
+  card3d:          $('card-3d'),
+  cardNumberPrev:  $('card-number-preview'),
+  cardHolderPrev:  $('card-holder-preview'),
+  cardExpiryPrev:  $('card-expiry-preview'),
+  cardCvvPrev:     $('card-cvv-preview'),
+  cardBrandLogo:   $('card-brand-logo'),
+  cardBackBrand:   $('card-back-brand'),
+
+  // Submit
+  btnSubmit:  $('btn-submit'),
+  btnText:    document.querySelector('.btn-text'),
+  btnSpinner: document.querySelector('.btn-spinner'),
+
+  // Overlays
+  overlayLoading: $('overlay-loading'),
+  overlaySuccess: $('overlay-success'),
+  overlayPix:     $('overlay-pix'),
+  overlayBoleto:  $('overlay-boleto'),
+
+  // PIX
+  pixQrImg:      $('pix-qr-img'),
+  pixCodeDisplay:$('pix-code-display'),
+  btnCopyPix:    $('btn-copy-pix'),
+  pixCountdown:  $('pix-countdown'),
+
+  // Boleto
+  boletoDueResult:$('boleto-due-result'),
+  boletoBarcode:  $('boletoBarcode') || $('boleto-barcode'),
+  btnCopyBoleto:  $('btn-copy-boleto'),
+  btnOpenBoleto:  $('btn-open-boleto'),
+
+  // Success
+  successOrderId: $('success-order-id'),
+};
+
+// ─── Init ────────────────────────────────────────────────────────
+(async function init() {
+  await loadConfig();
+  setupMethodTabs();
+  setupCardPreview();
+  setupMasks();
+  setupSubmit();
+  setupCloseOverlayOnClick();
+  setupCoupon();
+})();
+
+// ─── Config ──────────────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const pathParts = window.location.pathname.split('/');
+    const isOfferPath = pathParts[1] === 'c' && pathParts[2];
+    if (isOfferPath) state.offerSlug = pathParts[2];
+
+    const url = state.offerSlug ? `/api/config?offer=${state.offerSlug}` : '/api/config';
+    const res  = await fetch(url);
+    const data = await res.json();
+    state.config = data;
+    applyConfig(data);
+  } catch (e) {
+    console.error('Erro ao carregar configuração:', e);
+  }
+}
+
+function applyConfig(cfg) {
+  const price   = cfg.productPrice;
+  const maxInst = cfg.maxInstallments;
+
+  if (el.mentorName)    el.mentorName.textContent  = cfg.mentorName;
+  if (el.productName)   el.productName.textContent = cfg.productName;
+  if (el.mobileProduct) el.mobileProduct.textContent = `✦ ELEVATE MedClub`;
+
+  const priceFormatted = formatCurrency(price);
+  el.priceDisplay.textContent = priceFormatted;
+  el.mobilePrice.textContent  = priceFormatted;
+  el.pixPrice.textContent     = priceFormatted;
+  el.boletoPrice.textContent  = priceFormatted;
+
+  // Installment hint on summary
+  const inst1 = formatCurrency(Math.ceil(price / maxInst));
+  el.installDisplay.textContent = `ou ${maxInst}× de ${inst1} sem juros`;
+
+  // Build select options
+  buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo);
+}
+
+function buildInstallmentsSelect(price, max, noInterestUpTo) {
+  el.installments.innerHTML = '';
+  for (let i = 1; i <= max; i++) {
+    const amt    = Math.ceil(price / i);
+    const total  = amt * i;
+    const label  = i <= noInterestUpTo
+      ? `${i}× de ${formatCurrency(amt)} sem juros`
+      : `${i}× de ${formatCurrency(amt)} (total ${formatCurrency(total)})`;
+    const opt    = document.createElement('option');
+    opt.value    = i;
+    opt.textContent = label;
+    el.installments.appendChild(opt);
+  }
+}
+
+// ─── Method tabs ─────────────────────────────────────────────────
+function setupMethodTabs() {
+  document.querySelectorAll('.method-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const method = tab.dataset.method;
+      state.method = method;
+
+      document.querySelectorAll('.method-tab').forEach((t) => {
+        t.classList.toggle('active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+
+      document.querySelectorAll('.method-panel').forEach((p) => {
+        p.classList.toggle('active', p.id === `panel-${method}`);
+      });
+    });
+  });
+}
+
+// ─── Card preview ────────────────────────────────────────────────
+function setupCardPreview() {
+  el.cardNumber.addEventListener('input', () => {
+    updateCardNumberPreview();
+    detectBrand(el.cardNumber.value);
+  });
+
+  el.cardName.addEventListener('input', () => {
+    const name = el.cardName.value.toUpperCase() || 'NOME DO TITULAR';
+    el.cardHolderPrev.textContent = name.slice(0, 22);
+  });
+
+  el.cardExpiry.addEventListener('input', () => {
+    const val = el.cardExpiry.value || 'MM/AA';
+    el.cardExpiryPrev.textContent = val;
+  });
+
+  el.cardCvv.addEventListener('focus',  () => el.card3d.classList.add('flipped'));
+  el.cardCvv.addEventListener('blur',   () => el.card3d.classList.remove('flipped'));
+
+  el.cardCvv.addEventListener('input', () => {
+    const dots = '•'.repeat(el.cardCvv.value.length) || '•••';
+    el.cardCvvPrev.textContent = dots;
+  });
+}
+
+function updateCardNumberPreview() {
+  const raw  = el.cardNumber.value.replace(/\D/g, '').padEnd(16, '•');
+  const fmt  = raw.match(/.{1,4}/g).join(' ');
+  el.cardNumberPrev.textContent = fmt;
+}
+
+const BRANDS = [
+  { name: 'Visa',       re: /^4/,              logo: 'VISA'  },
+  { name: 'Mastercard', re: /^5[1-5]|^2[2-7]/, logo: 'MC'    },
+  { name: 'Amex',       re: /^3[47]/,           logo: 'AMEX'  },
+  { name: 'Elo',        re: /^4011|^431274|^438935|^451416|^457393|^4576|^457631|^457632|^504175|^627780|^636297|^636368|^6504|^6505|^6507|^6509|^6516|^6550/, logo: 'ELO' },
+  { name: 'Hipercard',  re: /^6062/,            logo: 'HIPER' },
+  { name: 'Discover',   re: /^6(?:011|5)/,      logo: 'DISC'  },
+];
+
+function detectBrand(number) {
+  const clean = number.replace(/\D/g, '');
+  const match = BRANDS.find((b) => b.re.test(clean));
+  const logo  = match ? match.logo : '';
+  el.cardBrandLogo.textContent = logo;
+  if (el.cardBackBrand) el.cardBackBrand.textContent = logo;
+}
+
+// ─── Input masks ─────────────────────────────────────────────────
+function setupMasks() {
+  el.cardNumber.addEventListener('input', maskCardNumber);
+  el.cardExpiry.addEventListener('input', maskExpiry);
+  el.cardName.addEventListener('input',   () => {
+    el.cardName.value = el.cardName.value.replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, '');
+  });
+  el.cpf.addEventListener('input',   maskCPF);
+  el.phone.addEventListener('input', maskPhone);
+}
+
+function maskCardNumber(e) {
+  let val = e.target.value.replace(/\D/g, '').slice(0, 16);
+  e.target.value = val.match(/.{1,4}/g)?.join(' ') || val;
+}
+
+function maskExpiry(e) {
+  let val = e.target.value.replace(/\D/g, '').slice(0, 4);
+  if (val.length >= 3) val = val.slice(0, 2) + '/' + val.slice(2);
+  e.target.value = val;
+}
+
+function maskCPF(e) {
+  let val = e.target.value.replace(/\D/g, '').slice(0, 11);
+  if (val.length > 9) val = val.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  else if (val.length > 6) val = val.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  else if (val.length > 3) val = val.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+  e.target.value = val;
+}
+
+function maskPhone(e) {
+  let val = e.target.value.replace(/\D/g, '').slice(0, 11);
+  if (val.length > 10)     val = val.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  else if (val.length > 6) val = val.replace(/(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
+  else if (val.length > 2) val = val.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+  e.target.value = val;
+}
+
+// ─── Validation ──────────────────────────────────────────────────
+function validateCPF(cpf) {
+  cpf = cpf.replace(/\D/g, '');
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]) * (10 - i);
+  let rest = 11 - (sum % 11);
+  if (rest >= 10) rest = 0;
+  if (rest !== parseInt(cpf[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cpf[i]) * (11 - i);
+  rest = 11 - (sum % 11);
+  if (rest >= 10) rest = 0;
+  return rest === parseInt(cpf[10]);
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function setError(input, message) {
+  clearError(input);
+  input.classList.add('error');
+  const err = document.createElement('span');
+  err.className = 'field-error';
+  err.textContent = message;
+  input.closest('.field-wrap').insertAdjacentElement('afterend', err);
+}
+
+function clearError(input) {
+  input.classList.remove('error');
+  const wrap = input.closest('.field-wrap');
+  const next = wrap?.nextElementSibling;
+  if (next?.classList.contains('field-error')) next.remove();
+}
+
+function clearAllErrors() {
+  document.querySelectorAll('.field.error').forEach((f) => f.classList.remove('error'));
+  document.querySelectorAll('.field-error').forEach((e) => e.remove());
+}
+
+function validateForm() {
+  clearAllErrors();
+  let valid = true;
+
+  // Personal data
+  if (!el.name.value.trim() || el.name.value.trim().length < 3) {
+    setError(el.name, 'Informe seu nome completo'); valid = false;
+  }
+  if (!validateEmail(el.email.value)) {
+    setError(el.email, 'E-mail inválido'); valid = false;
+  }
+  if (!validateCPF(el.cpf.value)) {
+    setError(el.cpf, 'CPF inválido'); valid = false;
+  }
+  if (el.phone.value.replace(/\D/g, '').length < 10) {
+    setError(el.phone, 'Telefone inválido'); valid = false;
+  }
+
+  // Card-specific
+  if (state.method === 'credit_card') {
+    if (el.cardNumber.value.replace(/\D/g, '').length < 14) {
+      setError(el.cardNumber, 'Número do cartão inválido'); valid = false;
+    }
+    if (!el.cardName.value.trim() || el.cardName.value.trim().length < 3) {
+      setError(el.cardName, 'Nome do titular inválido'); valid = false;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(el.cardExpiry.value)) {
+      setError(el.cardExpiry, 'Validade inválida'); valid = false;
+    } else {
+      const [mm, yy] = el.cardExpiry.value.split('/').map(Number);
+      const now      = new Date();
+      const expDate  = new Date(2000 + yy, mm - 1);
+      if (mm < 1 || mm > 12 || expDate < now) {
+        setError(el.cardExpiry, 'Cartão vencido'); valid = false;
+      }
+    }
+    if (el.cardCvv.value.length < 3) {
+      setError(el.cardCvv, 'CVV inválido'); valid = false;
+    }
+  }
+
+  return valid;
+}
+
+// ─── Coupon ──────────────────────────────────────────────────────
+function setupCoupon() {
+  const btnApply  = document.getElementById('btn-apply-coupon');
+  const inputCode = document.getElementById('f-coupon');
+  const resultEl  = document.getElementById('coupon-result');
+  if (!btnApply || !inputCode) return;
+
+  btnApply.addEventListener('click', async () => {
+    const code = inputCode.value.trim().toUpperCase();
+    if (!code) return;
+
+    btnApply.disabled = true;
+    btnApply.textContent = '...';
+    resultEl.className = 'coupon-result hidden';
+
+    try {
+      const res  = await fetch('/api/coupon/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, offerSlug: state.offerSlug }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        resultEl.className = 'coupon-result error';
+        resultEl.textContent = data.error || 'Cupom inválido';
+        state.couponCode = null;
+        state.discount   = 0;
+        resetPriceDisplay();
+      } else {
+        state.couponCode = data.code;
+        state.discount   = data.discount;
+        resultEl.className = 'coupon-result success';
+        resultEl.textContent = `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
+        applyDiscountDisplay(data.finalPrice);
+      }
+    } catch (e) {
+      resultEl.className = 'coupon-result error';
+      resultEl.textContent = 'Erro ao validar cupom';
+    } finally {
+      btnApply.disabled = false;
+      btnApply.textContent = 'Aplicar';
+    }
+  });
+}
+
+function applyDiscountDisplay(finalPrice) {
+  const original = state.config?.productPrice || 0;
+  const fmt      = formatCurrency(finalPrice);
+  const fmtOrig  = formatCurrency(original);
+  if (el.priceDisplay) el.priceDisplay.innerHTML = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
+  if (el.mobilePrice)  el.mobilePrice.innerHTML  = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
+  if (el.pixPrice)     el.pixPrice.textContent   = fmt;
+  if (el.boletoPrice)  el.boletoPrice.textContent = fmt;
+  buildInstallmentsSelect(finalPrice, state.config?.maxInstallments || 12, state.config?.noInterestUpTo || 12);
+}
+
+function resetPriceDisplay() {
+  if (state.config) applyConfig(state.config);
+}
+
+// ─── Submit ──────────────────────────────────────────────────────
+function setupSubmit() {
+  el.btnSubmit.addEventListener('click', handleSubmit);
+}
+
+async function handleSubmit() {
+  if (!validateForm()) return;
+
+  // Store for redirect
+  state.customerName = el.name.value.trim();
+
+  setLoading(true);
+
+  const [expMonth, expYear] = el.cardExpiry.value.split('/');
+
+  const payload = {
+    customer: {
+      name:     el.name.value.trim(),
+      email:    el.email.value.trim(),
+      document: el.cpf.value,
+      phone:    el.phone.value,
+    },
+    payment: {
+      method: state.method,
+      ...(state.method === 'credit_card' && {
+        card: {
+          number:      el.cardNumber.value,
+          holder_name: el.cardName.value,
+          expiry:      el.cardExpiry.value,
+          cvv:         el.cardCvv.value,
+        },
+        installments: el.installments.value,
+      }),
+    },
+    ...(state.offerSlug  && { offerSlug:  state.offerSlug }),
+    ...(state.couponCode && { couponCode: state.couponCode }),
+  };
+
+  try {
+    const res  = await fetch('/api/order', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    setLoading(false);
+
+    if (!res.ok) {
+      showAlert(data.error || 'Erro ao processar. Tente novamente.');
+      return;
+    }
+
+    state.lastOrderId = data.orderId || '';
+
+    if (state.method === 'credit_card') {
+      // Cartão aprovado → redireciona direto para obrigado
+      goToThankyou(data.orderId);
+    } else if (state.method === 'pix') {
+      showPIX(data);
+    } else if (state.method === 'boleto') {
+      showBoleto(data);
+    }
+  } catch (e) {
+    setLoading(false);
+    showAlert('Erro de conexão. Verifique sua internet e tente novamente.');
+    console.error(e);
+  }
+}
+
+// ─── Loading ─────────────────────────────────────────────────────
+function setLoading(on) {
+  el.btnSubmit.disabled = on;
+  el.btnText.classList.toggle('hidden', on);
+  el.btnSpinner.classList.toggle('hidden', !on);
+  el.overlayLoading.classList.toggle('hidden', !on);
+}
+
+// ─── Redirect → página de Obrigado ───────────────────────────────
+function goToThankyou(orderId) {
+  const params = new URLSearchParams({
+    name:   state.customerName,
+    order:  orderId || '',
+    method: state.method,
+    wa:     state.config?.whatsappContact || '',
+  });
+  window.location.href = `/obrigado?${params.toString()}`;
+}
+
+// ─── Success overlays ────────────────────────────────────────────
+function showSuccess(orderId) {
+  if (orderId) el.successOrderId.textContent = `Pedido: ${orderId}`;
+  el.overlaySuccess.classList.remove('hidden');
+}
+
+function showPIX(data) {
+  el.pixQrImg.src = data.qrCodeUrl || '';
+  el.pixCodeDisplay.textContent = data.qrCode || '';
+
+  const seconds = data.expiresIn || 3600;
+  startPIXCountdown(seconds);
+
+  el.overlayPix.classList.remove('hidden');
+}
+
+function showBoleto(data) {
+  const dueDate = new Date();
+  const cfg     = state.config;
+  const days    = cfg ? (Number(cfg.boletoDueDays) || 3) : 3;
+  dueDate.setDate(dueDate.getDate() + days);
+
+  const boletoEl = document.getElementById('boleto-barcode');
+  if (boletoEl) boletoEl.textContent = data.boletoLine || '';
+
+  const dueEl = document.getElementById('boleto-due-result');
+  if (dueEl) dueEl.textContent = `${days} dias`;
+
+  if (el.btnOpenBoleto && data.boletoUrl) el.btnOpenBoleto.href = data.boletoUrl;
+
+  el.overlayBoleto.classList.remove('hidden');
+}
+
+// ─── PIX countdown ───────────────────────────────────────────────
+function startPIXCountdown(totalSeconds) {
+  if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
+  let remaining = totalSeconds;
+
+  function tick() {
+    const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const s = String(remaining % 60).padStart(2, '0');
+    el.pixCountdown.textContent = `${m}:${s}`;
+    if (remaining <= 0) {
+      clearInterval(state.pixCountdownTimer);
+      el.pixCountdown.textContent = 'expirado';
+    }
+    remaining--;
+  }
+
+  tick();
+  state.pixCountdownTimer = setInterval(tick, 1000);
+}
+
+// ─── Copy buttons + redirect buttons ────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-copy-pix')?.addEventListener('click', () => {
+    copyText(el.pixCodeDisplay.textContent, el.btnCopyPix);
+  });
+
+  document.getElementById('btn-copy-boleto')?.addEventListener('click', () => {
+    copyText(document.getElementById('boleto-barcode')?.textContent,
+             document.getElementById('btn-copy-boleto'));
+  });
+
+  // PIX: "Já paguei → próximos passos"
+  document.getElementById('btn-pix-done')?.addEventListener('click', () => {
+    if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
+    goToThankyou(state.lastOrderId);
+  });
+
+  // Boleto: "Entendido → próximos passos"
+  document.getElementById('btn-boleto-done')?.addEventListener('click', () => {
+    goToThankyou(state.lastOrderId);
+  });
+});
+
+function copyText(text, btn) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+// ─── Close overlay on background click ───────────────────────────
+function setupCloseOverlayOnClick() {
+  [el.overlaySuccess, el.overlayPix, el.overlayBoleto].forEach((overlay) => {
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.add('hidden');
+    });
+  });
+}
+
+// ─── Alert ───────────────────────────────────────────────────────
+function showAlert(message) {
+  const existing = document.getElementById('checkout-alert');
+  if (existing) existing.remove();
+
+  const alert     = document.createElement('div');
+  alert.id        = 'checkout-alert';
+  alert.style.cssText = `
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #DC2626; color: white;
+    padding: 14px 24px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(220,38,38,0.35);
+    z-index: 2000; max-width: 420px; width: 90%;
+    text-align: center; line-height: 1.4;
+    animation: slideDown 0.25s ease;
+  `;
+  alert.textContent = message;
+  document.body.appendChild(alert);
+
+  setTimeout(() => alert.remove(), 5000);
+  alert.addEventListener('click', () => alert.remove());
+}
+
+// ─── Utils ───────────────────────────────────────────────────────
+function formatCurrency(cents) {
+  return new Intl.NumberFormat('pt-BR', {
+    style:    'currency',
+    currency: 'BRL',
+  }).format(cents / 100);
+}
+
+// Alert animation
+const styleTag = document.createElement('style');
+styleTag.textContent = `@keyframes slideDown { from { opacity:0; transform: translateX(-50%) translateY(-10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }`;
+document.head.appendChild(styleTag);

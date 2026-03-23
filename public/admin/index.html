@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elevate Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --bg2:       #13161f;
+      --card:      #1a1d27;
+      --card2:     #1f2233;
+      --border:    rgba(255,255,255,0.07);
+      --gold:      #d4a853;
+      --gold-dim:  rgba(212,168,83,0.15);
+      --gold-mid:  rgba(212,168,83,0.35);
+      --green:     #18cb96;
+      --red:       #ff5050;
+      --text:      #e8eaf0;
+      --text2:     rgba(232,234,240,0.55);
+      --text3:     rgba(232,234,240,0.3);
+      --radius:    12px;
+      --sidebar-w: 220px;
+      --font:      'Inter', system-ui, sans-serif;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212,168,83,0.06) 0%, transparent 70%), var(--bg);
+    }
+    .login-card {
+      width: 360px; padding: 40px 36px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      text-align: center; margin-bottom: 32px;
+    }
+    .login-logo .sym { font-size: 28px; color: var(--gold); display: block; margin-bottom: 6px; }
+    .login-logo .name { font-size: 18px; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+    .login-logo .sub { font-size: 11px; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+    .login-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 6px; letter-spacing: 0.04em; }
+    .login-input {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: var(--font); font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: var(--gold-mid); }
+    .btn-login {
+      width: 100%; margin-top: 20px; padding: 13px;
+      background: var(--gold); color: #0f1117;
+      border: none; border-radius: 10px; cursor: pointer;
+      font-family: var(--font); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.04em; transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-login:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .login-error {
+      margin-top: 12px; padding: 10px 12px;
+      background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.25);
+      border-radius: 8px; color: var(--red); font-size: 13px; text-align: center;
+    }
+
+    /* ── App shell ── */
+    #app { display: none; height: 100vh; }
+    #app.visible { display: flex; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--card); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo .sym { color: var(--gold); font-size: 16px; margin-right: 6px; }
+    .sidebar-logo .name { font-size: 15px; font-weight: 700; }
+    .sidebar-logo .sub { font-size: 10px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-top: 1px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; cursor: pointer;
+      color: var(--text2); font-size: 13.5px; font-weight: 500;
+      border-radius: 0; transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
+      user-select: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+    .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim); }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-logout {
+      width: 100%; padding: 9px;
+      background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); cursor: pointer; font-size: 12px; font-weight: 500;
+      font-family: var(--font); transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; background: var(--bg); display: flex; flex-direction: column; }
+
+    .top-bar {
+      padding: 20px 28px; border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .top-bar h1 { font-size: 18px; font-weight: 700; }
+    .top-bar .hint { font-size: 11.5px; color: var(--text2); }
+    .top-bar .hint code { color: var(--gold); background: var(--gold-dim); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+    .content { padding: 24px 28px; flex: 1; }
+
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Table ── */
+    .table-wrap { border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--card2); padding: 11px 14px;
+      text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+    .td-mono { font-family: 'Courier New', monospace; font-size: 12.5px; color: var(--gold); }
+    .badge {
+      display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .badge-on  { background: rgba(24,203,150,0.12); color: var(--green); border: 1px solid rgba(24,203,150,0.25); }
+    .badge-off { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid var(--border); }
+    .action-row { display: flex; gap: 6px; align-items: center; }
+    .btn-sm {
+      padding: 5px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: none; font-family: var(--font); transition: opacity 0.15s;
+    }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-edit { background: rgba(212,168,83,0.15); color: var(--gold); border: 1px solid var(--gold-mid); }
+    .btn-del  { background: rgba(255,80,80,0.1); color: var(--red); border: 1px solid rgba(255,80,80,0.25); }
+    .btn-link { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); text-decoration: none; display: inline-block; line-height: 1; }
+    .empty-state { padding: 48px; text-align: center; color: var(--text2); }
+    .empty-state svg { width: 40px; height: 40px; opacity: 0.2; margin-bottom: 12px; display: block; margin-left: auto; margin-right: auto; }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .btn-primary {
+      padding: 9px 18px; background: var(--gold); color: #0f1117;
+      border: none; border-radius: 10px; cursor: pointer;
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.hidden { display: none; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    }
+    .modal-header {
+      padding: 22px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); border: none; cursor: pointer;
+      color: var(--text2); font-size: 18px; line-height: 1; font-family: var(--font);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: rgba(255,80,80,0.15); color: var(--red); }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .btn-cancel {
+      padding: 9px 18px; background: transparent; color: var(--text2);
+      border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+      font-size: 13px; font-family: var(--font); transition: all 0.15s;
+    }
+    .btn-cancel:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .btn-save {
+      padding: 9px 22px; background: var(--gold); color: #0f1117;
+      border: none; border-radius: 9px; cursor: pointer;
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+      transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* ── Form fields ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .fg-full { grid-column: 1 / -1; }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group label { font-size: 11.5px; font-weight: 600; color: var(--text2); letter-spacing: 0.04em; }
+    .field-group input, .field-group select, .field-group textarea {
+      padding: 10px 12px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+      color: var(--text); font-family: var(--font); font-size: 13.5px;
+      outline: none; transition: border-color 0.2s;
+      width: 100%;
+    }
+    .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+      border-color: var(--gold-mid);
+    }
+    .field-group select { cursor: pointer; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; border-radius: 20px; cursor: pointer;
+      background: rgba(255,255,255,0.1); transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; border-radius: 50%;
+      top: 3px; left: 3px; background: #fff;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--green); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+    .toggle-label { font-size: 13px; color: var(--text); }
+    .field-hint { font-size: 11px; color: var(--text3); }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+    }
+    .toast {
+      padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: toast-in 0.25s ease;
+      max-width: 320px;
+    }
+    .toast-success { background: rgba(24,203,150,0.15); border: 1px solid rgba(24,203,150,0.35); color: var(--green); }
+    .toast-error   { background: rgba(255,80,80,0.15); border: 1px solid rgba(255,80,80,0.3); color: var(--red); }
+    @keyframes toast-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ── Price display helper ── */
+    .price-cell { font-weight: 600; color: var(--text); }
+
+    /* ── Orders tab ── */
+    .search-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .search-input {
+      flex: 1; min-width: 180px; padding: 9px 12px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+      color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--gold-mid); }
+    .filter-select {
+      padding: 9px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+      color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer; outline: none;
+    }
+    .badge-paid    { background: rgba(24,203,150,0.12); color: var(--green); border: 1px solid rgba(24,203,150,0.25); }
+    .badge-pending { background: rgba(212,168,83,0.12); color: var(--gold);  border: 1px solid var(--gold-mid); }
+    .badge-failed  { background: rgba(255,80,80,0.1);  color: var(--red);   border: 1px solid rgba(255,80,80,0.25); }
+
+    /* ── Order detail modal ── */
+    .detail-section-title { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin: 18px 0 10px; }
+    .detail-section-title:first-child { margin-top: 0; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .detail-label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.04em; margin-bottom: 3px; text-transform: uppercase; }
+    .detail-value { font-size: 13.5px; color: var(--text); }
+    .detail-mono  { font-family: 'Courier New', monospace; font-size: 12px; color: var(--gold); word-break: break-all; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    /* ── Confirm dialog ── */
+    .confirm-backdrop {
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .confirm-backdrop.hidden { display: none; }
+    .confirm-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px 28px 22px; width: 340px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .confirm-box h3 { font-size: 16px; margin-bottom: 8px; }
+    .confirm-box p  { color: var(--text2); font-size: 13px; margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-confirm-del {
+      padding: 9px 20px; background: var(--red); color: #fff;
+      border: none; border-radius: 9px; cursor: pointer;
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+    }
+
+    @media (max-width: 680px) {
+      .sidebar { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login Screen ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="sym">✦</span>
+      <div class="name">Elevate Admin</div>
+      <div class="sub">Painel de controle</div>
+    </div>
+    <div class="field-group" style="margin-bottom:4px">
+      <label class="login-label">Senha de acesso</label>
+      <input type="password" id="login-pw" class="login-input" placeholder="Digite sua senha" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="btn-login">Entrar</button>
+    <div id="login-err" class="login-error" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ── Main App ── -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div><span class="sym">✦</span><span class="name">Elevate</span></div>
+      <span class="sub">Admin Panel</span>
+    </div>
+
+    <div class="nav-item active" data-tab="offers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Ofertas
+    </div>
+
+    <div class="nav-item" data-tab="coupons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+        <line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+      Cupons
+    </div>
+
+    <div class="nav-item" data-tab="orders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+      </svg>
+      Compras
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" id="btn-logout">Sair da conta</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- ── Offers tab ── -->
+    <div id="tab-offers" class="tab-section active">
+      <div class="top-bar">
+        <div>
+          <h1>Ofertas</h1>
+          <div class="hint">URL base do checkout: <code id="checkout-base-url"></code></div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <span style="color:var(--text2);font-size:13px" id="offers-count"></span>
+          <button class="btn-primary" id="btn-new-offer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova Oferta
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Slug / URL</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Parc.</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="offers-tbody">
+              <tr><td colspan="6"><div class="empty-state">Carregando…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Coupons tab ── -->
+    <div id="tab-coupons" class="tab-section">
+      <div class="top-bar">
+        <h1>Cupons de Desconto</h1>
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <span style="color:var(--text2);font-size:13px" id="coupons-count"></span>
+          <button class="btn-primary" id="btn-new-coupon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Cupom
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Tipo</th>
+                <th>Desconto</th>
+                <th>Usos</th>
+                <th>Oferta</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="coupons-tbody">
+              <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Orders tab ── -->
+    <div id="tab-orders" class="tab-section">
+      <div class="top-bar">
+        <div>
+          <h1>Compras</h1>
+          <span id="orders-count" style="font-size:11.5px;color:var(--text2)"></span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="search-bar">
+          <input type="search" id="orders-search" class="search-input" placeholder="Buscar por nome, e-mail ou ID do pedido…" />
+          <select id="orders-filter-method" class="filter-select">
+            <option value="">Todos os métodos</option>
+            <option value="credit_card">Cartão</option>
+            <option value="pix">PIX</option>
+            <option value="boleto">Boleto</option>
+          </select>
+          <select id="orders-filter-status" class="filter-select">
+            <option value="">Todos os status</option>
+            <option value="paid">Pago</option>
+            <option value="pending">Pendente</option>
+            <option value="failed">Falhou</option>
+          </select>
+          <button class="btn-primary" id="btn-orders-refresh" style="padding:9px 14px" title="Atualizar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Oferta</th>
+                <th>Método</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Offer Modal ── -->
+<div class="modal-backdrop hidden" id="offer-modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="offer-modal-title">Nova Oferta</h2>
+      <button class="modal-close" data-close="offer-modal-backdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="offer-id" />
+      <div class="form-grid">
+        <div class="field-group fg-full">
+          <label>Nome da oferta</label>
+          <input type="text" id="offer-name" placeholder="Ex: Mentoria VIP Dezembro" />
+        </div>
+        <div class="field-group">
+          <label>Slug (URL)</label>
+          <input type="text" id="offer-slug" placeholder="Ex: vip-dezembro" />
+          <span class="field-hint">Letras minúsculas, números e hífens. Ex: /c/vip-dezembro</span>
+        </div>
+        <div class="field-group">
+          <label>Preço (R$)</label>
+          <input type="number" id="offer-price" placeholder="3500.00" step="0.01" min="1" />
+          <span class="field-hint">Em reais (ex: 3500.00 = R$ 3.500,00)</span>
+        </div>
+        <div class="field-group fg-full">
+          <label>Descrição interna (Pagar.me)</label>
+          <input type="text" id="offer-description" placeholder="Ex: Mentoria individual 3 meses" />
+        </div>
+        <div class="field-group">
+          <label>Descritivo na fatura (máx 13 car.)</label>
+          <input type="text" id="offer-descriptor" maxlength="13" placeholder="MENTORIA" />
+        </div>
+        <div class="field-group">
+          <label>Nome do mentor</label>
+          <input type="text" id="offer-mentor-name" placeholder="Ex: Katherine" />
+        </div>
+        <div class="field-group">
+          <label>Parcelas máximas</label>
+          <input type="number" id="offer-max-install" min="1" max="12" placeholder="12" />
+        </div>
+        <div class="field-group">
+          <label>Parcelas sem juros</label>
+          <input type="number" id="offer-no-interest" min="1" max="12" placeholder="12" />
+        </div>
+        <div class="field-group">
+          <label>PIX expira em (segundos)</label>
+          <input type="number" id="offer-pix-expires" min="300" placeholder="3600" />
+        </div>
+        <div class="field-group">
+          <label>Boleto — vencimento (dias)</label>
+          <input type="number" id="offer-boleto-days" min="1" placeholder="3" />
+        </div>
+        <div class="field-group fg-full">
+          <label>WhatsApp de contato (opcional)</label>
+          <input type="text" id="offer-whatsapp" placeholder="11999999999" />
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="offer-active" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Oferta ativa</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="offer-modal-backdrop">Cancelar</button>
+      <button class="btn-save" id="btn-save-offer">Salvar oferta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Coupon Modal ── -->
+<div class="modal-backdrop hidden" id="coupon-modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="coupon-modal-title">Novo Cupom</h2>
+      <button class="modal-close" data-close="coupon-modal-backdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="coupon-id" />
+      <div class="form-grid">
+        <div class="field-group fg-full">
+          <label>Código do cupom</label>
+          <input type="text" id="coupon-code" placeholder="Ex: DESCONTO20" style="text-transform:uppercase" />
+        </div>
+        <div class="field-group">
+          <label>Tipo de desconto</label>
+          <select id="coupon-type">
+            <option value="percent">Percentual (%)</option>
+            <option value="fixed">Valor fixo (R$)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label id="coupon-value-label">Valor (%)</label>
+          <input type="number" id="coupon-value" placeholder="10" min="0" step="0.01" />
+        </div>
+        <div class="field-group">
+          <label>Usos máximos</label>
+          <input type="number" id="coupon-max-uses" placeholder="Ilimitado (deixe vazio)" min="1" />
+        </div>
+        <div class="field-group">
+          <label>Válido para oferta</label>
+          <select id="coupon-offer-id">
+            <option value="">Todas as ofertas</option>
+          </select>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="coupon-active" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Cupom ativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="coupon-modal-backdrop">Cancelar</button>
+      <button class="btn-save" id="btn-save-coupon">Salvar cupom</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Order Detail Modal ── -->
+<div class="modal-backdrop hidden" id="order-detail-modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:620px">
+    <div class="modal-header">
+      <h2>Detalhes do Pedido</h2>
+      <button class="modal-close" data-close="order-detail-modal-backdrop">&times;</button>
+    </div>
+    <div class="modal-body" id="order-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="order-detail-modal-backdrop">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Delete ── -->
+<div class="confirm-backdrop hidden" id="confirm-backdrop">
+  <div class="confirm-box">
+    <h3>Confirmar exclusão</h3>
+    <p id="confirm-msg">Tem certeza? Esta ação não pode ser desfeita.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="btn-confirm-cancel">Cancelar</button>
+      <button class="btn-confirm-del" id="btn-confirm-ok">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast container ── -->
+<div id="toast-container"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   Elevate Admin — SPA Logic
+   ════════════════════════════════════════════════════════ */
+
+const TOKEN_KEY = 'adminToken';
+let token = localStorage.getItem(TOKEN_KEY) || '';
+let offers  = [];
+let coupons = [];
+let orders  = [];
+let ordersSearchTimer = null;
+let confirmCallback = null;
+
+// ── Auth ──────────────────────────────────────────────────
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function setToken(t) { localStorage.setItem(TOKEN_KEY, t); token = t; }
+function clearToken() { localStorage.removeItem(TOKEN_KEY); token = ''; }
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+}
+
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, { ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
+  if (res.status === 401) { logout(); throw new Error('401'); }
+  return res;
+}
+
+// ── Boot ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('checkout-base-url').textContent = `${location.origin}/c/[slug]`;
+
+  if (getToken()) {
+    showApp();
+  }
+
+  // Login
+  document.getElementById('btn-login').addEventListener('click', doLogin);
+  document.getElementById('login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+  // Nav tabs
+  document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+    item.addEventListener('click', () => switchTab(item.dataset.tab));
+  });
+
+  // Logout
+  document.getElementById('btn-logout').addEventListener('click', logout);
+
+  // New offer/coupon buttons
+  document.getElementById('btn-new-offer').addEventListener('click', () => openOfferModal(null));
+  document.getElementById('btn-new-coupon').addEventListener('click', () => openCouponModal(null));
+
+  // Save buttons
+  document.getElementById('btn-save-offer').addEventListener('click', saveOffer);
+  document.getElementById('btn-save-coupon').addEventListener('click', saveCoupon);
+
+  // Modal close buttons
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(b => {
+    b.addEventListener('click', e => { if (e.target === b) b.classList.add('hidden'); });
+  });
+
+  // Coupon type change
+  document.getElementById('coupon-type').addEventListener('change', () => {
+    const t = document.getElementById('coupon-type').value;
+    document.getElementById('coupon-value-label').textContent = t === 'percent' ? 'Valor (%)' : 'Valor (R$)';
+  });
+
+  // Confirm dialog
+  document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+    document.getElementById('confirm-backdrop').classList.add('hidden');
+    confirmCallback = null;
+  });
+  document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+    document.getElementById('confirm-backdrop').classList.add('hidden');
+    if (confirmCallback) confirmCallback();
+    confirmCallback = null;
+  });
+
+  // Offer slug auto-generate from name
+  document.getElementById('offer-name').addEventListener('input', () => {
+    const slugEl = document.getElementById('offer-slug');
+    if (slugEl.dataset.manual === 'true') return;
+    const name = document.getElementById('offer-name').value;
+    slugEl.value = name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  });
+  document.getElementById('offer-slug').addEventListener('input', () => {
+    document.getElementById('offer-slug').dataset.manual = 'true';
+  });
+});
+
+async function doLogin() {
+  const pw  = document.getElementById('login-pw').value;
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('btn-login');
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Entrando…';
+
+  try {
+    const res  = await fetch('/admin/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Falha no login');
+    setToken(data.token);
+    showApp();
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  loadOffers();
+  loadCoupons();
+  loadOrders();
+}
+
+function logout() {
+  clearToken();
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pw').value = '';
+}
+
+// ── Tabs ─────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item[data-tab]').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.toggle('active', s.id === `tab-${tab}`));
+  if (tab === 'orders') loadOrders();
+}
+
+// ── Offers ───────────────────────────────────────────────
+async function loadOffers() {
+  try {
+    const res = await apiFetch('/admin/api/offers');
+    offers = await res.json();
+    renderOffers();
+  } catch(e) { if (e.message !== '401') toast('Erro ao carregar ofertas', 'error'); }
+}
+
+function renderOffers() {
+  const tbody = document.getElementById('offers-tbody');
+  const count = document.getElementById('offers-count');
+  count.textContent = `${offers.length} oferta${offers.length !== 1 ? 's' : ''}`;
+
+  if (!offers.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Nenhuma oferta criada ainda
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = offers.map(o => {
+    const priceR = (o.price / 100).toFixed(2).replace('.', ',');
+    const url    = `${location.origin}/c/${o.slug}`;
+    return `<tr>
+      <td>
+        <div class="td-mono">/c/${o.slug}</div>
+      </td>
+      <td>${escHtml(o.name)}</td>
+      <td class="price-cell">R$ ${priceR}</td>
+      <td style="color:var(--text2)">${o.maxInstallments}x</td>
+      <td><span class="badge ${o.active !== false ? 'badge-on' : 'badge-off'}">${o.active !== false ? 'Ativa' : 'Inativa'}</span></td>
+      <td>
+        <div class="action-row">
+          <a class="btn-sm btn-link" href="${url}" target="_blank" rel="noopener" title="Ver checkout">↗</a>
+          <button class="btn-sm btn-edit" onclick="openOfferModal('${o.id}')">Editar</button>
+          <button class="btn-sm btn-del"  onclick="deleteOffer('${o.id}', '${escHtml(o.name)}')">Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openOfferModal(id) {
+  const modal = document.getElementById('offer-modal-backdrop');
+  const title = document.getElementById('offer-modal-title');
+  document.getElementById('offer-slug').dataset.manual = id ? 'true' : '';
+
+  if (!id) {
+    title.textContent = 'Nova Oferta';
+    document.getElementById('offer-id').value        = '';
+    document.getElementById('offer-name').value      = '';
+    document.getElementById('offer-slug').value      = '';
+    document.getElementById('offer-price').value     = '';
+    document.getElementById('offer-description').value = '';
+    document.getElementById('offer-descriptor').value  = 'MENTORIA';
+    document.getElementById('offer-mentor-name').value = '';
+    document.getElementById('offer-max-install').value  = '12';
+    document.getElementById('offer-no-interest').value  = '12';
+    document.getElementById('offer-pix-expires').value  = '3600';
+    document.getElementById('offer-boleto-days').value  = '3';
+    document.getElementById('offer-whatsapp').value     = '';
+    document.getElementById('offer-active').checked     = true;
+  } else {
+    const o = offers.find(x => x.id === id);
+    if (!o) return;
+    title.textContent = 'Editar Oferta';
+    document.getElementById('offer-id').value           = o.id;
+    document.getElementById('offer-name').value          = o.name;
+    document.getElementById('offer-slug').value          = o.slug;
+    document.getElementById('offer-price').value         = (o.price / 100).toFixed(2);
+    document.getElementById('offer-description').value   = o.description || '';
+    document.getElementById('offer-descriptor').value    = o.statementDescriptor || 'MENTORIA';
+    document.getElementById('offer-mentor-name').value   = o.mentorName || '';
+    document.getElementById('offer-max-install').value   = o.maxInstallments || 12;
+    document.getElementById('offer-no-interest').value   = o.noInterestUpTo || 12;
+    document.getElementById('offer-pix-expires').value   = o.pixExpiresIn || 3600;
+    document.getElementById('offer-boleto-days').value   = o.boletoDueDays || 3;
+    document.getElementById('offer-whatsapp').value      = o.whatsappContact || '';
+    document.getElementById('offer-active').checked      = o.active !== false;
+  }
+
+  modal.classList.remove('hidden');
+  document.getElementById('offer-name').focus();
+}
+
+async function saveOffer() {
+  const id    = document.getElementById('offer-id').value;
+  const price = parseFloat(document.getElementById('offer-price').value || '0');
+
+  const body = {
+    name:                document.getElementById('offer-name').value.trim(),
+    slug:                document.getElementById('offer-slug').value.trim(),
+    price:               Math.round(price * 100),
+    description:         document.getElementById('offer-description').value.trim(),
+    statementDescriptor: document.getElementById('offer-descriptor').value.trim(),
+    mentorName:          document.getElementById('offer-mentor-name').value.trim(),
+    maxInstallments:     parseInt(document.getElementById('offer-max-install').value) || 12,
+    noInterestUpTo:      parseInt(document.getElementById('offer-no-interest').value) || 12,
+    pixExpiresIn:        parseInt(document.getElementById('offer-pix-expires').value) || 3600,
+    boletoDueDays:       parseInt(document.getElementById('offer-boleto-days').value) || 3,
+    whatsappContact:     document.getElementById('offer-whatsapp').value.trim(),
+    active:              document.getElementById('offer-active').checked,
+  };
+
+  if (!body.name) { toast('Informe o nome da oferta', 'error'); return; }
+  if (!body.slug) { toast('Informe o slug da oferta', 'error'); return; }
+  if (!body.price || body.price < 100) { toast('Preço inválido (mínimo R$ 1,00)', 'error'); return; }
+
+  const btn = document.getElementById('btn-save-offer');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url    = id ? `/admin/api/offers/${id}` : '/admin/api/offers';
+    const res    = await apiFetch(url, { method, body: JSON.stringify(body) });
+    const data   = await res.json();
+
+    if (!res.ok) { toast(data.error || 'Erro ao salvar', 'error'); return; }
+
+    closeModal('offer-modal-backdrop');
+    toast(id ? 'Oferta atualizada!' : 'Oferta criada!', 'success');
+    await loadOffers();
+    await populateCouponOffers();
+  } catch(e) {
+    if (e.message !== '401') toast('Erro de conexão', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar oferta';
+  }
+}
+
+function deleteOffer(id, name) {
+  document.getElementById('confirm-msg').textContent = `Excluir a oferta "${name}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-backdrop').classList.remove('hidden');
+  confirmCallback = async () => {
+    try {
+      const res = await apiFetch(`/admin/api/offers/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast(d.error || 'Erro ao excluir', 'error'); return; }
+      toast('Oferta excluída', 'success');
+      await loadOffers();
+      await populateCouponOffers();
+    } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  };
+}
+
+// ── Coupons ──────────────────────────────────────────────
+async function loadCoupons() {
+  try {
+    const res = await apiFetch('/admin/api/coupons');
+    coupons = await res.json();
+    renderCoupons();
+  } catch(e) { if (e.message !== '401') toast('Erro ao carregar cupons', 'error'); }
+}
+
+function renderCoupons() {
+  const tbody = document.getElementById('coupons-tbody');
+  const count = document.getElementById('coupons-count');
+  count.textContent = `${coupons.length} cupom${coupons.length !== 1 ? 'ns' : ''}`;
+
+  if (!coupons.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Nenhum cupom criado ainda
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = coupons.map(c => {
+    const offerName = c.offerId ? (offers.find(o => o.id === c.offerId)?.name || c.offerId) : '—';
+    const uses      = c.maxUses != null ? `${c.usedCount}/${c.maxUses}` : `${c.usedCount}/∞`;
+    const valStr    = c.type === 'percent' ? `${c.value}%` : `R$ ${(c.value/100).toFixed(2).replace('.',',')}`;
+    return `<tr>
+      <td class="td-mono">${escHtml(c.code)}</td>
+      <td style="color:var(--text2)">${c.type === 'percent' ? 'Percentual' : 'Valor fixo'}</td>
+      <td style="font-weight:600">${valStr}</td>
+      <td style="color:var(--text2)">${uses}</td>
+      <td style="color:var(--text2);font-size:12px">${escHtml(offerName)}</td>
+      <td><span class="badge ${c.active !== false ? 'badge-on' : 'badge-off'}">${c.active !== false ? 'Ativo' : 'Inativo'}</span></td>
+      <td>
+        <div class="action-row">
+          <button class="btn-sm btn-edit" onclick="openCouponModal('${c.id}')">Editar</button>
+          <button class="btn-sm btn-del"  onclick="deleteCoupon('${c.id}', '${escHtml(c.code)}')">Excluir</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function populateCouponOffers() {
+  const sel = document.getElementById('coupon-offer-id');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas as ofertas</option>';
+  offers.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = o.name;
+    sel.appendChild(opt);
+  });
+  sel.value = cur;
+}
+
+function openCouponModal(id) {
+  const modal = document.getElementById('coupon-modal-backdrop');
+  const title = document.getElementById('coupon-modal-title');
+  populateCouponOffers();
+
+  if (!id) {
+    title.textContent = 'Novo Cupom';
+    document.getElementById('coupon-id').value       = '';
+    document.getElementById('coupon-code').value     = '';
+    document.getElementById('coupon-type').value     = 'percent';
+    document.getElementById('coupon-value').value    = '';
+    document.getElementById('coupon-max-uses').value = '';
+    document.getElementById('coupon-offer-id').value = '';
+    document.getElementById('coupon-active').checked = true;
+    document.getElementById('coupon-value-label').textContent = 'Valor (%)';
+  } else {
+    const c = coupons.find(x => x.id === id);
+    if (!c) return;
+    title.textContent = 'Editar Cupom';
+    document.getElementById('coupon-id').value       = c.id;
+    document.getElementById('coupon-code').value     = c.code;
+    document.getElementById('coupon-type').value     = c.type;
+    document.getElementById('coupon-value').value    = c.type === 'fixed' ? (c.value / 100).toFixed(2) : c.value;
+    document.getElementById('coupon-max-uses').value = c.maxUses != null ? c.maxUses : '';
+    document.getElementById('coupon-offer-id').value = c.offerId || '';
+    document.getElementById('coupon-active').checked = c.active !== false;
+    document.getElementById('coupon-value-label').textContent = c.type === 'percent' ? 'Valor (%)' : 'Valor (R$)';
+  }
+
+  modal.classList.remove('hidden');
+  document.getElementById('coupon-code').focus();
+}
+
+async function saveCoupon() {
+  const id   = document.getElementById('coupon-id').value;
+  const type = document.getElementById('coupon-type').value;
+  const rawVal = parseFloat(document.getElementById('coupon-value').value || '0');
+  const value  = type === 'fixed' ? Math.round(rawVal * 100) : rawVal;
+  const maxUsesRaw = document.getElementById('coupon-max-uses').value.trim();
+
+  const body = {
+    code:    document.getElementById('coupon-code').value.trim().toUpperCase(),
+    type,
+    value,
+    maxUses: maxUsesRaw !== '' ? parseInt(maxUsesRaw) : null,
+    offerId: document.getElementById('coupon-offer-id').value || null,
+    active:  document.getElementById('coupon-active').checked,
+  };
+
+  if (!body.code) { toast('Informe o código do cupom', 'error'); return; }
+  if (!body.value) { toast('Informe o valor do desconto', 'error'); return; }
+
+  const btn = document.getElementById('btn-save-coupon');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url    = id ? `/admin/api/coupons/${id}` : '/admin/api/coupons';
+    const res    = await apiFetch(url, { method, body: JSON.stringify(body) });
+    const data   = await res.json();
+
+    if (!res.ok) { toast(data.error || 'Erro ao salvar', 'error'); return; }
+
+    closeModal('coupon-modal-backdrop');
+    toast(id ? 'Cupom atualizado!' : 'Cupom criado!', 'success');
+    await loadCoupons();
+  } catch(e) {
+    if (e.message !== '401') toast('Erro de conexão', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar cupom';
+  }
+}
+
+function deleteCoupon(id, code) {
+  document.getElementById('confirm-msg').textContent = `Excluir o cupom "${code}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-backdrop').classList.remove('hidden');
+  confirmCallback = async () => {
+    try {
+      const res = await apiFetch(`/admin/api/coupons/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast(d.error || 'Erro ao excluir', 'error'); return; }
+      toast('Cupom excluído', 'success');
+      await loadCoupons();
+    } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  };
+}
+
+// ── Orders ────────────────────────────────────────────────
+async function loadOrders() {
+  const q      = (document.getElementById('orders-search')?.value || '').trim();
+  const method = document.getElementById('orders-filter-method')?.value || '';
+  const status = document.getElementById('orders-filter-status')?.value || '';
+  const params = new URLSearchParams();
+  if (q)      params.set('q', q);
+  if (method) params.set('method', method);
+  if (status) params.set('status', status);
+  try {
+    const res  = await apiFetch(`/admin/api/orders?${params}`);
+    const data = await res.json();
+    orders = data.orders;
+    const countEl = document.getElementById('orders-count');
+    if (countEl) countEl.textContent = data.filtered === data.total
+      ? `${data.total} compra${data.total !== 1 ? 's' : ''}`
+      : `${data.filtered} de ${data.total} compras`;
+    renderOrders();
+  } catch(e) { if (e.message !== '401') toast('Erro ao carregar compras', 'error'); }
+}
+
+function renderOrders() {
+  const tbody = document.getElementById('orders-tbody');
+  if (!tbody) return;
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/>
+      </svg>
+      Nenhum pedido encontrado</div></td></tr>`;
+    return;
+  }
+  const methodLabel = { credit_card: 'Cartão', pix: 'PIX', boleto: 'Boleto' };
+  const statusBadge = s => {
+    if (s === 'paid')    return `<span class="badge badge-paid">Pago</span>`;
+    if (s === 'pending') return `<span class="badge badge-pending">Pendente</span>`;
+    return `<span class="badge badge-failed">Falhou</span>`;
+  };
+  tbody.innerHTML = orders.map(o => {
+    const date   = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
+    const amount = `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}`;
+    const offerTd = o.offer ? escHtml(o.offer.name) : `<span style="color:var(--text3)">—</span>`;
+    return `<tr>
+      <td style="color:var(--text2);font-size:12px;white-space:nowrap">${date}</td>
+      <td>
+        <div style="font-weight:500">${escHtml(o.customer.name)}</div>
+        <div style="font-size:11.5px;color:var(--text2)">${escHtml(o.customer.email)}</div>
+      </td>
+      <td style="font-size:12.5px;color:var(--text2)">${offerTd}</td>
+      <td style="color:var(--text2)">${methodLabel[o.paymentMethod] || o.paymentMethod}</td>
+      <td class="price-cell">${amount}</td>
+      <td>${statusBadge(o.chargeStatus || o.status)}</td>
+      <td><button class="btn-sm btn-edit" onclick="openOrderDetail('${o.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openOrderDetail(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const fmt  = cents => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
+  const date = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const methodLabel = { credit_card: 'Cartão de crédito', pix: 'PIX', boleto: 'Boleto bancário' };
+  let extraHtml = '';
+  if (o.pix?.qrCode) {
+    extraHtml = `<div class="detail-section-title">PIX</div>
+      <div class="detail-grid" style="grid-template-columns:1fr">
+        <div><div class="detail-label">Código Copia e Cola</div>
+        <div class="detail-mono">${escHtml(o.pix.qrCode)}</div></div>
+      </div>`;
+  }
+  if (o.boleto?.line) {
+    extraHtml = `<div class="detail-section-title">Boleto</div>
+      <div class="detail-grid" style="grid-template-columns:1fr">
+        <div><div class="detail-label">Linha digitável</div>
+        <div class="detail-mono">${escHtml(o.boleto.line)}</div></div>
+        ${o.boleto.url ? `<div><a href="${escHtml(o.boleto.url)}" target="_blank" class="btn-sm btn-edit" style="display:inline-block;margin-top:4px">Abrir boleto ↗</a></div>` : ''}
+      </div>`;
+  }
+  document.getElementById('order-detail-body').innerHTML = `
+    <div class="detail-section-title">Pedido</div>
+    <div class="detail-grid">
+      <div><div class="detail-label">ID Pagar.me</div><div class="detail-mono">${escHtml(o.pagarmeOrderId || '—')}</div></div>
+      <div><div class="detail-label">Data</div><div class="detail-value">${date}</div></div>
+      <div><div class="detail-label">Método</div><div class="detail-value">${methodLabel[o.paymentMethod] || o.paymentMethod}${o.installments > 1 ? ` (${o.installments}x)` : ''}</div></div>
+      <div><div class="detail-label">Status</div><div class="detail-value">${o.chargeStatus || o.status}</div></div>
+      <div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>
+      ${o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
+      ${o.offer  ? `<div><div class="detail-label">Oferta</div><div class="detail-value">${escHtml(o.offer.name)}</div></div>` : ''}
+      ${o.coupon ? `<div><div class="detail-label">Cupom</div><div class="detail-mono">${escHtml(o.coupon.code)}</div></div>` : ''}
+    </div>
+    <div class="detail-section-title">Cliente</div>
+    <div class="detail-grid">
+      <div><div class="detail-label">Nome</div><div class="detail-value">${escHtml(o.customer.name)}</div></div>
+      <div><div class="detail-label">E-mail</div><div class="detail-value">${escHtml(o.customer.email)}</div></div>
+      <div><div class="detail-label">CPF</div><div class="detail-mono">${escHtml(o.customer.document)}</div></div>
+      <div><div class="detail-label">Telefone</div><div class="detail-value">${escHtml(o.customer.phone)}</div></div>
+    </div>
+    ${extraHtml}`;
+  document.getElementById('order-detail-modal-backdrop').classList.remove('hidden');
+}
+
+// Wiring orders events
+document.getElementById('btn-orders-refresh')?.addEventListener('click', loadOrders);
+document.getElementById('orders-search')?.addEventListener('input', () => {
+  clearTimeout(ordersSearchTimer);
+  ordersSearchTimer = setTimeout(loadOrders, 350);
+});
+document.getElementById('orders-filter-method')?.addEventListener('change', loadOrders);
+document.getElementById('orders-filter-status')?.addEventListener('change', loadOrders);
+
+// ── Modal helpers ─────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el  = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Utils ─────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulação de Compra — Elevate MedClub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1F1F1F;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: #18CB96;
+    }
+    p.sub {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 1.75rem;
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.35rem;
+      margin-top: 1rem;
+    }
+    input, select {
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: #18CB96; }
+    select option { background: #2a2a2a; }
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.75rem;
+      padding: 0.85rem;
+      background: #18CB96;
+      color: #0D1A15;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .log {
+      margin-top: 1.25rem;
+      padding: 0.85rem;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.6);
+      min-height: 3rem;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .log.show { display: block; }
+    .log.ok  { color: #18CB96; }
+    .log.err { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Simulação de Compra</h1>
+  <p class="sub">Testa a página de obrigado + notificações WhatsApp sem cobrar nada no Pagar.me</p>
+
+  <label>Nome completo</label>
+  <input id="name" type="text" value="Ana Beatriz Lima" />
+
+  <label>E-mail</label>
+  <input id="email" type="email" value="ana@teste.com" />
+
+  <label>CPF</label>
+  <input id="doc" type="text" value="123.456.789-09" />
+
+  <label>Telefone (com DDD)</label>
+  <input id="phone" type="text" placeholder="11999999999" />
+
+  <label>Método de pagamento</label>
+  <select id="method">
+    <option value="credit_card">Cartão de Crédito</option>
+    <option value="pix">PIX</option>
+    <option value="boleto">Boleto</option>
+  </select>
+
+  <button class="btn" id="btn">Simular compra →</button>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+  document.getElementById('btn').addEventListener('click', async () => {
+    const btn = document.getElementById('btn');
+    const log = document.getElementById('log');
+    btn.disabled = true;
+    btn.textContent = 'Simulando…';
+    log.className = 'log show';
+    log.textContent = 'Enviando para /api/simulate…';
+
+    const payload = {
+      customer: {
+        name:     document.getElementById('name').value,
+        email:    document.getElementById('email').value,
+        document: document.getElementById('doc').value,
+        phone:    document.getElementById('phone').value,
+      },
+      method: document.getElementById('method').value,
+    };
+
+    try {
+      const res  = await fetch('/api/simulate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+
+      log.className = 'log show ok';
+      log.textContent = `✅ Simulação OK!\n${JSON.stringify(data, null, 2)}`;
+
+      // redireciona para obrigado após 1.5s
+      setTimeout(() => {
+        const p = new URLSearchParams({
+          name:   payload.customer.name,
+          order:  data.orderId,
+          method: payload.method,
+          wa:     '',          // preencha se quiser testar o botão WA
+        });
+        window.location.href = `/obrigado?${p.toString()}`;
+      }, 1500);
+
+    } catch (err) {
+      log.className = 'log show err';
+      log.textContent = `❌ Erro: ${err.message}`;
+      btn.disabled = false;
+      btn.textContent = 'Simular compra →';
+    }
+  });
+</script>
+</body>
+</html>

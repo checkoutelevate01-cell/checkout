@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Elevate MedClub</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script>
+    (function(){
+      var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <style>
+    .coupon-optional { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 400; font-family: var(--font-body); }
+    .coupon-row { display: flex; gap: 10px; align-items: stretch; }
+    .coupon-field-wrap { flex: 1; margin-bottom: 0; }
+    .btn-coupon { padding: 0 20px; height: 48px; background: rgba(199,159,103,0.15); border: 1px solid rgba(199,159,103,0.4); color: #C79F67; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.03em; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; align-self: flex-end; }
+    .btn-coupon:hover { background: rgba(212,168,83,0.25); }
+    .btn-coupon:disabled { opacity: 0.5; cursor: not-allowed; }
+    .coupon-result { margin-top: 8px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; }
+    .coupon-result.success { background: rgba(199,159,103,0.12); border: 1px solid rgba(199,159,103,0.3); color: #C79F67; }
+    .coupon-result.error { background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.25); color: #ff6b6b; }
+    .coupon-result.hidden { display: none; }
+    .price-original { text-decoration: line-through; opacity: 0.5; font-size: 0.9em; }
+    .price-discount { color: #C79F67; font-size: 0.8em; margin-left: 6px; }
+  </style>
+</head>
+<body>
+
+  <div class="checkout-layout">
+
+    <!-- ══════════════════════════════════════════════════════
+         PAINEL ESQUERDO — Brand + Fotos
+    ══════════════════════════════════════════════════════ -->
+    <aside class="summary-panel">
+
+      <div class="summary-content">
+
+        <!-- Fotos dos mentores (círculos) -->
+        <div class="mentor-circles">
+          <div class="mentor-circle">
+            <img src="/images/mentor-woman.png" alt="Mentora" />
+          </div>
+          <div class="mentor-circle">
+            <img src="/images/mentor-man.png" alt="Mentor" />
+          </div>
+        </div>
+
+        <!-- Brand -->
+        <div class="brand-lockup">
+          <div class="brand-symbol">✦</div>
+          <div class="brand-text">
+            <span class="brand-elevate">ELEVATE</span>
+            <span class="brand-medclub">MedClub</span>
+          </div>
+        </div>
+
+        <div class="summary-sep"></div>
+
+        <!-- Preço -->
+        <div class="pricing-block">
+          <div class="pricing-label">INVESTIMENTO</div>
+          <div class="pricing-value" id="price-display">—</div>
+          <div class="pricing-install" id="install-display">&nbsp;</div>
+        </div>
+
+        <div class="summary-sep"></div>
+
+        <!-- Features rápidos -->
+        <ul class="quick-features">
+          <li>
+            <span class="qf-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            Pagamento 100% seguro
+          </li>
+          <li>
+            <span class="qf-icon pix-color">
+              <!-- PIX logo oficial -->
+              <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <path d="M242.4 292.5c5.4-5.4 14.6-5.4 20 0l76.7 76.6c13.9 13.9 31.2 23 50.2 27.2l14.1 3c12.4 2.6 22.2 11.7 24.9 23.8l4.5 24.3c1.2 3.9-1.3 8.1-5.8 8.1H344.2l-90.9-91c-4.5-4.5-12.1-4.5-16.6 0l-90.9 91H62.9c-4.4 0-7-4.2-5.8-8.1l4.5-24.3c2.7-12.1 12.5-21.2 24.9-23.8l14.1-3c19-4.2 36.3-13.3 50.2-27.2L242.4 292.5z M151.9 143c-13.9-13.9-31.2-23-50.2-27.2l-14.1-3c-12.4-2.6-22.2-11.7-24.9-23.8l-4.5-24.3c-1.2-3.9 1.3-8.1 5.8-8.1h82.9l90.9 91c4.5 4.5 12.1 4.5 16.6 0l90.9-91h82.9c4.4 0 7 4.2 5.8 8.1l-4.5 24.3c-2.7 12.1-12.5 21.2-24.9 23.8l-14.1 3c-19 4.2-36.3 13.3-50.2 27.2L262.5 219.5c-5.4 5.4-14.6 5.4-20 0L151.9 143z" fill="currentColor"/>
+              </svg>
+            </span>
+            PIX com aprovação imediata
+          </li>
+          <li>
+            <span class="qf-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </span>
+            Parcelado sem juros no cartão
+          </li>
+        </ul>
+
+      </div>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════
+         PAINEL DIREITO — Formulário
+    ══════════════════════════════════════════════════════ -->
+    <main class="form-panel">
+      <div class="form-content">
+
+        <!-- Mobile: resumo do produto -->
+        <div class="mobile-summary">
+          <div class="mobile-brand">✦ ELEVATE MedClub</div>
+          <div class="mobile-price" id="mobile-price">—</div>
+        </div>
+
+        <!-- Cabeçalho -->
+        <div class="form-header">
+          <h2 class="form-title">Finalize seu pedido</h2>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="secure-tag">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Compra segura
+            </span>
+            <button class="theme-toggle" id="btn-theme" aria-label="Alternar tema" title="Alternar modo claro/escuro">
+              <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Dados pessoais ── -->
+        <section class="form-section">
+          <p class="section-label">Dados pessoais</p>
+
+          <div class="field-wrap">
+            <input type="text" id="f-name" class="field" autocomplete="name" placeholder=" " />
+            <label for="f-name" class="label">Nome completo</label>
+          </div>
+
+          <div class="field-wrap">
+            <input type="email" id="f-email" class="field" autocomplete="email" placeholder=" " />
+            <label for="f-email" class="label">E-mail</label>
+          </div>
+
+          <div class="fields-row">
+            <div class="field-wrap">
+              <input type="text" id="f-cpf" class="field" maxlength="14" inputmode="numeric" placeholder=" " />
+              <label for="f-cpf" class="label">CPF</label>
+            </div>
+            <div class="field-wrap">
+              <input type="tel" id="f-phone" class="field" maxlength="15" autocomplete="tel" placeholder=" " />
+              <label for="f-phone" class="label">Telefone</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Cupom de desconto ── -->
+        <section class="form-section coupon-section">
+          <p class="section-label">Cupom de desconto <span class="coupon-optional">(opcional)</span></p>
+          <div class="coupon-row">
+            <div class="field-wrap coupon-field-wrap">
+              <input type="text" id="f-coupon" class="field" placeholder=" " autocomplete="off" style="text-transform:uppercase" />
+              <label for="f-coupon" class="label">Código do cupom</label>
+            </div>
+            <button type="button" id="btn-apply-coupon" class="btn-coupon">Aplicar</button>
+          </div>
+          <div id="coupon-result" class="coupon-result hidden"></div>
+        </section>
+
+        <!-- ── Pagamento ── -->
+        <section class="form-section">
+          <p class="section-label">Forma de pagamento</p>
+
+          <!-- Tabs -->
+          <div class="method-tabs" role="tablist">
+
+            <button type="button" class="method-tab active" data-method="credit_card" role="tab" aria-selected="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Cartão
+            </button>
+
+            <button type="button" class="method-tab" data-method="pix" role="tab" aria-selected="false">
+              <!-- PIX logo oficial no tab -->
+              <svg width="15" height="15" viewBox="0 0 512 512">
+                <path d="M242.4 292.5c5.4-5.4 14.6-5.4 20 0l76.7 76.6c13.9 13.9 31.2 23 50.2 27.2l14.1 3c12.4 2.6 22.2 11.7 24.9 23.8l4.5 24.3c1.2 3.9-1.3 8.1-5.8 8.1H344.2l-90.9-91c-4.5-4.5-12.1-4.5-16.6 0l-90.9 91H62.9c-4.4 0-7-4.2-5.8-8.1l4.5-24.3c2.7-12.1 12.5-21.2 24.9-23.8l14.1-3c19-4.2 36.3-13.3 50.2-27.2L242.4 292.5z M151.9 143c-13.9-13.9-31.2-23-50.2-27.2l-14.1-3c-12.4-2.6-22.2-11.7-24.9-23.8l-4.5-24.3c-1.2-3.9 1.3-8.1 5.8-8.1h82.9l90.9 91c4.5 4.5 12.1 4.5 16.6 0l90.9-91h82.9c4.4 0 7 4.2 5.8 8.1l-4.5 24.3c-2.7 12.1-12.5 21.2-24.9 23.8l-14.1 3c-19 4.2-36.3 13.3-50.2 27.2L262.5 219.5c-5.4 5.4-14.6 5.4-20 0L151.9 143z" fill="currentColor"/>
+              </svg>
+              PIX
+            </button>
+
+            <button type="button" class="method-tab" data-method="boleto" role="tab" aria-selected="false">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/></svg>
+              Boleto
+            </button>
+
+          </div>
+
+          <!-- ── Cartão ── -->
+          <div class="method-panel active" id="panel-credit_card" role="tabpanel">
+
+            <!-- Card visual realista -->
+            <div class="card-scene">
+              <div class="card-3d" id="card-3d">
+
+                <!-- Frente -->
+                <div class="card-face front">
+                  <!-- Shimmer overlay -->
+                  <div class="card-shimmer"></div>
+                  <!-- Ruído de textura -->
+                  <div class="card-noise"></div>
+
+                  <div class="card-top">
+                    <!-- Chip EMV -->
+                    <div class="card-chip">
+                      <div class="chip-body">
+                        <div class="chip-line chip-line--h"></div>
+                        <div class="chip-line chip-line--v"></div>
+                        <div class="chip-center"></div>
+                      </div>
+                    </div>
+                    <!-- Contactless + Brand -->
+                    <div class="card-top-right">
+                      <div class="card-contactless">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5.5 12.5a6.5 6.5 0 0 1 6.5-6.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 12.5a9.5 9.5 0 0 1 9.5-9.5" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 12.5a12.5 12.5 0 0 1 12.5-12.5" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round"/><circle cx="5.5" cy="12.5" r="1" fill="rgba(255,255,255,0.6)"/></svg>
+                      </div>
+                      <div class="card-brand-logo" id="card-brand-logo"></div>
+                    </div>
+                  </div>
+
+                  <div class="card-number-row" id="card-number-preview">•••• &nbsp;•••• &nbsp;•••• &nbsp;••••</div>
+
+                  <div class="card-bottom">
+                    <div class="card-field">
+                      <div class="card-field-label">Titular</div>
+                      <div class="card-field-value" id="card-holder-preview">NOME DO TITULAR</div>
+                    </div>
+                    <div class="card-field card-field--right">
+                      <div class="card-field-label">Validade</div>
+                      <div class="card-field-value mono" id="card-expiry-preview">MM/AA</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Verso -->
+                <div class="card-face back">
+                  <div class="card-magstripe"></div>
+                  <div class="card-cvv-area">
+                    <div class="card-signature">
+                      <span class="cvv-label">CVV</span>
+                      <span class="cvv-value" id="card-cvv-preview">•••</span>
+                    </div>
+                  </div>
+                  <div class="card-back-brand" id="card-back-brand"></div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Campos do cartão -->
+            <div class="card-fields">
+              <div class="field-wrap">
+                <input type="text" id="f-card-number" class="field" maxlength="19" inputmode="numeric" autocomplete="cc-number" placeholder=" " />
+                <label for="f-card-number" class="label">Número do cartão</label>
+              </div>
+
+              <div class="field-wrap">
+                <input type="text" id="f-card-name" class="field" autocomplete="cc-name" placeholder=" " />
+                <label for="f-card-name" class="label">Nome impresso no cartão</label>
+              </div>
+
+              <div class="fields-row">
+                <div class="field-wrap">
+                  <input type="text" id="f-card-expiry" class="field" maxlength="5" inputmode="numeric" autocomplete="cc-exp" placeholder=" " />
+                  <label for="f-card-expiry" class="label">Validade (MM/AA)</label>
+                </div>
+                <div class="field-wrap">
+                  <input type="text" id="f-card-cvv" class="field" maxlength="4" inputmode="numeric" autocomplete="cc-csc" placeholder=" " />
+                  <label for="f-card-cvv" class="label">CVV</label>
+                </div>
+              </div>
+
+              <div class="field-wrap field-wrap--select">
+                <select id="f-installments" class="field field--select">
+                  <option value="1">Carregando…</option>
+                </select>
+                <label for="f-installments" class="label label--up">Parcelas</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── PIX ── -->
+          <div class="method-panel" id="panel-pix" role="tabpanel">
+            <div class="info-card">
+              <div class="info-card__icon pix-icon-wrap">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M242.4 292.5c5.4-5.4 14.6-5.4 20 0l76.7 76.6c13.9 13.9 31.2 23 50.2 27.2l14.1 3c12.4 2.6 22.2 11.7 24.9 23.8l4.5 24.3c1.2 3.9-1.3 8.1-5.8 8.1H344.2l-90.9-91c-4.5-4.5-12.1-4.5-16.6 0l-90.9 91H62.9c-4.4 0-7-4.2-5.8-8.1l4.5-24.3c2.7-12.1 12.5-21.2 24.9-23.8l14.1-3c19-4.2 36.3-13.3 50.2-27.2L242.4 292.5z M151.9 143c-13.9-13.9-31.2-23-50.2-27.2l-14.1-3c-12.4-2.6-22.2-11.7-24.9-23.8l-4.5-24.3c-1.2-3.9 1.3-8.1 5.8-8.1h82.9l90.9 91c4.5 4.5 12.1 4.5 16.6 0l90.9-91h82.9c4.4 0 7 4.2 5.8 8.1l-4.5 24.3c-2.7 12.1-12.5 21.2-24.9 23.8l-14.1 3c-19 4.2-36.3 13.3-50.2 27.2L262.5 219.5c-5.4 5.4-14.6 5.4-20 0L151.9 143z" fill="#C79F67"/>
+                </svg>
+              </div>
+              <h4>Aprovação imediata</h4>
+              <p>Após confirmar, um QR Code será gerado. Escaneie com o app do seu banco ou copie o código.</p>
+              <ol class="steps-list">
+                <li>Abra o app do seu banco</li>
+                <li>Acesse PIX → Pagar com QR Code</li>
+                <li>Escaneie ou cole o código</li>
+                <li>Confirme e pronto</li>
+              </ol>
+              <div class="info-price" id="pix-price">—</div>
+            </div>
+          </div>
+
+          <!-- ── Boleto ── -->
+          <div class="method-panel" id="panel-boleto" role="tabpanel">
+            <div class="info-card">
+              <div class="info-card__icon">
+                <svg viewBox="0 0 80 50" fill="none" width="72" height="45">
+                  <rect x="2" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="8" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="12" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="19" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="23" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="29" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="33" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="40" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="44" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="50" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="54" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="61" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="65" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
+                  <rect x="71" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
+                  <rect x="74" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
+                </svg>
+              </div>
+              <h4>Boleto Bancário</h4>
+              <p>O boleto é gerado após confirmar. Vencimento em <strong>3 dias corridos</strong>.</p>
+              <p class="info-warning">⚠ O acesso é liberado após a compensação (até 3 dias úteis).</p>
+              <div class="info-price" id="boleto-price">—</div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Botão -->
+        <button type="button" class="btn-submit" id="btn-submit">
+          <span class="btn-text">Garantir minha vaga</span>
+          <svg class="btn-spinner hidden" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="rgba(0,0,0,0.2)" stroke-width="3"/>
+            <path d="M12 3a9 9 0 0 1 9 9" stroke="#1F1F1F" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <p class="form-footer-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Dados protegidos com criptografia SSL 256-bit
+        </p>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       OVERLAYS
+  ══════════════════════════════════════════════════════ -->
+
+  <!-- Loading -->
+  <div class="overlay hidden" id="overlay-loading">
+    <div class="overlay-box">
+      <svg class="overlay-spinner" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+        <path d="M12 3a9 9 0 0 1 9 9" stroke="#C79F67" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <p>Processando pagamento…</p>
+    </div>
+  </div>
+
+  <!-- Sucesso (cartão) -->
+  <div class="overlay hidden" id="overlay-success">
+    <div class="overlay-box">
+      <div class="success-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1F1F1F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h3>Pagamento aprovado!</h3>
+      <p>Sua vaga está garantida.<br/>Você receberá o acesso por e-mail em instantes.</p>
+      <p class="order-id-display" id="success-order-id"></p>
+    </div>
+  </div>
+
+  <!-- PIX QR Code -->
+  <div class="overlay hidden" id="overlay-pix">
+    <div class="overlay-box pix-box">
+      <div class="pix-result-header">
+        <svg class="pix-result-logo" viewBox="0 0 512 512">
+          <path d="M242.4 292.5c5.4-5.4 14.6-5.4 20 0l76.7 76.6c13.9 13.9 31.2 23 50.2 27.2l14.1 3c12.4 2.6 22.2 11.7 24.9 23.8l4.5 24.3c1.2 3.9-1.3 8.1-5.8 8.1H344.2l-90.9-91c-4.5-4.5-12.1-4.5-16.6 0l-90.9 91H62.9c-4.4 0-7-4.2-5.8-8.1l4.5-24.3c2.7-12.1 12.5-21.2 24.9-23.8l14.1-3c19-4.2 36.3-13.3 50.2-27.2L242.4 292.5z M151.9 143c-13.9-13.9-31.2-23-50.2-27.2l-14.1-3c-12.4-2.6-22.2-11.7-24.9-23.8l-4.5-24.3c-1.2-3.9 1.3-8.1 5.8-8.1h82.9l90.9 91c4.5 4.5 12.1 4.5 16.6 0l90.9-91h82.9c4.4 0 7 4.2 5.8 8.1l-4.5 24.3c-2.7 12.1-12.5 21.2-24.9 23.8l-14.1 3c-19 4.2-36.3 13.3-50.2 27.2L262.5 219.5c-5.4 5.4-14.6 5.4-20 0L151.9 143z" fill="#C79F67"/>
+        </svg>
+        <h3>Escaneie o QR Code</h3>
+        <p>Expira em <strong id="pix-countdown">60:00</strong></p>
+      </div>
+      <div class="pix-qr-wrap">
+        <img id="pix-qr-img" src="" alt="QR Code PIX" />
+      </div>
+      <div class="pix-copy-wrap">
+        <div class="pix-code-display" id="pix-code-display"></div>
+        <button type="button" class="btn-copy" id="btn-copy-pix">Copiar</button>
+      </div>
+      <p class="pix-waiting-note">
+        <span class="pulsing-dot"></span>
+        Aguardando confirmação…
+      </p>
+      <button type="button" class="btn-pix-done" id="btn-pix-done">
+        Já realizei o pagamento — ver próximos passos →
+      </button>
+    </div>
+  </div>
+
+  <!-- Boleto gerado -->
+  <div class="overlay hidden" id="overlay-boleto">
+    <div class="overlay-box">
+      <div class="success-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3>Boleto gerado!</h3>
+      <p>Vencimento em <strong id="boleto-due-result">3 dias</strong>.<br/>Pague em qualquer banco ou lotérica.</p>
+      <div class="boleto-barcode" id="boleto-barcode"></div>
+      <div class="boleto-actions">
+        <button type="button" class="btn-outline" id="btn-copy-boleto">Copiar linha digitável</button>
+        <a class="btn-accent-link" id="btn-open-boleto" href="#" target="_blank" rel="noopener">Abrir boleto</a>
+      </div>
+      <p class="info-warning small">⚠ Acesso liberado após compensação (até 3 dias úteis).</p>
+      <button type="button" class="btn-pix-done" id="btn-boleto-done">
+        Entendido — ver próximos passos →
+      </button>
+    </div>
+  </div>
+
+  <script src="/js/checkout.js"></script>
+  <script>
+  (function() {
+    var btn = document.getElementById('btn-theme');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      var current = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  })();
+  </script>
+</body>
+</html>
