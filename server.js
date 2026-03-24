@@ -645,6 +645,38 @@ app.delete('/admin/api/coupons/:id', authAdmin, async (req, res) => {
   }
 });
 
+// Sync — verifica pedidos PIX pendentes no Pagar.me e atualiza
+app.post('/admin/api/orders/sync', authAdmin, async (req, res) => {
+  try {
+    const { data: pending } = await supabase.from('orders')
+      .select('id, pagarme_order_id, simulated')
+      .eq('payment_method', 'pix')
+      .neq('charge_status', 'paid');
+
+    if (!pending?.length) return res.json({ updated: 0 });
+
+    let updated = 0;
+    for (const order of pending) {
+      if (order.simulated) continue;
+      try {
+        const { data: pg } = await axios.get(
+          `${PAGARME_URL}/orders/${order.pagarme_order_id}`,
+          { headers: pagarmeHeaders() }
+        );
+        const chargeStatus = pg.charges?.[0]?.status;
+        if (chargeStatus === 'paid') {
+          await markOrderPaid(order.pagarme_order_id);
+          updated++;
+        }
+      } catch (_) { /* ignora erros individuais */ }
+    }
+
+    res.json({ updated, total: pending.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Orders — somente leitura
 app.get('/admin/api/orders', authAdmin, async (req, res) => {
   try {
