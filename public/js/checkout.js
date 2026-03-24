@@ -110,12 +110,18 @@ function applyConfig(cfg) {
   el.mobilePrice.textContent  = priceFormatted;
   el.pixPrice.textContent     = priceFormatted;
 
-  // Installment hint on summary
-  const inst1 = formatCurrency(Math.ceil(price / maxInst));
-  el.installDisplay.textContent = `ou ${maxInst}× de ${inst1} sem juros`;
+  // Installment hint on summary — usa o mesmo cálculo real do select
+  updateInstallDisplay(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
 
   // Build select options
   buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
+}
+
+function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {
+  const rate = interestRate ?? 1.99;
+  const { amount, hasInterest } = calcInstallment(price, max, noInterestUpTo, rate);
+  const suffix = hasInterest ? `com juros` : `sem juros`;
+  el.installDisplay.textContent = `ou ${max}× de ${formatCurrency(amount)} ${suffix}`;
 }
 
 function calcInstallment(price, n, noInterestUpTo, monthlyRate) {
@@ -387,7 +393,11 @@ function applyDiscountDisplay(finalPrice) {
   if (el.priceDisplay) el.priceDisplay.innerHTML = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.mobilePrice)  el.mobilePrice.innerHTML  = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.pixPrice)     el.pixPrice.textContent   = fmt;
-  buildInstallmentsSelect(finalPrice, state.config?.maxInstallments || 12, state.config?.noInterestUpTo || 12, state.config?.interestRate);
+  const max  = state.config?.maxInstallments || 12;
+  const noInt = state.config?.noInterestUpTo || 12;
+  const rate  = state.config?.interestRate;
+  updateInstallDisplay(finalPrice, max, noInt, rate);
+  buildInstallmentsSelect(finalPrice, max, noInt, rate);
 }
 
 function resetPriceDisplay() {
