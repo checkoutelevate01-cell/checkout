@@ -109,6 +109,11 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
   margin-bottom: 32px;
 }
 
+.mentor-circle--single {
+  width: 96px;
+  height: 96px;
+}
+
 .mentor-circle {
   width: 72px;
   height: 72px;
