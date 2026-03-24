@@ -1,10 +1,11 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const axios   = require('axios');
-const path    = require('path');
-const crypto  = require('crypto');
-const jwt     = require('jsonwebtoken');
+const express  = require('express');
+const cors     = require('cors');
+const axios    = require('axios');
+const path     = require('path');
+const crypto   = require('crypto');
+const jwt      = require('jsonwebtoken');
+const QRCode   = require('qrcode');
 const { createClient } = require('@supabase/supabase-js');
 
 const app  = express();
@@ -305,7 +306,7 @@ app.post('/api/order', async (req, res) => {
       };
       if (payment.method === 'pix') {
         result.qrCode    = '00020126580014br.gov.bcb.pix0136simulacao-pix-key@teste.com.br5204000053039865802BR5913MENTORIA TEST6009SAO PAULO62070503***6304ABCD';
-        result.qrCodeUrl = 'https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=simulacao-pix';
+        result.qrCodeUrl = await QRCode.toDataURL(result.qrCode, { width: 280, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
         result.expiresIn = 3600;
       }
       if (payment.method === 'boleto') {
@@ -358,8 +359,10 @@ app.post('/api/order', async (req, res) => {
 
     if (payment.method === 'pix') {
       result.qrCode    = tx?.qr_code;
-      result.qrCodeUrl = tx?.qr_code_url;
       result.expiresIn = offer ? (offer.pixExpiresIn || 3600) : (parseInt(process.env.PIX_EXPIRES_IN, 10) || 3600);
+      result.qrCodeUrl = tx?.qr_code
+        ? await QRCode.toDataURL(tx.qr_code, { width: 280, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+        : (tx?.qr_code_url || '');
     }
     const finalPrice = items[0].amount;
 
@@ -395,6 +398,38 @@ app.post('/api/order', async (req, res) => {
     const pagarmeErrors = err.response?.data?.errors;
     console.error('[Pagar.me]', pagarmeMsg || err.message, pagarmeErrors || '');
     res.status(err.response?.status || 500).json({ error: pagarmeMsg || 'Erro ao processar pagamento. Tente novamente.' });
+  }
+});
+
+// ─── Status do pedido (polling PIX) ──────────────────────────────────────────
+app.get('/api/order/:orderId/status', async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const SIMULATE = process.env.SIMULATE_MODE === 'true';
+    if (SIMULATE) {
+      // Em simulação: marca como pago após 15 segundos do pedido
+      const orders  = await getOrders();
+      const record  = orders.find(o => o.pagarmeOrderId === orderId || o.id === orderId);
+      if (!record) return res.status(404).json({ error: 'Pedido não encontrado' });
+      const age     = Date.now() - new Date(record.createdAt).getTime();
+      const paid    = age >= 15000;
+      return res.json({ status: paid ? 'paid' : 'pending', chargeStatus: paid ? 'paid' : 'pending', paid });
+    }
+
+    const { data: order } = await axios.get(
+      `${PAGARME_URL}/orders/${orderId}`,
+      { headers: pagarmeHeaders() }
+    );
+    const charge      = order.charges?.[0];
+    const chargeStatus = charge?.status || null;
+    return res.json({
+      status:       order.status,
+      chargeStatus,
+      paid:         chargeStatus === 'paid',
+    });
+  } catch (err) {
+    console.error('[Status]', err.message);
+    res.status(500).json({ error: 'Erro ao consultar status' });
   }
 });
 

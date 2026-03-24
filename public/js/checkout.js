@@ -10,6 +10,7 @@ const state = {
   config:           null,
   method:           'credit_card',
   pixCountdownTimer:null,
+  pixPollTimer:     null,
   customerName:     '',
   lastOrderId:      '',
 };
@@ -482,8 +483,35 @@ function showPIX(data) {
 
   const seconds = data.expiresIn || 3600;
   startPIXCountdown(seconds);
+  startPIXPolling(data.orderId || state.lastOrderId);
 
   el.overlayPix.classList.remove('hidden');
+}
+
+function startPIXPolling(orderId) {
+  if (state.pixPollTimer) clearInterval(state.pixPollTimer);
+  if (!orderId) return;
+
+  state.pixPollTimer = setInterval(async () => {
+    try {
+      const res  = await fetch(`/api/order/${orderId}/status`);
+      const data = await res.json();
+      if (data.paid) {
+        clearInterval(state.pixPollTimer);
+        if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
+
+        // Mostra feedback visual antes de redirecionar
+        el.overlayPix.querySelector('.overlay-box').innerHTML = `
+          <div class="success-circle" style="margin:0 auto 16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 style="margin-bottom:8px">Pagamento confirmado!</h3>
+          <p style="color:var(--text-mid)">Redirecionando…</p>
+        `;
+        setTimeout(() => goToThankyou(orderId), 1500);
+      }
+    } catch (_) { /* mantém polling em erros de rede */ }
+  }, 5000);
 }
 
 // ─── PIX countdown ───────────────────────────────────────────────
@@ -515,6 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // PIX: "Já paguei → próximos passos"
   document.getElementById('btn-pix-done')?.addEventListener('click', () => {
     if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
+    if (state.pixPollTimer)      clearInterval(state.pixPollTimer);
     goToThankyou(state.lastOrderId);
   });
 
