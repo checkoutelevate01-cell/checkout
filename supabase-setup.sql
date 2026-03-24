@@ -13,6 +13,7 @@ create table if not exists offers (
   statement_descriptor text default 'MENTORIA',
   max_installments     integer default 12,
   no_interest_up_to    integer default 12,
+  interest_rate        numeric default 1.99,
   mentor_name          text default '',
   whatsapp_contact     text default '',
   pix_expires_in       integer default 3600,

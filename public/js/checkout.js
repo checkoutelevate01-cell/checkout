@@ -115,19 +115,29 @@ function applyConfig(cfg) {
   el.installDisplay.textContent = `ou ${maxInst}× de ${inst1} sem juros`;
 
   // Build select options
-  buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo);
+  buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
 }
 
-function buildInstallmentsSelect(price, max, noInterestUpTo) {
+function calcInstallment(price, n, noInterestUpTo, monthlyRate) {
+  if (n <= noInterestUpTo || monthlyRate <= 0) {
+    return { amount: Math.ceil(price / n), total: Math.ceil(price / n) * n, hasInterest: false };
+  }
+  // Juros compostos: PMT = PV * [r(1+r)^n] / [(1+r)^n - 1]
+  const r    = monthlyRate / 100;
+  const pmt  = Math.ceil(price * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
+  return { amount: pmt, total: pmt * n, hasInterest: true };
+}
+
+function buildInstallmentsSelect(price, max, noInterestUpTo, monthlyRate) {
   el.installments.innerHTML = '';
+  const rate = monthlyRate ?? 1.99;
   for (let i = 1; i <= max; i++) {
-    const amt    = Math.ceil(price / i);
-    const total  = amt * i;
-    const label  = i <= noInterestUpTo
-      ? `${i}× de ${formatCurrency(amt)} sem juros`
-      : `${i}× de ${formatCurrency(amt)} (total ${formatCurrency(total)})`;
-    const opt    = document.createElement('option');
-    opt.value    = i;
+    const { amount, total, hasInterest } = calcInstallment(price, i, noInterestUpTo, rate);
+    const label = hasInterest
+      ? `${i}× de ${formatCurrency(amount)} (total ${formatCurrency(total)})`
+      : `${i}× de ${formatCurrency(amount)} sem juros`;
+    const opt = document.createElement('option');
+    opt.value = i;
     opt.textContent = label;
     el.installments.appendChild(opt);
   }
@@ -377,7 +387,7 @@ function applyDiscountDisplay(finalPrice) {
   if (el.priceDisplay) el.priceDisplay.innerHTML = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.mobilePrice)  el.mobilePrice.innerHTML  = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.pixPrice)     el.pixPrice.textContent   = fmt;
-  buildInstallmentsSelect(finalPrice, state.config?.maxInstallments || 12, state.config?.noInterestUpTo || 12);
+  buildInstallmentsSelect(finalPrice, state.config?.maxInstallments || 12, state.config?.noInterestUpTo || 12, state.config?.interestRate);
 }
 
 function resetPriceDisplay() {

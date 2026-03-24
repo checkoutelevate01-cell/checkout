@@ -34,6 +34,7 @@ function mapOffer(row) {
     statementDescriptor: row.statement_descriptor,
     maxInstallments:     row.max_installments,
     noInterestUpTo:      row.no_interest_up_to,
+    interestRate:        row.interest_rate ?? 1.99,
     mentorName:          row.mentor_name,
     whatsappContact:     row.whatsapp_contact,
     pixExpiresIn:        row.pix_expires_in,
@@ -227,6 +228,7 @@ app.get('/api/config', async (req, res) => {
     const price          = offer ? offer.price          : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000);
     const maxInstall     = offer ? offer.maxInstallments : (parseInt(process.env.MAX_INSTALLMENTS, 10) || 12);
     const noInterestUpTo = offer ? offer.noInterestUpTo  : (parseInt(process.env.MAX_INSTALLMENTS_NO_INTEREST, 10) || 12);
+    const interestRate   = offer ? offer.interestRate : 1.99;
 
     res.json({
       productName:        offer ? offer.name        : (process.env.PRODUCT_NAME        || 'Mentoria Estratégica Premium'),
@@ -235,6 +237,7 @@ app.get('/api/config', async (req, res) => {
       mentorName:         offer ? offer.mentorName  : (process.env.MENTOR_NAME || 'Mentor'),
       maxInstallments:    maxInstall,
       noInterestUpTo,
+      interestRate,
       whatsappContact:    offer ? (offer.whatsappContact || '') : (process.env.WHATSAPP_CONTACT || ''),
       offerSlug:          slug || null,
     });
@@ -533,7 +536,8 @@ app.post('/admin/api/offers', authAdmin, async (req, res) => {
       price:               parseInt(req.body.price, 10) || 350000,
       statement_descriptor: (req.body.statementDescriptor || 'MENTORIA').slice(0, 13),
       max_installments:    parseInt(req.body.maxInstallments, 10)  || 12,
-      no_interest_up_to:   parseInt(req.body.noInterestUpTo, 10)   || 12,
+      no_interest_up_to:   parseInt(req.body.noInterestUpTo, 10)    || 12,
+      interest_rate:       parseFloat(req.body.interestRate)        || 1.99,
       mentor_name:         req.body.mentorName          || '',
       whatsapp_contact:    req.body.whatsappContact     || '',
       pix_expires_in:      parseInt(req.body.pixExpiresIn, 10)     || 3600,
@@ -560,6 +564,7 @@ app.put('/admin/api/offers/:id', authAdmin, async (req, res) => {
     if (req.body.statementDescriptor !== undefined) updates.statement_descriptor = req.body.statementDescriptor.slice(0, 13);
     if (req.body.maxInstallments     !== undefined) updates.max_installments     = parseInt(req.body.maxInstallments, 10);
     if (req.body.noInterestUpTo      !== undefined) updates.no_interest_up_to    = parseInt(req.body.noInterestUpTo, 10);
+    if (req.body.interestRate        !== undefined) updates.interest_rate        = parseFloat(req.body.interestRate);
     if (req.body.mentorName          !== undefined) updates.mentor_name          = req.body.mentorName;
     if (req.body.whatsappContact     !== undefined) updates.whatsapp_contact     = req.body.whatsappContact;
     if (req.body.pixExpiresIn        !== undefined) updates.pix_expires_in       = parseInt(req.body.pixExpiresIn, 10);

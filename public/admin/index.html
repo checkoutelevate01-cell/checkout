@@ -561,6 +561,11 @@
           <input type="number" id="offer-no-interest" min="1" max="12" placeholder="12" />
         </div>
         <div class="field-group">
+          <label>Juros ao mês (%)</label>
+          <input type="number" id="offer-interest-rate" min="0" step="0.01" placeholder="1.99" />
+          <span class="field-hint">Aplicado após as parcelas sem juros. Padrão Pagar.me: 1,99%</span>
+        </div>
+        <div class="field-group">
           <label>PIX expira em (segundos)</label>
           <input type="number" id="offer-pix-expires" min="300" placeholder="3600" />
         </div>
@@ -874,8 +879,9 @@ function openOfferModal(id) {
     document.getElementById('offer-descriptor').value  = 'MENTORIA';
     document.getElementById('offer-mentor-name').value = '';
     document.getElementById('offer-max-install').value  = '12';
-    document.getElementById('offer-no-interest').value  = '12';
-    document.getElementById('offer-pix-expires').value  = '3600';
+    document.getElementById('offer-no-interest').value    = '12';
+    document.getElementById('offer-interest-rate').value  = '1.99';
+    document.getElementById('offer-pix-expires').value    = '3600';
     document.getElementById('offer-boleto-days').value  = '3';
     document.getElementById('offer-whatsapp').value     = '';
     document.getElementById('offer-active').checked     = true;
@@ -891,8 +897,9 @@ function openOfferModal(id) {
     document.getElementById('offer-descriptor').value    = o.statementDescriptor || 'MENTORIA';
     document.getElementById('offer-mentor-name').value   = o.mentorName || '';
     document.getElementById('offer-max-install').value   = o.maxInstallments || 12;
-    document.getElementById('offer-no-interest').value   = o.noInterestUpTo || 12;
-    document.getElementById('offer-pix-expires').value   = o.pixExpiresIn || 3600;
+    document.getElementById('offer-no-interest').value    = o.noInterestUpTo || 12;
+    document.getElementById('offer-interest-rate').value  = o.interestRate ?? 1.99;
+    document.getElementById('offer-pix-expires').value    = o.pixExpiresIn || 3600;
     document.getElementById('offer-boleto-days').value   = o.boletoDueDays || 3;
     document.getElementById('offer-whatsapp').value      = o.whatsappContact || '';
     document.getElementById('offer-active').checked      = o.active !== false;
@@ -915,6 +922,7 @@ async function saveOffer() {
     mentorName:          document.getElementById('offer-mentor-name').value.trim(),
     maxInstallments:     parseInt(document.getElementById('offer-max-install').value) || 12,
     noInterestUpTo:      parseInt(document.getElementById('offer-no-interest').value) || 12,
+    interestRate:        parseFloat(document.getElementById('offer-interest-rate').value) || 1.99,
     pixExpiresIn:        parseInt(document.getElementById('offer-pix-expires').value) || 3600,
     boletoDueDays:       parseInt(document.getElementById('offer-boleto-days').value) || 3,
     whatsappContact:     document.getElementById('offer-whatsapp').value.trim(),
