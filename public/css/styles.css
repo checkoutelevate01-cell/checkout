@@ -110,8 +110,8 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 }
 
 .mentor-circle--single {
-  width: 96px;
-  height: 96px;
+  width: 130px;
+  height: 130px;
 }
 
 .mentor-circle {
@@ -158,7 +158,7 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 
 .brand-elevate {
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--text);
@@ -166,7 +166,7 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 
 .brand-medclub {
   font-family: var(--font-serif);
-  font-size: 16px;
+  font-size: 21px;
   font-weight: 400;
   font-style: italic;
   color: var(--accent);
