@@ -403,9 +403,10 @@ app.post('/api/order', async (req, res) => {
 
 // ─── Atualiza status do pedido no DB ─────────────────────────────────────────
 async function markOrderPaid(pagarmeOrderId) {
-  await supabase.from('orders')
+  const { error } = await supabase.from('orders')
     .update({ status: 'paid', charge_status: 'paid' })
-    .or(`pagarme_order_id.eq.${pagarmeOrderId},id.eq.${pagarmeOrderId}`);
+    .eq('pagarme_order_id', pagarmeOrderId);
+  if (error) console.error('[markOrderPaid]', error.message);
 }
 
 // ─── Status do pedido (polling PIX) ──────────────────────────────────────────
