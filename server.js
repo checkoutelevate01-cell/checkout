@@ -401,18 +401,32 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
+// ─── Atualiza status do pedido no DB ─────────────────────────────────────────
+async function markOrderPaid(pagarmeOrderId) {
+  await supabase.from('orders')
+    .update({ status: 'paid', charge_status: 'paid' })
+    .or(`pagarme_order_id.eq.${pagarmeOrderId},id.eq.${pagarmeOrderId}`);
+}
+
 // ─── Status do pedido (polling PIX) ──────────────────────────────────────────
 app.get('/api/order/:orderId/status', async (req, res) => {
   const { orderId } = req.params;
   try {
     const SIMULATE = process.env.SIMULATE_MODE === 'true';
     if (SIMULATE) {
-      // Em simulação: marca como pago após 15 segundos do pedido
-      const orders  = await getOrders();
-      const record  = orders.find(o => o.pagarmeOrderId === orderId || o.id === orderId);
+      const orders = await getOrders();
+      const record = orders.find(o => o.pagarme_order_id === orderId || o.id === orderId);
       if (!record) return res.status(404).json({ error: 'Pedido não encontrado' });
-      const age     = Date.now() - new Date(record.createdAt).getTime();
-      const paid    = age >= 15000;
+
+      // Já estava pago no DB
+      if (record.charge_status === 'paid') {
+        return res.json({ status: 'paid', chargeStatus: 'paid', paid: true });
+      }
+
+      // Simula aprovação após 15s
+      const age  = Date.now() - new Date(record.created_at).getTime();
+      const paid = age >= 15000;
+      if (paid) await markOrderPaid(orderId);
       return res.json({ status: paid ? 'paid' : 'pending', chargeStatus: paid ? 'paid' : 'pending', paid });
     }
 
@@ -420,16 +434,33 @@ app.get('/api/order/:orderId/status', async (req, res) => {
       `${PAGARME_URL}/orders/${orderId}`,
       { headers: pagarmeHeaders() }
     );
-    const charge      = order.charges?.[0];
+    const charge       = order.charges?.[0];
     const chargeStatus = charge?.status || null;
-    return res.json({
-      status:       order.status,
-      chargeStatus,
-      paid:         chargeStatus === 'paid',
-    });
+    const paid         = chargeStatus === 'paid';
+    if (paid) await markOrderPaid(orderId);
+    return res.json({ status: order.status, chargeStatus, paid });
   } catch (err) {
     console.error('[Status]', err.message);
     res.status(500).json({ error: 'Erro ao consultar status' });
+  }
+});
+
+// ─── Webhook Pagar.me (confirmação server-side) ───────────────────────────────
+app.post('/api/webhook/pagarme', async (req, res) => {
+  try {
+    const event = req.body;
+    const type  = event?.type || '';
+    if (type === 'charge.paid' || type === 'order.paid') {
+      const pagarmeOrderId = event?.data?.order?.id || event?.data?.id;
+      if (pagarmeOrderId) {
+        await markOrderPaid(pagarmeOrderId);
+        console.log('[Webhook] Pagamento confirmado:', pagarmeOrderId);
+      }
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('[Webhook]', err.message);
+    res.sendStatus(500);
   }
 });
 
