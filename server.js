@@ -248,7 +248,7 @@ app.get('/api/config', async (req, res) => {
 });
 
 app.post('/api/order', async (req, res) => {
-  const { customer: customerData, payment, offerSlug, couponCode } = req.body;
+  const { customer: customerData, payment, offerSlug, couponCode, isDoctor, specialty } = req.body;
 
   const customerError = validateCustomer(customerData);
   if (customerError) return res.status(400).json({ error: customerError });
@@ -324,7 +324,7 @@ app.post('/api/order', async (req, res) => {
         installments: payment.method === 'credit_card' ? (parseInt(payment.installments, 10) || 1) : 1,
         amountCents: offer ? offer.price : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000),
         discountCents: discount, finalAmountCents: finalPrice,
-        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
+        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,''), isDoctor: !!isDoctor, specialty: isDoctor ? (specialty || '') : '' },
         offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
         coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
         pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
@@ -380,10 +380,12 @@ app.post('/api/order', async (req, res) => {
       discountCents:    discount,
       finalAmountCents: finalPrice,
       customer: {
-        name:     customerData.name.trim(),
-        email:    customerData.email.trim().toLowerCase(),
-        document: customerData.document.replace(/\D/g, ''),
-        phone:    customerData.phone.replace(/\D/g, ''),
+        name:      customerData.name.trim(),
+        email:     customerData.email.trim().toLowerCase(),
+        document:  customerData.document.replace(/\D/g, ''),
+        phone:     customerData.phone.replace(/\D/g, ''),
+        isDoctor:  !!isDoctor,
+        specialty: isDoctor ? (specialty || '') : '',
       },
       offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
       coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
@@ -646,6 +648,48 @@ app.delete('/admin/api/coupons/:id', authAdmin, async (req, res) => {
     const { error } = await supabase.from('coupons').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dashboard
+app.get('/admin/api/dashboard', authAdmin, async (req, res) => {
+  try {
+    const { data: orders } = await supabase.from('orders').select('*');
+    const all = orders || [];
+
+    const paid = all.filter(o => o.charge_status === 'paid' || o.status === 'paid');
+    const revenue = paid.reduce((s, o) => s + (o.final_amount_cents || 0), 0);
+    const doctors = all.filter(o => o.customer?.isDoctor);
+
+    // Método de pagamento
+    const methodMap = {};
+    all.forEach(o => {
+      const m = o.payment_method || 'desconhecido';
+      methodMap[m] = (methodMap[m] || 0) + 1;
+    });
+
+    // Especialidades
+    const specMap = {};
+    doctors.forEach(o => {
+      const s = (o.customer?.specialty || '').trim();
+      if (s) specMap[s] = (specMap[s] || 0) + 1;
+    });
+    const specialties = Object.entries(specMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }));
+
+    res.json({
+      total:       all.length,
+      paid:        paid.length,
+      revenue,
+      avgTicket:   paid.length ? Math.round(revenue / paid.length) : 0,
+      doctors:     doctors.length,
+      methodMap,
+      specialties,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

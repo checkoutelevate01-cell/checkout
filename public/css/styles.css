@@ -828,6 +828,40 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
   flex-shrink: 0;
 }
 
+/* ── Doctor question ───────────────────────────────────────── */
+.doctor-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.doctor-question__label {
+  font-size: 14px;
+  color: var(--text);
+}
+.doctor-toggle {
+  display: flex;
+  gap: 6px;
+}
+.doctor-btn {
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-mid);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .18s;
+}
+.doctor-btn.active {
+  border-color: var(--accent);
+  background: rgba(199,159,103,0.12);
+  color: var(--accent);
+}
+.doctor-specialty { margin-top: 4px; }
+
 /* ── Submit button ─────────────────────────────────────────── */
 .btn-submit {
   width: 100%;

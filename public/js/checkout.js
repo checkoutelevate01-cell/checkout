@@ -13,6 +13,8 @@ const state = {
   pixPollTimer:     null,
   customerName:     '',
   lastOrderId:      '',
+  isDoctor:         false,
+  specialty:        '',
 };
 
 // ─── DOM refs ────────────────────────────────────────────────────
@@ -78,6 +80,7 @@ const el = {
   setupSubmit();
   setupCloseOverlayOnClick();
   setupCoupon();
+  setupDoctor();
 })();
 
 // ─── Config ──────────────────────────────────────────────────────
@@ -340,6 +343,28 @@ function validateForm() {
   return valid;
 }
 
+// ─── Doctor question ─────────────────────────────────────────────
+function setupDoctor() {
+  const btnNo       = document.getElementById('btn-doctor-no');
+  const btnYes      = document.getElementById('btn-doctor-yes');
+  const specialtyWrap = document.getElementById('specialty-wrap');
+
+  btnNo?.addEventListener('click', () => {
+    state.isDoctor = false;
+    btnNo.classList.add('active');
+    btnYes.classList.remove('active');
+    specialtyWrap.classList.add('hidden');
+  });
+
+  btnYes?.addEventListener('click', () => {
+    state.isDoctor = true;
+    btnYes.classList.add('active');
+    btnNo.classList.remove('active');
+    specialtyWrap.classList.remove('hidden');
+    document.getElementById('f-specialty')?.focus();
+  });
+}
+
 // ─── Coupon ──────────────────────────────────────────────────────
 function setupCoupon() {
   const btnApply  = document.getElementById('btn-apply-coupon');
@@ -440,6 +465,8 @@ async function handleSubmit() {
     },
     ...(state.offerSlug  && { offerSlug:  state.offerSlug }),
     ...(state.couponCode && { couponCode: state.couponCode }),
+    isDoctor:  state.isDoctor,
+    specialty: state.isDoctor ? (document.getElementById('f-specialty')?.value.trim() || '') : '',
   };
 
   try {

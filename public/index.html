@@ -149,6 +149,22 @@
           </div>
         </section>
 
+        <!-- ── Perfil médico ── -->
+        <section class="form-section">
+          <p class="section-label">Perfil profissional</p>
+          <div class="doctor-question">
+            <span class="doctor-question__label">Você é médico(a)?</span>
+            <div class="doctor-toggle">
+              <button type="button" class="doctor-btn active" id="btn-doctor-no" data-val="no">Não</button>
+              <button type="button" class="doctor-btn" id="btn-doctor-yes" data-val="yes">Sim</button>
+            </div>
+          </div>
+          <div class="field-wrap doctor-specialty hidden" id="specialty-wrap">
+            <input type="text" id="f-specialty" class="field" placeholder=" " autocomplete="off" />
+            <label for="f-specialty" class="label">Qual sua especialidade?</label>
+          </div>
+        </section>
+
         <!-- ── Cupom de desconto ── -->
         <section class="form-section coupon-section">
           <p class="section-label">Cupom de desconto <span class="coupon-optional">(opcional)</span></p>
