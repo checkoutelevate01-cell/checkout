@@ -186,16 +186,6 @@ function buildPayment(payment, offer) {
     return [{ payment_method: 'pix', pix: { expires_in: expiresIn } }];
   }
 
-  if (method === 'boleto') {
-    const dueDays = offer
-      ? (offer.boletoDueDays || 3)
-      : (parseInt(process.env.BOLETO_DUE_DAYS, 10) || 3);
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + dueDays);
-    const dueDateStr = dueDate.toISOString().split('T')[0] + 'T23:59:59Z';
-    return [{ payment_method: 'boleto', boleto: { instructions: 'Não receber após o vencimento.', due_at: dueDateStr } }];
-  }
-
   return null;
 }
 
@@ -209,7 +199,7 @@ function validateCustomer(data) {
 }
 
 function validatePayment(payment) {
-  if (!['credit_card', 'pix', 'boleto'].includes(payment?.method)) return 'Método de pagamento inválido';
+  if (!['credit_card', 'pix'].includes(payment?.method)) return 'Método de pagamento inválido';
   if (payment.method === 'credit_card') {
     const { card } = payment;
     if (!card?.number || card.number.replace(/\D/g, '').length < 14) return 'Número do cartão inválido';
@@ -333,8 +323,7 @@ app.post('/api/order', async (req, res) => {
         customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
         offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
         coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
-        pix:    payment.method === 'pix'    ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
-        boleto: payment.method === 'boleto' ? { url: result.boletoUrl, pdf: result.boletoPdf, line: result.boletoLine } : null,
+        pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
         simulated: true,
         createdAt: new Date().toISOString(),
       };
@@ -372,12 +361,6 @@ app.post('/api/order', async (req, res) => {
       result.qrCodeUrl = tx?.qr_code_url;
       result.expiresIn = offer ? (offer.pixExpiresIn || 3600) : (parseInt(process.env.PIX_EXPIRES_IN, 10) || 3600);
     }
-    if (payment.method === 'boleto') {
-      result.boletoUrl  = tx?.url;
-      result.boletoPdf  = tx?.pdf;
-      result.boletoLine = tx?.line;
-    }
-
     const finalPrice = items[0].amount;
 
     const orderRecord = {
@@ -398,8 +381,7 @@ app.post('/api/order', async (req, res) => {
       },
       offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
       coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
-      pix:    payment.method === 'pix'    ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
-      boleto: payment.method === 'boleto' ? { url: result.boletoUrl, pdf: result.boletoPdf, line: result.boletoLine } : null,
+      pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
       createdAt: new Date().toISOString(),
     };
     appendOrder(orderRecord).catch(e => console.error('[Orders] Falha ao salvar:', e.message));
@@ -685,7 +667,6 @@ async function sendEvolution(rawPhone, message) {
 const METHOD_LABEL = {
   credit_card: 'Cartão de crédito',
   pix:         'PIX',
-  boleto:      'Boleto bancário',
 };
 
 async function notifyCustomerWA(customerData, result, method) {

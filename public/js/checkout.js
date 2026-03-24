@@ -23,7 +23,6 @@ const el = {
   priceDisplay:   $('price-display'),
   installDisplay: $('install-display'),
   pixPrice:       $('pix-price'),
-  boletoPrice:    $('boleto-price'),
   mobileProduct:  $('mobile-product') || $('mobile-brand'),
   mobilePrice:    $('mobile-price'),
 
@@ -58,19 +57,12 @@ const el = {
   overlayLoading: $('overlay-loading'),
   overlaySuccess: $('overlay-success'),
   overlayPix:     $('overlay-pix'),
-  overlayBoleto:  $('overlay-boleto'),
 
   // PIX
   pixQrImg:      $('pix-qr-img'),
   pixCodeDisplay:$('pix-code-display'),
   btnCopyPix:    $('btn-copy-pix'),
   pixCountdown:  $('pix-countdown'),
-
-  // Boleto
-  boletoDueResult:$('boleto-due-result'),
-  boletoBarcode:  $('boletoBarcode') || $('boleto-barcode'),
-  btnCopyBoleto:  $('btn-copy-boleto'),
-  btnOpenBoleto:  $('btn-open-boleto'),
 
   // Success
   successOrderId: $('success-order-id'),
@@ -116,7 +108,6 @@ function applyConfig(cfg) {
   el.priceDisplay.textContent = priceFormatted;
   el.mobilePrice.textContent  = priceFormatted;
   el.pixPrice.textContent     = priceFormatted;
-  el.boletoPrice.textContent  = priceFormatted;
 
   // Installment hint on summary
   const inst1 = formatCurrency(Math.ceil(price / maxInst));
@@ -385,7 +376,6 @@ function applyDiscountDisplay(finalPrice) {
   if (el.priceDisplay) el.priceDisplay.innerHTML = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.mobilePrice)  el.mobilePrice.innerHTML  = `<span class="price-original">${fmtOrig}</span> ${fmt}`;
   if (el.pixPrice)     el.pixPrice.textContent   = fmt;
-  if (el.boletoPrice)  el.boletoPrice.textContent = fmt;
   buildInstallmentsSelect(finalPrice, state.config?.maxInstallments || 12, state.config?.noInterestUpTo || 12);
 }
 
@@ -453,8 +443,6 @@ async function handleSubmit() {
       goToThankyou(data.orderId);
     } else if (state.method === 'pix') {
       showPIX(data);
-    } else if (state.method === 'boleto') {
-      showBoleto(data);
     }
   } catch (e) {
     setLoading(false);
@@ -498,23 +486,6 @@ function showPIX(data) {
   el.overlayPix.classList.remove('hidden');
 }
 
-function showBoleto(data) {
-  const dueDate = new Date();
-  const cfg     = state.config;
-  const days    = cfg ? (Number(cfg.boletoDueDays) || 3) : 3;
-  dueDate.setDate(dueDate.getDate() + days);
-
-  const boletoEl = document.getElementById('boleto-barcode');
-  if (boletoEl) boletoEl.textContent = data.boletoLine || '';
-
-  const dueEl = document.getElementById('boleto-due-result');
-  if (dueEl) dueEl.textContent = `${days} dias`;
-
-  if (el.btnOpenBoleto && data.boletoUrl) el.btnOpenBoleto.href = data.boletoUrl;
-
-  el.overlayBoleto.classList.remove('hidden');
-}
-
 // ─── PIX countdown ───────────────────────────────────────────────
 function startPIXCountdown(totalSeconds) {
   if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
@@ -541,21 +512,12 @@ document.addEventListener('DOMContentLoaded', () => {
     copyText(el.pixCodeDisplay.textContent, el.btnCopyPix);
   });
 
-  document.getElementById('btn-copy-boleto')?.addEventListener('click', () => {
-    copyText(document.getElementById('boleto-barcode')?.textContent,
-             document.getElementById('btn-copy-boleto'));
-  });
-
   // PIX: "Já paguei → próximos passos"
   document.getElementById('btn-pix-done')?.addEventListener('click', () => {
     if (state.pixCountdownTimer) clearInterval(state.pixCountdownTimer);
     goToThankyou(state.lastOrderId);
   });
 
-  // Boleto: "Entendido → próximos passos"
-  document.getElementById('btn-boleto-done')?.addEventListener('click', () => {
-    goToThankyou(state.lastOrderId);
-  });
 });
 
 function copyText(text, btn) {
@@ -582,7 +544,7 @@ function copyText(text, btn) {
 
 // ─── Close overlay on background click ───────────────────────────
 function setupCloseOverlayOnClick() {
-  [el.overlaySuccess, el.overlayPix, el.overlayBoleto].forEach((overlay) => {
+  [el.overlaySuccess, el.overlayPix].forEach((overlay) => {
     overlay?.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.classList.add('hidden');
     });

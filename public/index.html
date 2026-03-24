@@ -185,11 +185,6 @@
               PIX
             </button>
 
-            <button type="button" class="method-tab" data-method="boleto" role="tab" aria-selected="false">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/></svg>
-              Boleto
-            </button>
-
           </div>
 
           <!-- ── Cartão ── -->
@@ -305,35 +300,6 @@
             </div>
           </div>
 
-          <!-- ── Boleto ── -->
-          <div class="method-panel" id="panel-boleto" role="tabpanel">
-            <div class="info-card">
-              <div class="info-card__icon">
-                <svg viewBox="0 0 80 50" fill="none" width="72" height="45">
-                  <rect x="2" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="8" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="12" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="19" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="23" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="29" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="33" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="40" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="44" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="50" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="54" y="6" width="4" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="61" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="65" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="71" y="6" width="1.5" height="38" fill="rgba(255,255,255,0.5)"/>
-                  <rect x="74" y="6" width="3" height="38" fill="rgba(255,255,255,0.7)"/>
-                </svg>
-              </div>
-              <h4>Boleto Bancário</h4>
-              <p>O boleto é gerado após confirmar. Vencimento em <strong>3 dias corridos</strong>.</p>
-              <p class="info-warning">⚠ O acesso é liberado após a compensação (até 3 dias úteis).</p>
-              <div class="info-price" id="boleto-price">—</div>
-            </div>
-          </div>
-
         </section>
 
         <!-- Botão -->
@@ -406,26 +372,6 @@
       </p>
       <button type="button" class="btn-pix-done" id="btn-pix-done">
         Já realizei o pagamento — ver próximos passos →
-      </button>
-    </div>
-  </div>
-
-  <!-- Boleto gerado -->
-  <div class="overlay hidden" id="overlay-boleto">
-    <div class="overlay-box">
-      <div class="success-circle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <h3>Boleto gerado!</h3>
-      <p>Vencimento em <strong id="boleto-due-result">3 dias</strong>.<br/>Pague em qualquer banco ou lotérica.</p>
-      <div class="boleto-barcode" id="boleto-barcode"></div>
-      <div class="boleto-actions">
-        <button type="button" class="btn-outline" id="btn-copy-boleto">Copiar linha digitável</button>
-        <a class="btn-accent-link" id="btn-open-boleto" href="#" target="_blank" rel="noopener">Abrir boleto</a>
-      </div>
-      <p class="info-warning small">⚠ Acesso liberado após compensação (até 3 dias úteis).</p>
-      <button type="button" class="btn-pix-done" id="btn-boleto-done">
-        Entendido — ver próximos passos →
       </button>
     </div>
   </div>
