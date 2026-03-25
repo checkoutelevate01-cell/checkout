@@ -110,7 +110,7 @@
 
         <!-- Cabeçalho -->
         <div class="form-header">
-          <h2 class="form-title">Finalize seu pedido</h2>
+          <h2 class="form-title" id="form-title">Seus dados</h2>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="secure-tag">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -123,47 +123,64 @@
           </div>
         </div>
 
-        <!-- ── Dados pessoais ── -->
-        <section class="form-section">
-          <p class="section-label">Dados pessoais</p>
-
-          <div class="field-wrap">
-            <input type="text" id="f-name" class="field" autocomplete="name" placeholder=" " />
-            <label for="f-name" class="label">Nome completo</label>
+        <!-- ── Indicador de etapas ── -->
+        <div class="step-indicator">
+          <div class="step active" id="step-ind-1">
+            <div class="step-num">1</div>
+            <span>Seus dados</span>
           </div>
-
-          <div class="field-wrap">
-            <input type="email" id="f-email" class="field" autocomplete="email" placeholder=" " />
-            <label for="f-email" class="label">E-mail</label>
+          <div class="step-line"></div>
+          <div class="step" id="step-ind-2">
+            <div class="step-num">2</div>
+            <span>Pagamento</span>
           </div>
+        </div>
 
-          <div class="fields-row">
+        <!-- ══ ETAPA 1 — Dados do lead ══ -->
+        <div id="step-1">
+
+          <section class="form-section">
+            <p class="section-label">Dados pessoais</p>
+
             <div class="field-wrap">
-              <input type="text" id="f-cpf" class="field" maxlength="14" inputmode="numeric" placeholder=" " />
-              <label for="f-cpf" class="label">CPF</label>
+              <input type="text" id="f-name" class="field" autocomplete="name" placeholder=" " />
+              <label for="f-name" class="label">Nome completo</label>
             </div>
+
+            <div class="field-wrap">
+              <input type="email" id="f-email" class="field" autocomplete="email" placeholder=" " />
+              <label for="f-email" class="label">E-mail</label>
+            </div>
+
             <div class="field-wrap">
               <input type="tel" id="f-phone" class="field" maxlength="15" autocomplete="tel" placeholder=" " />
-              <label for="f-phone" class="label">Telefone</label>
+              <label for="f-phone" class="label">Telefone / WhatsApp</label>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- ── Perfil médico ── -->
-        <section class="form-section">
-          <p class="section-label">Perfil profissional</p>
-          <div class="doctor-question">
-            <span class="doctor-question__label">Você é médico(a)?</span>
-            <div class="doctor-toggle">
-              <button type="button" class="doctor-btn active" id="btn-doctor-no" data-val="no">Não</button>
-              <button type="button" class="doctor-btn" id="btn-doctor-yes" data-val="yes">Sim</button>
+          <section class="form-section">
+            <p class="section-label">Perfil profissional</p>
+
+            <div class="field-wrap">
+              <input type="text" id="f-specialty" class="field" placeholder=" " autocomplete="off" />
+              <label for="f-specialty" class="label">Especialidade médica</label>
             </div>
-          </div>
-          <div class="field-wrap doctor-specialty hidden" id="specialty-wrap">
-            <input type="text" id="f-specialty" class="field" placeholder=" " autocomplete="off" />
-            <label for="f-specialty" class="label">Qual sua especialidade?</label>
-          </div>
-        </section>
+
+            <div class="field-wrap">
+              <input type="text" id="f-crm" class="field" placeholder=" " autocomplete="off" inputmode="numeric" />
+              <label for="f-crm" class="label">CRM (opcional)</label>
+            </div>
+          </section>
+
+          <button type="button" class="btn-submit" id="btn-step1">
+            <span class="btn-text">Continuar para pagamento</span>
+            <svg class="btn-spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></path></svg>
+          </button>
+
+        </div>
+
+        <!-- ══ ETAPA 2 — Pagamento ══ -->
+        <div id="step-2" class="hidden">
 
         <!-- ── Cupom de desconto ── -->
         <section class="form-section coupon-section">
@@ -176,6 +193,15 @@
             <button type="button" id="btn-apply-coupon" class="btn-coupon">Aplicar</button>
           </div>
           <div id="coupon-result" class="coupon-result hidden"></div>
+        </section>
+
+        <!-- ── CPF (necessário para pagamento) ── -->
+        <section class="form-section">
+          <p class="section-label">Documento</p>
+          <div class="field-wrap">
+            <input type="text" id="f-cpf" class="field" maxlength="14" inputmode="numeric" placeholder=" " />
+            <label for="f-cpf" class="label">CPF</label>
+          </div>
         </section>
 
         <!-- ── Pagamento ── -->
@@ -328,6 +354,13 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Dados protegidos com criptografia SSL 256-bit
         </p>
+
+        <button type="button" class="btn-back" id="btn-back-step1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Voltar e editar dados
+        </button>
+
+        </div><!-- /step-2 -->
 
       </div>
     </main>

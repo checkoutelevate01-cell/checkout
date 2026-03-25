@@ -57,7 +57,24 @@ create table if not exists orders (
   created_at         timestamptz default now()
 );
 
+-- Tabela de leads (CRM)
+create table if not exists leads (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  email      text not null,
+  phone      text,
+  specialty  text,
+  crm        text,
+  offer_slug text,
+  order_id   uuid references orders(id) on delete set null,
+  status     text default 'lead',
+  notes      text,
+  created_at timestamptz default now(),
+  updated_at timestamptz
+);
+
 -- Desabilitar RLS (app server-side, acesso apenas pelo backend)
 alter table offers  disable row level security;
 alter table coupons disable row level security;
 alter table orders  disable row level security;
+alter table leads   disable row level security;

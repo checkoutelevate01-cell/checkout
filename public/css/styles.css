@@ -862,6 +862,89 @@ body { font-family: var(--font-sans); background: var(--bg); color: var(--text);
 }
 .doctor-specialty { margin-top: 4px; }
 
+/* ── Ocultar preço no step 1 ───────────────────────────────── */
+body.step-1 .pricing-block,
+body.step-1 .quick-features,
+body.step-1 .summary-sep:not(:first-of-type) {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .3s, visibility .3s;
+}
+body.step-2 .pricing-block,
+body.step-2 .quick-features,
+body.step-2 .summary-sep:not(:first-of-type) {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity .4s .1s, visibility .4s .1s;
+}
+
+/* Mobile: esconder preço no topo do form no step 1 */
+body.step-1 .mobile-price { visibility: hidden; opacity: 0; }
+body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity .3s; }
+
+/* ── Step indicator ────────────────────────────────────────── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+  transition: color .2s;
+}
+.step.active { color: var(--accent); }
+.step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all .2s;
+}
+.step.active .step-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1F1F1F;
+}
+.step.done .step-num {
+  background: rgba(199,159,103,0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.step.done { color: var(--text-mid); }
+.step-line {
+  flex: 1;
+  height: 1.5px;
+  background: var(--border);
+  margin: 0 10px;
+}
+
+/* ── Back button ────────────────────────────────────────────── */
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color .18s;
+}
+.btn-back:hover { color: var(--text-mid); }
+
 /* ── Submit button ─────────────────────────────────────────── */
 .btn-submit {
   width: 100%;

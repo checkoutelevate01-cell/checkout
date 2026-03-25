@@ -105,6 +105,12 @@ async function appendOrder(record) {
     created_at:         record.createdAt,
   });
   if (error) throw error;
+  // Mark lead as converted
+  if (record.leadId) {
+    await supabase.from('leads')
+      .update({ status: 'convertido', order_id: record.id, updated_at: new Date().toISOString() })
+      .eq('id', record.leadId);
+  }
 }
 
 function newId() { return crypto.randomUUID(); }
@@ -248,7 +254,7 @@ app.get('/api/config', async (req, res) => {
 });
 
 app.post('/api/order', async (req, res) => {
-  const { customer: customerData, payment, offerSlug, couponCode, isDoctor, specialty } = req.body;
+  const { customer: customerData, payment, offerSlug, couponCode, leadId } = req.body;
 
   const customerError = validateCustomer(customerData);
   if (customerError) return res.status(400).json({ error: customerError });
@@ -324,11 +330,12 @@ app.post('/api/order', async (req, res) => {
         installments: payment.method === 'credit_card' ? (parseInt(payment.installments, 10) || 1) : 1,
         amountCents: offer ? offer.price : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000),
         discountCents: discount, finalAmountCents: finalPrice,
-        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,''), isDoctor: !!isDoctor, specialty: isDoctor ? (specialty || '') : '' },
+        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
         offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
         coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
         pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
         simulated: true,
+        leadId: leadId || null,
         createdAt: new Date().toISOString(),
       };
       appendOrder(orderRecord).catch(e => console.error('[Orders]', e.message));
@@ -380,16 +387,15 @@ app.post('/api/order', async (req, res) => {
       discountCents:    discount,
       finalAmountCents: finalPrice,
       customer: {
-        name:      customerData.name.trim(),
-        email:     customerData.email.trim().toLowerCase(),
-        document:  customerData.document.replace(/\D/g, ''),
-        phone:     customerData.phone.replace(/\D/g, ''),
-        isDoctor:  !!isDoctor,
-        specialty: isDoctor ? (specialty || '') : '',
+        name:     customerData.name.trim(),
+        email:    customerData.email.trim().toLowerCase(),
+        document: customerData.document.replace(/\D/g, ''),
+        phone:    customerData.phone.replace(/\D/g, ''),
       },
       offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
       coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
       pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
+      leadId: leadId || null,
       createdAt: new Date().toISOString(),
     };
     appendOrder(orderRecord).catch(e => console.error('[Orders] Falha ao salvar:', e.message));
@@ -467,6 +473,28 @@ app.post('/api/webhook/pagarme', async (req, res) => {
   } catch (err) {
     console.error('[Webhook]', err.message);
     res.sendStatus(500);
+  }
+});
+
+// ─── Lead capture ─────────────────────────────────────────────────────────────
+app.post('/api/lead', async (req, res) => {
+  try {
+    const { name, email, phone, specialty, crm, offerSlug } = req.body;
+    if (!name || !email) return res.status(400).json({ error: 'Nome e e-mail obrigatórios' });
+    const { data, error } = await supabase.from('leads').insert({
+      name:       name.trim(),
+      email:      email.trim().toLowerCase(),
+      phone:      (phone || '').replace(/\D/g, ''),
+      specialty:  specialty || null,
+      crm:        crm || null,
+      offer_slug: offerSlug || null,
+      status:     'lead',
+    }).select().single();
+    if (error) throw error;
+    res.json({ id: data.id });
+  } catch (err) {
+    console.error('[Lead]', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -767,6 +795,44 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
     res.json({ total: orders.length, filtered: orders.length, orders });
   } catch (err) {
     console.error('[Orders]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Admin Leads (CRM) ────────────────────────────────────────────────────────
+app.get('/admin/api/leads', authAdmin, async (req, res) => {
+  try {
+    const { status, q, specialty } = req.query;
+    let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
+    if (status)    query = query.eq('status', status);
+    if (specialty) query = query.ilike('specialty', `%${specialty}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+    let leads = data || [];
+    if (q) {
+      const lq = q.toLowerCase();
+      leads = leads.filter(l =>
+        (l.name    || '').toLowerCase().includes(lq) ||
+        (l.email   || '').toLowerCase().includes(lq) ||
+        (l.phone   || '').includes(lq)
+      );
+    }
+    res.json({ total: leads.length, leads });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/admin/api/leads/:id', authAdmin, async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const updates = { updated_at: new Date().toISOString() };
+    if (status !== undefined) updates.status = status;
+    if (notes  !== undefined) updates.notes  = notes;
+    const { data, error } = await supabase.from('leads').update(updates).eq('id', req.params.id).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

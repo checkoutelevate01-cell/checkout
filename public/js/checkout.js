@@ -13,8 +13,8 @@ const state = {
   pixPollTimer:     null,
   customerName:     '',
   lastOrderId:      '',
-  isDoctor:         false,
-  specialty:        '',
+  leadId:           null,
+  currentStep:      1,
 };
 
 // ─── DOM refs ────────────────────────────────────────────────────
@@ -73,6 +73,7 @@ const el = {
 
 // ─── Init ────────────────────────────────────────────────────────
 (async function init() {
+  document.body.classList.add('step-1');
   await loadConfig();
   setupMethodTabs();
   setupCardPreview();
@@ -80,7 +81,7 @@ const el = {
   setupSubmit();
   setupCloseOverlayOnClick();
   setupCoupon();
-  setupDoctor();
+  setupSteps();
 })();
 
 // ─── Config ──────────────────────────────────────────────────────
@@ -104,23 +105,24 @@ function applyConfig(cfg) {
   const price   = cfg.productPrice;
   const maxInst = cfg.maxInstallments;
 
-  if (el.mentorName)    el.mentorName.textContent  = cfg.mentorName;
-  if (el.productName)   el.productName.textContent = cfg.productName;
+  if (el.mentorName)    el.mentorName.textContent    = cfg.mentorName;
+  if (el.productName)   el.productName.textContent   = cfg.productName;
   if (el.mobileProduct) el.mobileProduct.textContent = `✦ ELEVATE MedClub`;
 
   const priceFormatted = formatCurrency(price);
-  el.priceDisplay.textContent = priceFormatted;
-  el.mobilePrice.textContent  = priceFormatted;
-  el.pixPrice.textContent     = priceFormatted;
+  if (el.priceDisplay) el.priceDisplay.textContent = priceFormatted;
+  if (el.mobilePrice)  el.mobilePrice.textContent  = priceFormatted;
+  if (el.pixPrice)     el.pixPrice.textContent     = priceFormatted;
 
   // Installment hint on summary — usa o mesmo cálculo real do select
   updateInstallDisplay(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
 
-  // Build select options
+  // Build select options (step-2, but safe even if hidden)
   buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
 }
 
 function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {
+  if (!el.installDisplay) return;
   const rate = interestRate ?? 1.99;
   const { amount, hasInterest } = calcInstallment(price, max, noInterestUpTo, rate);
   const suffix = hasInterest ? `com juros` : `sem juros`;
@@ -138,6 +140,7 @@ function calcInstallment(price, n, noInterestUpTo, monthlyRate) {
 }
 
 function buildInstallmentsSelect(price, max, noInterestUpTo, monthlyRate) {
+  if (!el.installments) return;
   el.installments.innerHTML = '';
   const rate = monthlyRate ?? 1.99;
   for (let i = 1; i <= max; i++) {
@@ -303,18 +306,9 @@ function validateForm() {
   clearAllErrors();
   let valid = true;
 
-  // Personal data
-  if (!el.name.value.trim() || el.name.value.trim().length < 3) {
-    setError(el.name, 'Informe seu nome completo'); valid = false;
-  }
-  if (!validateEmail(el.email.value)) {
-    setError(el.email, 'E-mail inválido'); valid = false;
-  }
+  // CPF (step 2)
   if (!validateCPF(el.cpf.value)) {
     setError(el.cpf, 'CPF inválido'); valid = false;
-  }
-  if (el.phone.value.replace(/\D/g, '').length < 10) {
-    setError(el.phone, 'Telefone inválido'); valid = false;
   }
 
   // Card-specific
@@ -343,26 +337,87 @@ function validateForm() {
   return valid;
 }
 
-// ─── Doctor question ─────────────────────────────────────────────
-function setupDoctor() {
-  const btnNo       = document.getElementById('btn-doctor-no');
-  const btnYes      = document.getElementById('btn-doctor-yes');
-  const specialtyWrap = document.getElementById('specialty-wrap');
+// ─── 2-Step flow ─────────────────────────────────────────────────
+function setupSteps() {
+  document.getElementById('btn-step1')?.addEventListener('click', handleStep1);
+  document.getElementById('btn-back-step1')?.addEventListener('click', goToStep1);
+}
 
-  btnNo?.addEventListener('click', () => {
-    state.isDoctor = false;
-    btnNo.classList.add('active');
-    btnYes.classList.remove('active');
-    specialtyWrap.classList.add('hidden');
-  });
+function goToStep1() {
+  state.currentStep = 1;
+  document.body.className = document.body.className.replace(/step-\d/g, '').trim() + ' step-1';
+  document.getElementById('step-1').classList.remove('hidden');
+  document.getElementById('step-2').classList.add('hidden');
+  document.getElementById('form-title').textContent = 'Seus dados';
+  document.getElementById('step-ind-1').classList.add('active');
+  document.getElementById('step-ind-1').classList.remove('done');
+  document.getElementById('step-ind-2').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-  btnYes?.addEventListener('click', () => {
-    state.isDoctor = true;
-    btnYes.classList.add('active');
-    btnNo.classList.remove('active');
-    specialtyWrap.classList.remove('hidden');
-    document.getElementById('f-specialty')?.focus();
-  });
+function goToStep2() {
+  state.currentStep = 2;
+  document.body.className = document.body.className.replace(/step-\d/g, '').trim() + ' step-2';
+  document.getElementById('step-1').classList.add('hidden');
+  document.getElementById('step-2').classList.remove('hidden');
+  document.getElementById('form-title').textContent = 'Pagamento';
+  document.getElementById('step-ind-1').classList.remove('active');
+  document.getElementById('step-ind-1').classList.add('done');
+  document.getElementById('step-ind-2').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function handleStep1() {
+  const nameEl      = document.getElementById('f-name');
+  const emailEl     = document.getElementById('f-email');
+  const phoneEl     = document.getElementById('f-phone');
+  const specialtyEl = document.getElementById('f-specialty');
+  const crmEl       = document.getElementById('f-crm');
+  const btn         = document.getElementById('btn-step1');
+
+  clearAllErrors();
+  let valid = true;
+
+  if (!nameEl.value.trim() || nameEl.value.trim().length < 3) {
+    setError(nameEl, 'Informe seu nome completo'); valid = false;
+  }
+  if (!validateEmail(emailEl.value)) {
+    setError(emailEl, 'E-mail inválido'); valid = false;
+  }
+  if (phoneEl.value.replace(/\D/g, '').length < 10) {
+    setError(phoneEl, 'Telefone inválido'); valid = false;
+  }
+  if (!valid) return;
+
+  // Save lead
+  btn.disabled = true;
+  btn.querySelector('.btn-text').textContent = 'Salvando…';
+  btn.querySelector('.btn-spinner')?.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:      nameEl.value.trim(),
+        email:     emailEl.value.trim().toLowerCase(),
+        phone:     phoneEl.value.trim(),
+        specialty: specialtyEl?.value.trim() || '',
+        crm:       crmEl?.value.trim() || '',
+        offerSlug: state.offerSlug || null,
+      }),
+    });
+    const data = await res.json();
+    if (data.id) state.leadId = data.id;
+  } catch (e) {
+    console.warn('[Lead]', e.message);
+  }
+
+  btn.disabled = false;
+  btn.querySelector('.btn-text').textContent = 'Continuar para pagamento';
+  btn.querySelector('.btn-spinner')?.classList.add('hidden');
+
+  goToStep2();
 }
 
 // ─── Coupon ──────────────────────────────────────────────────────
@@ -437,19 +492,20 @@ function setupSubmit() {
 async function handleSubmit() {
   if (!validateForm()) return;
 
-  // Store for redirect
-  state.customerName = el.name.value.trim();
+  // Get data from step 1 fields
+  const nameVal  = document.getElementById('f-name')?.value.trim()  || '';
+  const emailVal = document.getElementById('f-email')?.value.trim() || '';
+  const phoneVal = document.getElementById('f-phone')?.value.trim() || '';
+  state.customerName = nameVal;
 
   setLoading(true);
 
-  const [expMonth, expYear] = el.cardExpiry.value.split('/');
-
   const payload = {
     customer: {
-      name:     el.name.value.trim(),
-      email:    el.email.value.trim(),
+      name:     nameVal,
+      email:    emailVal,
       document: el.cpf.value,
-      phone:    el.phone.value,
+      phone:    phoneVal,
     },
     payment: {
       method: state.method,
@@ -465,8 +521,7 @@ async function handleSubmit() {
     },
     ...(state.offerSlug  && { offerSlug:  state.offerSlug }),
     ...(state.couponCode && { couponCode: state.couponCode }),
-    isDoctor:  state.isDoctor,
-    specialty: state.isDoctor ? (document.getElementById('f-specialty')?.value.trim() || '') : '',
+    ...(state.leadId     && { leadId:     state.leadId }),
   };
 
   try {
