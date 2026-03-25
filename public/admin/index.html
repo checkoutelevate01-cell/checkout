@@ -693,6 +693,7 @@
           <select id="leads-filter-status" class="filter-select">
             <option value="">Todos os status</option>
             <option value="lead">Lead</option>
+            <option value="abandono">Abandonou</option>
             <option value="convertido">Convertido</option>
             <option value="perdido">Perdido</option>
           </select>
@@ -725,12 +726,13 @@
                   <th>Contato</th>
                   <th>Especialidade</th>
                   <th>CRM</th>
+                  <th>Compra</th>
                   <th>Status</th>
                   <th>Ações</th>
                 </tr>
               </thead>
               <tbody id="leads-tbody">
-                <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
+                <tr><td colspan="8"><div class="empty-state">Carregando…</div></td></tr>
               </tbody>
             </table>
           </div>
@@ -742,10 +744,18 @@
             <div class="kanban-col" id="kanban-lead">
               <div class="kanban-col-header">
                 <span class="kanban-col-dot" style="background:#C79F67"></span>
-                Lead
+                Leads
                 <span class="kanban-col-count" id="kanban-count-lead">0</span>
               </div>
               <div class="kanban-cards" id="kanban-cards-lead"></div>
+            </div>
+            <div class="kanban-col" id="kanban-abandono">
+              <div class="kanban-col-header">
+                <span class="kanban-col-dot" style="background:#f97316"></span>
+                Abandonou
+                <span class="kanban-col-count" id="kanban-count-abandono">0</span>
+              </div>
+              <div class="kanban-cards" id="kanban-cards-abandono"></div>
             </div>
             <div class="kanban-col" id="kanban-convertido">
               <div class="kanban-col-header">
@@ -1547,8 +1557,8 @@ document.getElementById('orders-filter-status')?.addEventListener('change', load
 let leads = [];
 let leadsSearchTimer;
 
-const LEAD_STATUS_LABELS = { lead: 'Lead', convertido: 'Convertido', perdido: 'Perdido' };
-const LEAD_STATUS_COLORS = { lead: '#C79F67', convertido: '#22c55e', perdido: '#ef4444' };
+const LEAD_STATUS_LABELS = { lead: 'Lead', abandono: 'Abandonou', convertido: 'Convertido', perdido: 'Perdido' };
+const LEAD_STATUS_COLORS = { lead: '#C79F67', abandono: '#f97316', convertido: '#22c55e', perdido: '#ef4444' };
 
 async function loadLeads() {
   const q      = (document.getElementById('leads-search')?.value || '').trim();
@@ -1577,7 +1587,7 @@ function renderSpecialtiesSummary() {
   });
   const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 8);
   container.innerHTML = sorted.map(([s, n]) =>
-    `<span style="background:rgba(199,159,103,0.12);border:1px solid rgba(199,159,103,0.25);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--accent)">${escHtml(s)} <strong>${n}</strong></span>`
+    `<span style="background:rgba(199,159,103,0.12);border:1px solid rgba(199,159,103,0.25);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold)">${escHtml(s)} <strong>${n}</strong></span>`
   ).join('');
 }
 
@@ -1594,9 +1604,33 @@ function waBtn(phone) {
 function statusSelect(id, current) {
   return `<select class="lead-status-select" onchange="updateLeadStatus('${id}', this.value)">
     <option value="lead"       ${current==='lead'       ?'selected':''}>Lead</option>
+    <option value="abandono"   ${current==='abandono'   ?'selected':''}>Abandonou</option>
     <option value="convertido" ${current==='convertido' ?'selected':''}>Convertido</option>
     <option value="perdido"    ${current==='perdido'    ?'selected':''}>Perdido</option>
   </select>`;
+}
+
+function fmtCents(cents) {
+  if (!cents) return '—';
+  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtMethod(m) {
+  if (!m) return '—';
+  return { credit_card: 'Cartão', pix: 'PIX', boleto: 'Boleto' }[m] || m;
+}
+
+function orderBadge(order) {
+  if (!order) return `<span style="color:var(--text3);font-size:12px">—</span>`;
+  const color = { paid: '#22c55e', pending: '#C79F67', failed: '#ef4444' }[order.charge_status] || '#888';
+  const method = fmtMethod(order.payment_method);
+  const val = fmtCents(order.final_amount_cents);
+  const inst = order.payment_method === 'credit_card' && order.installments > 1
+    ? ` ${order.installments}x` : '';
+  return `<div style="line-height:1.5">
+    <div style="font-weight:600;color:var(--text)">${val}${inst}</div>
+    <div style="font-size:11px;color:${color}">${method}</div>
+  </div>`;
 }
 
 function renderLeads() {
@@ -1604,7 +1638,7 @@ function renderLeads() {
   const tbody = document.getElementById('leads-tbody');
   if (!tbody) return;
   if (!leads.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum lead ainda. Os dados aparecem assim que alguém preenche o checkout.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Nenhum lead ainda. Os dados aparecem assim que alguém preenche o checkout.</div></td></tr>';
     return;
   }
   const fmtDate  = d => new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
@@ -1618,6 +1652,7 @@ function renderLeads() {
       <td>${fmtPhone(l.phone)}</td>
       <td>${escHtml(l.specialty || '—')}</td>
       <td style="font-family:monospace;font-size:12px">${escHtml(l.crm || '—')}</td>
+      <td>${orderBadge(l.orders)}</td>
       <td><span class="status-badge" style="background:${color}22;color:${color};border-color:${color}44">${label}</span></td>
       <td>
         <div style="display:flex;flex-direction:column;gap:6px">
@@ -1630,11 +1665,20 @@ function renderLeads() {
 }
 
 function renderKanban() {
-  const cols = { lead: [], convertido: [], perdido: [] };
+  const cols = { lead: [], abandono: [], convertido: [], perdido: [] };
   leads.forEach(l => { if (cols[l.status]) cols[l.status].push(l); else cols.lead.push(l); });
 
   const fmtDate  = d => new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'2-digit' });
   const fmtPhone = p => { const n=(p||'').replace(/\D/g,''); if(n.length===11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`; if(n.length===10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`; return p||''; };
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 60) return `${m}min atrás`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h atrás`;
+    return `${Math.floor(h / 24)}d atrás`;
+  }
 
   Object.keys(cols).forEach(status => {
     const countEl = document.getElementById(`kanban-count-${status}`);
@@ -1647,12 +1691,34 @@ function renderKanban() {
     }
     container.innerHTML = cols[status].map(l => {
       const phone = fmtPhone(l.phone);
+      const ord = l.orders;
+
+      // Purchase block (for convertido)
+      let purchaseBlock = '';
+      if (ord && status === 'convertido') {
+        const val  = fmtCents(ord.final_amount_cents);
+        const meth = fmtMethod(ord.payment_method);
+        const inst = ord.payment_method === 'credit_card' && ord.installments > 1 ? ` · ${ord.installments}x` : '';
+        const chColor = { paid:'#22c55e', pending:'#C79F67', failed:'#ef4444' }[ord.charge_status] || '#888';
+        purchaseBlock = `<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:8px 10px;margin-bottom:10px">
+          <div style="font-weight:700;font-size:14px;color:#22c55e">${val}${inst}</div>
+          <div style="font-size:11px;color:${chColor};margin-top:2px">${meth} · ${ord.charge_status === 'paid' ? 'Pago' : ord.charge_status === 'pending' ? 'Pendente' : 'Falhou'}</div>
+        </div>`;
+      }
+
+      // Time since registration for leads/abandono
+      let timeBlock = '';
+      if (status === 'lead' || status === 'abandono') {
+        timeBlock = `<div style="font-size:10.5px;color:var(--text3);margin-bottom:10px">⏱ Registrou ${timeAgo(l.created_at)}</div>`;
+      }
+
       return `<div class="kanban-card">
         <div class="kanban-card-name">${escHtml(l.name)}</div>
         <div class="kanban-card-email">${escHtml(l.email)}</div>
         ${phone ? `<div class="kanban-card-phone">${escHtml(phone)}</div>` : ''}
         ${l.specialty ? `<div class="kanban-card-tag">${escHtml(l.specialty)}</div>` : ''}
-        <div class="kanban-card-date">Entrou em ${fmtDate(l.created_at)}</div>
+        ${purchaseBlock}
+        ${timeBlock}
         <div class="kanban-card-sep"></div>
         <div class="kanban-card-actions">
           ${waBtn(l.phone)}

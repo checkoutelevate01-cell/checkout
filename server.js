@@ -803,7 +803,9 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
 app.get('/admin/api/leads', authAdmin, async (req, res) => {
   try {
     const { status, q, specialty } = req.query;
-    let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('leads')
+      .select('*, orders(id, payment_method, final_amount_cents, installments, status, charge_status, created_at)')
+      .order('created_at', { ascending: false });
     if (status)    query = query.eq('status', status);
     if (specialty) query = query.ilike('specialty', `%${specialty}%`);
     const { data, error } = await query;
