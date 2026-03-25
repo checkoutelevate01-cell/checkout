@@ -294,19 +294,28 @@
     /* ── Price display helper ── */
     .price-cell { font-weight: 600; color: var(--text); }
 
+    /* ── Generic hidden utility ── */
+    .hidden { display: none !important; }
+
+    /* ── Status badge (leads list) ── */
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; border: 1px solid transparent;
+    }
+
     /* ── CRM / Leads ── */
     .btn-wa-contact {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 12px; border-radius: 8px;
+      padding: 7px 14px; border-radius: 8px;
       background: rgba(37,211,102,0.12); border: 1px solid rgba(37,211,102,0.3);
-      color: #25D366; font-size: 12px; font-weight: 500;
+      color: #25D366; font-size: 12.5px; font-weight: 600;
       text-decoration: none; white-space: nowrap;
-      transition: background .15s;
+      transition: background .15s, transform .1s;
     }
-    .btn-wa-contact:hover { background: rgba(37,211,102,0.22); }
+    .btn-wa-contact:hover { background: rgba(37,211,102,0.22); transform: translateY(-1px); }
 
     .lead-status-select {
-      font-size: 12px; padding: 4px 8px; border-radius: 8px;
+      font-size: 12px; padding: 5px 8px; border-radius: 8px;
       border: 1px solid var(--border); background: var(--bg2);
       color: var(--text); cursor: pointer; width: 100%;
     }
@@ -318,35 +327,61 @@
       background: transparent; border: none; color: var(--text2);
       cursor: pointer; transition: background .15s, color .15s;
     }
-    .view-btn.active { background: var(--accent); color: #1a1a1a; }
-    .view-btn:not(.active):hover { background: var(--bg2); color: var(--text); }
+    .view-btn.active { background: var(--gold); color: #0f1117; font-weight: 600; }
+    .view-btn:not(.active):hover { background: rgba(255,255,255,0.05); color: var(--text); }
 
     /* Kanban */
-    .kanban-board { display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px; }
-    .kanban-col { flex: 1; min-width: 240px; max-width: 340px; background: var(--bg2); border-radius: 12px; padding: 12px; }
+    .kanban-board {
+      display: flex; gap: 14px; align-items: flex-start;
+      overflow-x: auto; padding-bottom: 16px; min-height: 400px;
+    }
+    .kanban-col {
+      flex-shrink: 0; width: 280px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 0; overflow: hidden;
+    }
     .kanban-col-header {
       display: flex; align-items: center; gap: 8px;
-      font-size: 13px; font-weight: 600; color: var(--text);
-      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text);
+      padding: 12px 14px 11px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.04em; text-transform: uppercase;
     }
     .kanban-col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .kanban-col-count {
-      margin-left: auto; background: var(--bg3); border-radius: 20px;
-      padding: 2px 8px; font-size: 11px; color: var(--text2);
+      margin-left: auto;
+      background: rgba(255,255,255,0.08); border-radius: 20px;
+      padding: 2px 9px; font-size: 11px; color: var(--text2);
+      font-weight: 500; letter-spacing: 0;
     }
-    .kanban-cards { display: flex; flex-direction: column; gap: 10px; }
+    .kanban-cards { display: flex; flex-direction: column; gap: 0; padding: 10px; }
     .kanban-card {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-      padding: 12px; transition: box-shadow .15s;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; margin-bottom: 8px; cursor: default;
+      transition: box-shadow .15s, transform .1s, border-color .15s;
     }
-    .kanban-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .kanban-card-name { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
-    .kanban-card-info { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+    .kanban-card:last-child { margin-bottom: 0; }
+    .kanban-card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .kanban-card-name { font-weight: 600; font-size: 13.5px; margin-bottom: 4px; color: var(--text); }
+    .kanban-card-email { font-size: 11.5px; color: var(--text2); margin-bottom: 3px; }
+    .kanban-card-phone { font-size: 11.5px; color: var(--text2); margin-bottom: 10px; }
     .kanban-card-tag {
-      display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px;
-      background: rgba(199,159,103,0.12); color: var(--accent); margin-bottom: 10px;
+      display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px;
+      background: rgba(212,168,83,0.12); color: var(--gold);
+      border: 1px solid rgba(212,168,83,0.25);
+      margin-bottom: 11px;
     }
-    .kanban-card-actions { display: flex; flex-direction: column; gap: 6px; }
+    .kanban-card-date { font-size: 10.5px; color: var(--text3); margin-bottom: 12px; }
+    .kanban-card-sep { height: 1px; background: var(--border); margin: 10px 0; }
+    .kanban-card-actions { display: flex; flex-direction: column; gap: 7px; }
+    .kanban-empty {
+      text-align: center; color: var(--text3); font-size: 12px;
+      padding: 28px 16px; line-height: 1.6;
+    }
 
     /* ── Orders tab ── */
     .search-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
@@ -1598,25 +1633,33 @@ function renderKanban() {
   const cols = { lead: [], convertido: [], perdido: [] };
   leads.forEach(l => { if (cols[l.status]) cols[l.status].push(l); else cols.lead.push(l); });
 
+  const fmtDate  = d => new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'2-digit' });
+  const fmtPhone = p => { const n=(p||'').replace(/\D/g,''); if(n.length===11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`; if(n.length===10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`; return p||''; };
+
   Object.keys(cols).forEach(status => {
     const countEl = document.getElementById(`kanban-count-${status}`);
     if (countEl) countEl.textContent = cols[status].length;
     const container = document.getElementById(`kanban-cards-${status}`);
     if (!container) return;
     if (!cols[status].length) {
-      container.innerHTML = `<div style="text-align:center;color:var(--text-soft);font-size:12px;padding:24px 0">Sem leads</div>`;
+      container.innerHTML = `<div class="kanban-empty">Nenhum lead<br>nesta coluna</div>`;
       return;
     }
-    container.innerHTML = cols[status].map(l => `
-      <div class="kanban-card">
+    container.innerHTML = cols[status].map(l => {
+      const phone = fmtPhone(l.phone);
+      return `<div class="kanban-card">
         <div class="kanban-card-name">${escHtml(l.name)}</div>
-        <div class="kanban-card-info">${escHtml(l.email)}</div>
+        <div class="kanban-card-email">${escHtml(l.email)}</div>
+        ${phone ? `<div class="kanban-card-phone">${escHtml(phone)}</div>` : ''}
         ${l.specialty ? `<div class="kanban-card-tag">${escHtml(l.specialty)}</div>` : ''}
+        <div class="kanban-card-date">Entrou em ${fmtDate(l.created_at)}</div>
+        <div class="kanban-card-sep"></div>
         <div class="kanban-card-actions">
           ${waBtn(l.phone)}
           ${statusSelect(l.id, l.status)}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   });
 }
 
