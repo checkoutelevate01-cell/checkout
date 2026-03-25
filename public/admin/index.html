@@ -294,6 +294,60 @@
     /* ── Price display helper ── */
     .price-cell { font-weight: 600; color: var(--text); }
 
+    /* ── CRM / Leads ── */
+    .btn-wa-contact {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 8px;
+      background: rgba(37,211,102,0.12); border: 1px solid rgba(37,211,102,0.3);
+      color: #25D366; font-size: 12px; font-weight: 500;
+      text-decoration: none; white-space: nowrap;
+      transition: background .15s;
+    }
+    .btn-wa-contact:hover { background: rgba(37,211,102,0.22); }
+
+    .lead-status-select {
+      font-size: 12px; padding: 4px 8px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg2);
+      color: var(--text); cursor: pointer; width: 100%;
+    }
+
+    .view-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .view-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px; font-size: 12px; font-weight: 500;
+      background: transparent; border: none; color: var(--text2);
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .view-btn.active { background: var(--accent); color: #1a1a1a; }
+    .view-btn:not(.active):hover { background: var(--bg2); color: var(--text); }
+
+    /* Kanban */
+    .kanban-board { display: flex; gap: 16px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px; }
+    .kanban-col { flex: 1; min-width: 240px; max-width: 340px; background: var(--bg2); border-radius: 12px; padding: 12px; }
+    .kanban-col-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .kanban-col-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .kanban-col-count {
+      margin-left: auto; background: var(--bg3); border-radius: 20px;
+      padding: 2px 8px; font-size: 11px; color: var(--text2);
+    }
+    .kanban-cards { display: flex; flex-direction: column; gap: 10px; }
+    .kanban-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px; transition: box-shadow .15s;
+    }
+    .kanban-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .kanban-card-name { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+    .kanban-card-info { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+    .kanban-card-tag {
+      display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px;
+      background: rgba(199,159,103,0.12); color: var(--accent); margin-bottom: 10px;
+    }
+    .kanban-card-actions { display: flex; flex-direction: column; gap: 6px; }
+
     /* ── Orders tab ── */
     .search-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
     .search-input {
@@ -610,29 +664,73 @@
           <button class="btn-primary" id="btn-leads-refresh" style="padding:9px 14px" title="Atualizar">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
+          <div class="view-toggle">
+            <button class="view-btn active" id="btn-view-list" title="Lista">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+              Lista
+            </button>
+            <button class="view-btn" id="btn-view-kanban" title="Kanban">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+              Kanban
+            </button>
+          </div>
         </div>
 
         <!-- Especialidades resumo -->
         <div id="specialties-summary" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Nome</th>
-                <th>Contato</th>
-                <th>Especialidade</th>
-                <th>CRM</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="leads-tbody">
-              <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
-            </tbody>
-          </table>
+        <!-- Vista Lista -->
+        <div id="leads-list-view">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th>Contato</th>
+                  <th>Especialidade</th>
+                  <th>CRM</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="leads-tbody">
+                <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Vista Kanban -->
+        <div id="leads-kanban-view" class="hidden">
+          <div class="kanban-board">
+            <div class="kanban-col" id="kanban-lead">
+              <div class="kanban-col-header">
+                <span class="kanban-col-dot" style="background:#C79F67"></span>
+                Lead
+                <span class="kanban-col-count" id="kanban-count-lead">0</span>
+              </div>
+              <div class="kanban-cards" id="kanban-cards-lead"></div>
+            </div>
+            <div class="kanban-col" id="kanban-convertido">
+              <div class="kanban-col-header">
+                <span class="kanban-col-dot" style="background:#22c55e"></span>
+                Convertido
+                <span class="kanban-col-count" id="kanban-count-convertido">0</span>
+              </div>
+              <div class="kanban-cards" id="kanban-cards-convertido"></div>
+            </div>
+            <div class="kanban-col" id="kanban-perdido">
+              <div class="kanban-col-header">
+                <span class="kanban-col-dot" style="background:#ef4444"></span>
+                Perdido
+                <span class="kanban-col-count" id="kanban-count-perdido">0</span>
+              </div>
+              <div class="kanban-cards" id="kanban-cards-perdido"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1448,44 +1546,78 @@ function renderSpecialtiesSummary() {
   ).join('');
 }
 
+let leadsView = 'list';
+
+const WA_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>`;
+
+function waBtn(phone) {
+  const num = (phone || '').replace(/\D/g, '');
+  if (!num) return `<span style="opacity:.3;font-size:12px;color:var(--text-soft)">Sem tel.</span>`;
+  return `<a href="https://wa.me/55${num}" target="_blank" rel="noopener" class="btn-wa-contact">${WA_SVG} Entrar em contato</a>`;
+}
+
+function statusSelect(id, current) {
+  return `<select class="lead-status-select" onchange="updateLeadStatus('${id}', this.value)">
+    <option value="lead"       ${current==='lead'       ?'selected':''}>Lead</option>
+    <option value="convertido" ${current==='convertido' ?'selected':''}>Convertido</option>
+    <option value="perdido"    ${current==='perdido'    ?'selected':''}>Perdido</option>
+  </select>`;
+}
+
 function renderLeads() {
+  if (leadsView === 'kanban') { renderKanban(); return; }
   const tbody = document.getElementById('leads-tbody');
   if (!tbody) return;
   if (!leads.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum lead encontrado</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum lead ainda. Os dados aparecem assim que alguém preenche o checkout.</div></td></tr>';
     return;
   }
-  const fmtDate = d => new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
-  const fmtPhone = p => {
-    const n = (p || '').replace(/\D/g,'');
-    if (n.length === 11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`;
-    if (n.length === 10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`;
-    return p || '—';
-  };
+  const fmtDate  = d => new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+  const fmtPhone = p => { const n=(p||'').replace(/\D/g,''); if(n.length===11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`; if(n.length===10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`; return p||'—'; };
   tbody.innerHTML = leads.map(l => {
     const color = LEAD_STATUS_COLORS[l.status] || '#888';
     const label = LEAD_STATUS_LABELS[l.status] || l.status;
     return `<tr>
       <td style="font-size:12px;color:var(--text2)">${fmtDate(l.created_at)}</td>
       <td><div style="font-weight:500">${escHtml(l.name)}</div><div style="font-size:12px;color:var(--text2)">${escHtml(l.email)}</div></td>
-      <td style="font-size:13px">${fmtPhone(l.phone)}</td>
-      <td style="font-size:13px">${escHtml(l.specialty || '—')}</td>
-      <td style="font-size:12px;font-family:monospace">${escHtml(l.crm || '—')}</td>
+      <td>${fmtPhone(l.phone)}</td>
+      <td>${escHtml(l.specialty || '—')}</td>
+      <td style="font-family:monospace;font-size:12px">${escHtml(l.crm || '—')}</td>
       <td><span class="status-badge" style="background:${color}22;color:${color};border-color:${color}44">${label}</span></td>
       <td>
-        <div style="display:flex;gap:6px;align-items:center">
-          <a href="https://wa.me/55${(l.phone||'').replace(/\D/g,'')}" target="_blank" rel="noopener" title="WhatsApp" style="color:#25D366;opacity:.85;display:flex" ${!l.phone ? 'style="pointer-events:none;opacity:.3"' : ''}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-          </a>
-          <select onchange="updateLeadStatus('${l.id}', this.value)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">
-            <option value="lead"       ${l.status==='lead'        ? 'selected' : ''}>Lead</option>
-            <option value="convertido" ${l.status==='convertido'  ? 'selected' : ''}>Convertido</option>
-            <option value="perdido"    ${l.status==='perdido'     ? 'selected' : ''}>Perdido</option>
-          </select>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${waBtn(l.phone)}
+          ${statusSelect(l.id, l.status)}
         </div>
       </td>
     </tr>`;
   }).join('');
+}
+
+function renderKanban() {
+  const cols = { lead: [], convertido: [], perdido: [] };
+  leads.forEach(l => { if (cols[l.status]) cols[l.status].push(l); else cols.lead.push(l); });
+
+  Object.keys(cols).forEach(status => {
+    const countEl = document.getElementById(`kanban-count-${status}`);
+    if (countEl) countEl.textContent = cols[status].length;
+    const container = document.getElementById(`kanban-cards-${status}`);
+    if (!container) return;
+    if (!cols[status].length) {
+      container.innerHTML = `<div style="text-align:center;color:var(--text-soft);font-size:12px;padding:24px 0">Sem leads</div>`;
+      return;
+    }
+    container.innerHTML = cols[status].map(l => `
+      <div class="kanban-card">
+        <div class="kanban-card-name">${escHtml(l.name)}</div>
+        <div class="kanban-card-info">${escHtml(l.email)}</div>
+        ${l.specialty ? `<div class="kanban-card-tag">${escHtml(l.specialty)}</div>` : ''}
+        <div class="kanban-card-actions">
+          ${waBtn(l.phone)}
+          ${statusSelect(l.id, l.status)}
+        </div>
+      </div>`).join('');
+  });
 }
 
 async function updateLeadStatus(id, status) {
@@ -1493,7 +1625,7 @@ async function updateLeadStatus(id, status) {
     await apiFetch(`/admin/api/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     const lead = leads.find(l => l.id === id);
     if (lead) { lead.status = status; renderLeads(); renderSpecialtiesSummary(); }
-    toast(`Status atualizado: ${LEAD_STATUS_LABELS[status]}`, 'success');
+    toast(`Status: ${LEAD_STATUS_LABELS[status]}`, 'success');
   } catch(e) { toast('Erro ao atualizar status', 'error'); }
 }
 
@@ -1503,6 +1635,23 @@ document.getElementById('leads-search')?.addEventListener('input', () => {
   leadsSearchTimer = setTimeout(loadLeads, 350);
 });
 document.getElementById('leads-filter-status')?.addEventListener('change', loadLeads);
+
+document.getElementById('btn-view-list')?.addEventListener('click', () => {
+  leadsView = 'list';
+  document.getElementById('btn-view-list').classList.add('active');
+  document.getElementById('btn-view-kanban').classList.remove('active');
+  document.getElementById('leads-list-view').classList.remove('hidden');
+  document.getElementById('leads-kanban-view').classList.add('hidden');
+  renderLeads();
+});
+document.getElementById('btn-view-kanban')?.addEventListener('click', () => {
+  leadsView = 'kanban';
+  document.getElementById('btn-view-kanban').classList.add('active');
+  document.getElementById('btn-view-list').classList.remove('active');
+  document.getElementById('leads-kanban-view').classList.remove('hidden');
+  document.getElementById('leads-list-view').classList.add('hidden');
+  renderKanban();
+});
 
 // ── Modal helpers ─────────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
