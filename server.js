@@ -135,7 +135,9 @@ function pagarmeHeaders() {
 }
 
 function buildCustomer(data) {
-  const phone = data.phone.replace(/\D/g, '');
+  let phone = data.phone.replace(/\D/g, '');
+  // Remove country code 55 se vier na frente (ex: 5511999999999 → 11999999999)
+  if (phone.length >= 12 && phone.startsWith('55')) phone = phone.slice(2);
   return {
     name:          data.name.trim(),
     email:         data.email.trim().toLowerCase(),
@@ -156,9 +158,7 @@ function buildItems(offer) {
   const price = offer
     ? offer.price
     : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000);
-  const desc = offer
-    ? offer.description
-    : (process.env.PRODUCT_DESCRIPTION || 'Mentoria Premium');
+  const desc = (offer?.description || process.env.PRODUCT_DESCRIPTION || '').trim() || 'Mentoria Premium';
   return [{ amount: price, description: desc, quantity: 1, code: 'MENTORIA_001' }];
 }
 
