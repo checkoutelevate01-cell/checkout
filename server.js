@@ -167,7 +167,8 @@ function buildPayment(payment, offer) {
 
   if (method === 'credit_card') {
     const { card, installments } = payment;
-    const [expMonth, expYear] = (card.expiry || '').split('/');
+    const [expMonth, expYearRaw] = (card.expiry || '').split('/');
+    const expYear = expYearRaw?.trim().length === 4 ? expYearRaw.trim() : `20${expYearRaw?.trim()}`;
     const descriptor = offer
       ? (offer.statementDescriptor || 'MENTORIA').slice(0, 13)
       : (process.env.STATEMENT_DESCRIPTOR || 'MENTORIA').slice(0, 13);
@@ -180,7 +181,7 @@ function buildPayment(payment, offer) {
           number:      card.number.replace(/\D/g, ''),
           holder_name: card.holder_name.toUpperCase().trim(),
           exp_month:   parseInt(expMonth, 10),
-          exp_year:    parseInt(`20${expYear}`, 10),
+          exp_year:    parseInt(expYear, 10),
           cvv:         card.cvv,
           billing_address: {
             line_1:   'Av. Paulista, 1106',
@@ -351,9 +352,11 @@ app.post('/api/order', async (req, res) => {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    const pagarmePayload = { items, customer, payments };
+    console.log('[Pagar.me] Payload enviado:', JSON.stringify(pagarmePayload, null, 2));
     const { data: order } = await axios.post(
       `${PAGARME_URL}/orders`,
-      { items, customer, payments },
+      pagarmePayload,
       { headers: pagarmeHeaders() }
     );
 
