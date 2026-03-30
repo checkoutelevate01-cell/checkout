@@ -182,6 +182,13 @@ function buildPayment(payment, offer) {
           exp_month:   parseInt(expMonth, 10),
           exp_year:    parseInt(`20${expYear}`, 10),
           cvv:         card.cvv,
+          billing_address: {
+            line_1:   'Av. Paulista, 1106',
+            zip_code: '01310100',
+            city:     'São Paulo',
+            state:    'SP',
+            country:  'BR',
+          },
         },
       },
     }];
@@ -405,10 +412,17 @@ app.post('/api/order', async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    const pagarmeMsg    = err.response?.data?.message;
-    const pagarmeErrors = err.response?.data?.errors;
-    console.error('[Pagar.me]', pagarmeMsg || err.message, pagarmeErrors || '');
-    res.status(err.response?.status || 500).json({ error: pagarmeMsg || 'Erro ao processar pagamento. Tente novamente.' });
+    const pagarmeData   = err.response?.data;
+    const pagarmeMsg    = pagarmeData?.message;
+    const pagarmeErrors = pagarmeData?.errors;
+    console.error('[Pagar.me] Status:', err.response?.status);
+    console.error('[Pagar.me] Mensagem:', pagarmeMsg || err.message);
+    if (pagarmeErrors) console.error('[Pagar.me] Erros:', JSON.stringify(pagarmeErrors, null, 2));
+    if (pagarmeData)   console.error('[Pagar.me] Full response:', JSON.stringify(pagarmeData, null, 2));
+    res.status(err.response?.status || 500).json({
+      error:  pagarmeMsg || 'Erro ao processar pagamento. Tente novamente.',
+      errors: pagarmeErrors || undefined,
+    });
   }
 });
 
