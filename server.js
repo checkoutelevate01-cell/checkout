@@ -370,6 +370,27 @@ app.post('/api/order', async (req, res) => {
     const charge = order.charges?.[0];
     const tx     = charge?.last_transaction;
 
+    // Cartão recusado: retorna erro com mensagem do banco
+    if (payment.method === 'credit_card' && charge?.status === 'failed') {
+      const acquirerMsg = tx?.acquirer_message || 'Pagamento recusado pelo banco emissor.';
+      console.error('[Pagar.me] Cartão recusado:', acquirerMsg, '| code:', tx?.acquirer_return_code);
+      // Salva o pedido como falhou no banco
+      appendOrder({
+        id: newId(), pagarmeOrderId: order.id,
+        status: 'failed', chargeStatus: 'failed',
+        paymentMethod: payment.method,
+        installments: parseInt(payment.installments, 10) || 1,
+        amountCents: offer ? offer.price : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000),
+        discountCents: discount, finalAmountCents: items[0].amount,
+        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
+        offer: offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
+        coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
+        leadId: leadId || null,
+        createdAt: new Date().toISOString(),
+      }).catch(e => console.error('[Orders]', e.message));
+      return res.status(402).json({ error: acquirerMsg });
+    }
+
     const result = {
       orderId:      order.id,
       status:       order.status,

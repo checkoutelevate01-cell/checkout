@@ -535,7 +535,20 @@ async function handleSubmit() {
     setLoading(false);
 
     if (!res.ok) {
-      showAlert(data.error || 'Erro ao processar. Tente novamente.');
+      const rawMsg = (data.error || '').toLowerCase();
+      let friendlyMsg = data.error || 'Erro ao processar. Tente novamente.';
+      if (rawMsg.includes('inválido') || rawMsg.includes('invalid') || rawMsg.includes('1011')) {
+        friendlyMsg = 'Cartão inválido. Verifique os dados e tente novamente.';
+      } else if (rawMsg.includes('saldo') || rawMsg.includes('limit') || rawMsg.includes('insufici')) {
+        friendlyMsg = 'Cartão sem limite suficiente. Tente outro cartão.';
+      } else if (rawMsg.includes('recusad') || rawMsg.includes('denied') || rawMsg.includes('not_authorized')) {
+        friendlyMsg = 'Pagamento recusado pelo banco. Tente outro cartão ou entre em contato com seu banco.';
+      } else if (rawMsg.includes('bloqueado') || rawMsg.includes('blocked') || rawMsg.includes('restrict')) {
+        friendlyMsg = 'Cartão bloqueado. Entre em contato com seu banco.';
+      } else if (rawMsg.includes('timeout') || rawMsg.includes('time out')) {
+        friendlyMsg = 'Tempo esgotado. Tente novamente.';
+      }
+      showAlert(friendlyMsg);
       return;
     }
 
