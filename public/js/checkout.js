@@ -577,11 +577,15 @@ function setLoading(on) {
 
 // ─── Redirect → página de Obrigado ───────────────────────────────
 function goToThankyou(orderId) {
+  const priceRaw = state.config?.productPrice || 0;
+  const discount = state.discount || 0;
+  const finalCents = Math.max(priceRaw - discount, 0);
   const params = new URLSearchParams({
     name:   state.customerName,
     order:  orderId || '',
     method: state.method,
     wa:     state.config?.whatsappContact || '',
+    value:  (finalCents / 100).toFixed(2),
   });
   window.location.href = `/obrigado?${params.toString()}`;
 }
