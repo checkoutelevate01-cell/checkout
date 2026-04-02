@@ -464,6 +464,7 @@ function setupCoupon() {
         resultEl.className = 'coupon-result success';
         resultEl.textContent = `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
         applyDiscountDisplay(data.finalPrice);
+        toggleFreeOrderUI();
       }
     } catch (e) {
       resultEl.className = 'coupon-result error';
@@ -491,6 +492,15 @@ function applyDiscountDisplay(finalPrice) {
 
 function resetPriceDisplay() {
   if (state.config) applyConfig(state.config);
+  toggleFreeOrderUI();
+}
+
+function toggleFreeOrderUI() {
+  const free    = isFreeOrder();
+  const banner  = document.getElementById('free-order-banner');
+  const section = document.getElementById('payment-section');
+  if (banner)  banner.classList.toggle('hidden', !free);
+  if (section) section.classList.toggle('hidden', free);
 }
 
 // ─── Submit ──────────────────────────────────────────────────────

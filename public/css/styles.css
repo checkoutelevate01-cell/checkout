@@ -930,6 +930,39 @@ body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity
 }
 
 /* ── Back button ────────────────────────────────────────────── */
+/* ── Banner parabéns (cupom 100%) ── */
+#free-order-banner {
+  text-align: center;
+  padding: 28px 24px 24px;
+  margin-bottom: 4px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(212,168,83,0.10) 0%, rgba(212,168,83,0.04) 100%);
+  border: 1px solid rgba(212,168,83,0.25);
+}
+.free-banner-icon {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(212,168,83,0.15);
+  border: 1px solid rgba(212,168,83,0.30);
+  color: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.free-banner-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+.free-banner-sub {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 .btn-back {
   display: flex;
   align-items: center;
