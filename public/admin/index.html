@@ -1420,6 +1420,32 @@ function deleteCoupon(id, code) {
   };
 }
 
+function deleteOrder(id, name) {
+  document.getElementById('confirm-msg').textContent = `Excluir o pedido de "${name}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-backdrop').classList.remove('hidden');
+  confirmCallback = async () => {
+    try {
+      const res = await apiFetch(`/admin/api/orders/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast(d.error || 'Erro ao excluir', 'error'); return; }
+      toast('Pedido excluído', 'success');
+      await loadOrders();
+    } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  };
+}
+
+function deleteLead(id, name) {
+  document.getElementById('confirm-msg').textContent = `Excluir o lead "${name}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-backdrop').classList.remove('hidden');
+  confirmCallback = async () => {
+    try {
+      const res = await apiFetch(`/admin/api/leads/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast(d.error || 'Erro ao excluir', 'error'); return; }
+      toast('Lead excluído', 'success');
+      await loadLeads();
+    } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  };
+}
+
 // ── Orders ────────────────────────────────────────────────
 async function loadOrders() {
   const q      = (document.getElementById('orders-search')?.value || '').trim();
@@ -1473,7 +1499,10 @@ function renderOrders() {
       <td style="color:var(--text2)">${methodLabel[o.paymentMethod] || o.paymentMethod}</td>
       <td class="price-cell">${amount}</td>
       <td>${statusBadge(o.chargeStatus || o.status)}</td>
-      <td><button class="btn-sm btn-edit" onclick="openOrderDetail('${o.id}')">Ver</button></td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <button class="btn-sm btn-edit" onclick="openOrderDetail('${o.id}')">Ver</button>
+        <button class="btn-sm btn-del" onclick="deleteOrder('${o.id}', '${escHtml(o.customer.name)}')">Excluir</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1669,6 +1698,7 @@ function renderLeads() {
         <div style="display:flex;flex-direction:column;gap:6px">
           ${waBtn(l.phone)}
           ${statusSelect(l.id, l.status)}
+          <button class="btn-sm btn-del" style="width:100%" onclick="deleteLead('${l.id}', '${escHtml(l.name)}')">Excluir</button>
         </div>
       </td>
     </tr>`;

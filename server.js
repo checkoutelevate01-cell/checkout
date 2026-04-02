@@ -905,6 +905,26 @@ app.patch('/admin/api/leads/:id', authAdmin, async (req, res) => {
   }
 });
 
+app.delete('/admin/api/leads/:id', authAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase.from('leads').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/admin/api/orders/:id', authAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase.from('orders').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin panel SPA
 app.get('/admin',   (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
 app.get('/admin/*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
