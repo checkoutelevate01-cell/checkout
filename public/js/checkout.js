@@ -571,7 +571,7 @@ async function handleSubmit() {
     if (!res.ok) {
       const rawMsg = (data.error || '').toLowerCase();
       let friendlyMsg = data.error || 'Erro ao processar. Tente novamente.';
-      if (rawMsg.includes('inválido') || rawMsg.includes('invalid') || rawMsg.includes('1011')) {
+      if (rawMsg.includes('cartão') || rawMsg.includes('card') || rawMsg.includes('1011') || rawMsg.includes('número do cart')) {
         friendlyMsg = 'Cartão inválido. Verifique os dados e tente novamente.';
       } else if (rawMsg.includes('saldo') || rawMsg.includes('limit') || rawMsg.includes('insufici')) {
         friendlyMsg = 'Cartão sem limite suficiente. Tente outro cartão.';
@@ -588,8 +588,13 @@ async function handleSubmit() {
 
     state.lastOrderId = data.orderId || '';
 
+    // Pedido gratuito ou cartão aprovado → obrigado direto
+    if (data.free || data.chargeStatus === 'paid') {
+      goToThankyou(data.orderId);
+      return;
+    }
+
     if (state.method === 'credit_card') {
-      // Cartão aprovado → redireciona direto para obrigado
       goToThankyou(data.orderId);
     } else if (state.method === 'pix') {
       showPIX(data);
