@@ -234,6 +234,18 @@ function setupMasks() {
   el.phone.addEventListener('input', maskPhone);
 }
 
+// Algoritmo de Luhn para validar número do cartão
+function luhn(num) {
+  let sum = 0, alt = false;
+  for (let i = num.length - 1; i >= 0; i--) {
+    let n = parseInt(num[i], 10);
+    if (alt) { n *= 2; if (n > 9) n -= 9; }
+    sum += n;
+    alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+
 function maskCardNumber(e) {
   let val = e.target.value.replace(/\D/g, '').slice(0, 16);
   e.target.value = val.match(/.{1,4}/g)?.join(' ') || val;
@@ -322,7 +334,8 @@ function validateForm() {
 
   // Card-specific
   if (state.method === 'credit_card') {
-    if (el.cardNumber.value.replace(/\D/g, '').length < 14) {
+    const cardDigits = el.cardNumber.value.replace(/\D/g, '');
+    if (cardDigits.length < 14 || !luhn(cardDigits)) {
       setError(el.cardNumber, 'Número do cartão inválido'); valid = false;
     }
     if (!el.cardName.value.trim() || el.cardName.value.trim().length < 3) {
