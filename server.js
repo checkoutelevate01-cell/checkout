@@ -435,8 +435,6 @@ app.post('/api/order', async (req, res) => {
         ? await QRCode.toDataURL(tx.qr_code, { width: 280, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
         : (tx?.qr_code_url || '');
     }
-    const finalPrice = items[0].amount;
-
     const orderRecord = {
       id:               newId(),
       pagarmeOrderId:   order.id,
