@@ -539,18 +539,20 @@ async function handleSubmit() {
       document: el.cpf.value,
       phone:    phoneVal,
     },
-    payment: {
-      method: state.method,
-      ...(state.method === 'credit_card' && {
-        card: {
-          number:      el.cardNumber.value,
-          holder_name: el.cardName.value,
-          expiry:      el.cardExpiry.value,
-          cvv:         el.cardCvv.value,
+    payment: isFreeOrder()
+      ? { method: 'pix' }
+      : {
+          method: state.method,
+          ...(state.method === 'credit_card' && {
+            card: {
+              number:      el.cardNumber.value,
+              holder_name: el.cardName.value,
+              expiry:      el.cardExpiry.value,
+              cvv:         el.cardCvv.value,
+            },
+            installments: el.installments.value,
+          }),
         },
-        installments: el.installments.value,
-      }),
-    },
     ...(state.offerSlug  && { offerSlug:  state.offerSlug }),
     ...(state.couponCode && { couponCode: state.couponCode }),
     ...(state.leadId     && { leadId:     state.leadId }),
