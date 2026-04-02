@@ -303,9 +303,39 @@ app.post('/api/order', async (req, res) => {
 
     // Apply discount to items
     let items = buildItems(offer);
+    const basePrice = items[0].amount;
+    const finalPrice = Math.max(basePrice - discount, 0);
+
     if (discount > 0) {
       items = items.map(item => ({ ...item, amount: Math.max(item.amount - discount, 100) }));
     }
+
+    // ── Pedido 100% gratuito (cupom cobre tudo) ───────────────────────────────
+    if (finalPrice === 0) {
+      const freeId = 'free_' + newId();
+      const orderRecord = {
+        id: newId(), pagarmeOrderId: freeId,
+        status: 'paid', chargeStatus: 'paid',
+        paymentMethod: payment.method,
+        installments: 1,
+        amountCents: basePrice,
+        discountCents: discount, finalAmountCents: 0,
+        customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
+        offer:  offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
+        coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
+        leadId: leadId || null,
+        createdAt: new Date().toISOString(),
+      };
+      if (appliedCoupon) {
+        await supabase.from('coupons')
+          .update({ used_count: (appliedCoupon.usedCount || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('id', appliedCoupon.id);
+      }
+      appendOrder(orderRecord).catch(e => console.error('[Orders]', e.message));
+      console.log('[Free] Pedido gratuito via cupom:', freeId);
+      return res.json({ orderId: freeId, status: 'paid', chargeStatus: 'paid', discount, free: true });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const payments = buildPayment(payment, offer);
     const customer  = buildCustomer(customerData);
