@@ -302,6 +302,12 @@ function clearAllErrors() {
   document.querySelectorAll('.field-error').forEach((e) => e.remove());
 }
 
+function isFreeOrder() {
+  const price    = state.config?.productPrice || 0;
+  const discount = state.discount || 0;
+  return price > 0 && discount >= price;
+}
+
 function validateForm() {
   clearAllErrors();
   let valid = true;
@@ -310,6 +316,9 @@ function validateForm() {
   if (!validateCPF(el.cpf.value)) {
     setError(el.cpf, 'CPF inválido'); valid = false;
   }
+
+  // Pedido gratuito: não valida cartão
+  if (isFreeOrder()) return valid;
 
   // Card-specific
   if (state.method === 'credit_card') {
