@@ -650,6 +650,9 @@
             <option value="pending">Pendente</option>
             <option value="failed">Falhou</option>
           </select>
+          <select id="orders-filter-offer" class="filter-select">
+            <option value="">Todas as ofertas</option>
+          </select>
           <button class="btn-primary" id="btn-orders-refresh" style="padding:9px 14px" title="Atualizar">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
@@ -1344,6 +1347,20 @@ async function populateCouponOffers() {
     sel.appendChild(opt);
   });
   sel.value = cur;
+
+  // Também popular o filtro de ofertas em Compras
+  const filterSel = document.getElementById('orders-filter-offer');
+  if (filterSel) {
+    const curFilter = filterSel.value;
+    filterSel.innerHTML = '<option value="">Todas as ofertas</option>';
+    offers.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.slug;
+      opt.textContent = o.name;
+      filterSel.appendChild(opt);
+    });
+    filterSel.value = curFilter;
+  }
 }
 
 function openCouponModal(id) {
@@ -1460,13 +1477,15 @@ function deleteLead(id, name) {
 
 // ── Orders ────────────────────────────────────────────────
 async function loadOrders() {
-  const q      = (document.getElementById('orders-search')?.value || '').trim();
-  const method = document.getElementById('orders-filter-method')?.value || '';
-  const status = document.getElementById('orders-filter-status')?.value || '';
+  const q         = (document.getElementById('orders-search')?.value || '').trim();
+  const method    = document.getElementById('orders-filter-method')?.value || '';
+  const status    = document.getElementById('orders-filter-status')?.value || '';
+  const offerSlug = document.getElementById('orders-filter-offer')?.value || '';
   const params = new URLSearchParams();
-  if (q)      params.set('q', q);
-  if (method) params.set('method', method);
-  if (status) params.set('status', status);
+  if (q)         params.set('q', q);
+  if (method)    params.set('method', method);
+  if (status)    params.set('status', status);
+  if (offerSlug) params.set('offerSlug', offerSlug);
   try {
     const res  = await apiFetch(`/admin/api/orders?${params}`);
     const data = await res.json();
@@ -1593,6 +1612,7 @@ document.getElementById('orders-search')?.addEventListener('input', () => {
 });
 document.getElementById('orders-filter-method')?.addEventListener('change', loadOrders);
 document.getElementById('orders-filter-status')?.addEventListener('change', loadOrders);
+document.getElementById('orders-filter-offer')?.addEventListener('change', loadOrders);
 
 // ── CRM / Leads ───────────────────────────────────────────
 let leads = [];

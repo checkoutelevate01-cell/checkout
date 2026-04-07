@@ -829,11 +829,12 @@ app.post('/admin/api/orders/sync', authAdmin, async (req, res) => {
 // Orders — somente leitura
 app.get('/admin/api/orders', authAdmin, async (req, res) => {
   try {
-    const { method, status, q, from, to } = req.query;
+    const { method, status, q, from, to, offerSlug } = req.query;
     const all = await getOrders({ method, from, to });
 
     let filtered = all;
-    if (status) filtered = filtered.filter(o => o.status === status || o.charge_status === status);
+    if (status)    filtered = filtered.filter(o => o.status === status || o.charge_status === status);
+    if (offerSlug) filtered = filtered.filter(o => (o.offer?.slug || '') === offerSlug);
     if (q) {
       const lq = q.toLowerCase();
       filtered = filtered.filter(o =>
