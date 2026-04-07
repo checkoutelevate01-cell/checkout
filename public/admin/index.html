@@ -1147,6 +1147,7 @@ async function loadOffers() {
     const res = await apiFetch('/admin/api/offers');
     offers = await res.json();
     renderOffers();
+    populateCouponOffers();
   } catch(e) { if (e.message !== '401') toast('Erro ao carregar ofertas', 'error'); }
 }
 
