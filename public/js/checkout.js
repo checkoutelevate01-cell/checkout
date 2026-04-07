@@ -413,6 +413,11 @@ async function handleStep1() {
   if (phoneEl.value.replace(/\D/g, '').length < 10) {
     setError(phoneEl, 'Telefone inválido'); valid = false;
   }
+  const igEl = document.getElementById('f-instagram');
+  const igVisible = !document.getElementById('wrap-instagram')?.classList.contains('hidden');
+  if (igVisible && !igEl?.value.trim()) {
+    setError(igEl, 'Informe seu Instagram'); valid = false;
+  }
   if (!valid) return;
 
   // Save lead
