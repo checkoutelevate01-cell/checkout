@@ -39,6 +39,7 @@ function mapOffer(row) {
     whatsappContact:     row.whatsapp_contact,
     pixExpiresIn:        row.pix_expires_in,
     boletoDueDays:       row.boleto_due_days,
+    showInstagram:       row.show_instagram || false,
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -253,6 +254,7 @@ app.get('/api/config', async (req, res) => {
       noInterestUpTo,
       interestRate,
       whatsappContact:    offer ? (offer.whatsappContact || '') : (process.env.WHATSAPP_CONTACT || ''),
+      showInstagram:      offer ? (offer.showInstagram || false) : false,
       offerSlug:          slug || null,
     });
   } catch (err) {
@@ -545,7 +547,7 @@ app.post('/api/webhook/pagarme', async (req, res) => {
 // ─── Lead capture ─────────────────────────────────────────────────────────────
 app.post('/api/lead', async (req, res) => {
   try {
-    const { name, email, phone, specialty, crm, offerSlug } = req.body;
+    const { name, email, phone, specialty, crm, instagram, offerSlug } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Nome e e-mail obrigatórios' });
     const { data, error } = await supabase.from('leads').insert({
       name:       name.trim(),
@@ -553,6 +555,7 @@ app.post('/api/lead', async (req, res) => {
       phone:      (phone || '').replace(/\D/g, ''),
       specialty:  specialty || null,
       crm:        crm || null,
+      instagram:  instagram || null,
       offer_slug: offerSlug || null,
       status:     'lead',
     }).select().single();
@@ -638,6 +641,7 @@ app.post('/admin/api/offers', authAdmin, async (req, res) => {
       whatsapp_contact:    req.body.whatsappContact     || '',
       pix_expires_in:      parseInt(req.body.pixExpiresIn, 10)     || 3600,
       boleto_due_days:     parseInt(req.body.boletoDueDays, 10)    || 3,
+      show_instagram:      req.body.showInstagram === true,
       active:              req.body.active !== false,
     }).select().single();
 
@@ -665,6 +669,7 @@ app.put('/admin/api/offers/:id', authAdmin, async (req, res) => {
     if (req.body.whatsappContact     !== undefined) updates.whatsapp_contact     = req.body.whatsappContact;
     if (req.body.pixExpiresIn        !== undefined) updates.pix_expires_in       = parseInt(req.body.pixExpiresIn, 10);
     if (req.body.boletoDueDays       !== undefined) updates.boleto_due_days      = parseInt(req.body.boletoDueDays, 10);
+    if (req.body.showInstagram        !== undefined) updates.show_instagram        = req.body.showInstagram === true;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

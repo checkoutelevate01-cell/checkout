@@ -18,10 +18,14 @@ create table if not exists offers (
   whatsapp_contact     text default '',
   pix_expires_in       integer default 3600,
   boleto_due_days      integer default 3,
+  show_instagram       boolean default false,
   active               boolean default true,
   created_at           timestamptz default now(),
   updated_at           timestamptz
 );
+
+-- Migração: adicionar show_instagram se tabela já existir
+alter table offers add column if not exists show_instagram boolean default false;
 
 -- Tabela de cupons
 create table if not exists coupons (
@@ -65,6 +69,7 @@ create table if not exists leads (
   phone      text,
   specialty  text,
   crm        text,
+  instagram  text,
   offer_slug text,
   order_id   uuid references orders(id) on delete set null,
   status     text default 'lead',
@@ -78,3 +83,6 @@ alter table offers  disable row level security;
 alter table coupons disable row level security;
 alter table orders  disable row level security;
 alter table leads   disable row level security;
+
+-- Migração: adicionar instagram se tabela já existir
+alter table leads add column if not exists instagram text;

@@ -119,6 +119,10 @@ function applyConfig(cfg) {
 
   // Build select options (step-2, but safe even if hidden)
   buildInstallmentsSelect(price, maxInst, cfg.noInterestUpTo, cfg.interestRate);
+
+  // Mostrar/ocultar campo Instagram conforme config da oferta
+  const wrapIg = document.getElementById('wrap-instagram');
+  if (wrapIg) wrapIg.classList.toggle('hidden', !cfg.showInstagram);
 }
 
 function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {
@@ -426,6 +430,7 @@ async function handleStep1() {
         phone:     phoneEl.value.trim(),
         specialty: specialtyEl?.value.trim() || '',
         crm:       crmEl?.value.trim() || '',
+        instagram: document.getElementById('f-instagram')?.value.trim() || '',
         offerSlug: state.offerSlug || null,
       }),
     });

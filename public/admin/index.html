@@ -846,6 +846,15 @@
         <div class="field-group fg-full">
           <div class="toggle-row">
             <label class="toggle">
+              <input type="checkbox" id="offer-show-instagram" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Coletar Instagram no cadastro</span>
+          </div>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
               <input type="checkbox" id="offer-active" checked />
               <span class="toggle-slider"></span>
             </label>
@@ -1192,8 +1201,9 @@ function openOfferModal(id) {
     document.getElementById('offer-interest-rate').value  = '1.99';
     document.getElementById('offer-pix-expires').value    = '3600';
     document.getElementById('offer-boleto-days').value  = '3';
-    document.getElementById('offer-whatsapp').value     = '';
-    document.getElementById('offer-active').checked     = true;
+    document.getElementById('offer-whatsapp').value          = '';
+    document.getElementById('offer-show-instagram').checked  = false;
+    document.getElementById('offer-active').checked          = true;
   } else {
     const o = offers.find(x => x.id === id);
     if (!o) return;
@@ -1210,8 +1220,9 @@ function openOfferModal(id) {
     document.getElementById('offer-interest-rate').value  = o.interestRate ?? 1.99;
     document.getElementById('offer-pix-expires').value    = o.pixExpiresIn || 3600;
     document.getElementById('offer-boleto-days').value   = o.boletoDueDays || 3;
-    document.getElementById('offer-whatsapp').value      = o.whatsappContact || '';
-    document.getElementById('offer-active').checked      = o.active !== false;
+    document.getElementById('offer-whatsapp').value          = o.whatsappContact || '';
+    document.getElementById('offer-show-instagram').checked  = !!o.showInstagram;
+    document.getElementById('offer-active').checked          = o.active !== false;
   }
 
   modal.classList.remove('hidden');
@@ -1235,6 +1246,7 @@ async function saveOffer() {
     pixExpiresIn:        parseInt(document.getElementById('offer-pix-expires').value) || 3600,
     boletoDueDays:       parseInt(document.getElementById('offer-boleto-days').value) || 3,
     whatsappContact:     document.getElementById('offer-whatsapp').value.trim(),
+    showInstagram:       document.getElementById('offer-show-instagram').checked,
     active:              document.getElementById('offer-active').checked,
   };
 
@@ -1692,6 +1704,7 @@ function renderLeads() {
       <td>${fmtPhone(l.phone)}</td>
       <td>${escHtml(l.specialty || '—')}</td>
       <td style="font-family:monospace;font-size:12px">${escHtml(l.crm || '—')}</td>
+      <td style="font-size:12px">${l.instagram ? `<a href="https://instagram.com/${escHtml(l.instagram.replace('@',''))}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">@${escHtml(l.instagram.replace('@',''))}</a>` : '—'}</td>
       <td>${orderBadge(l.orders)}</td>
       <td><span class="status-badge" style="background:${color}22;color:${color};border-color:${color}44">${label}</span></td>
       <td>
