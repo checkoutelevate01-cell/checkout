@@ -639,7 +639,7 @@ app.post('/admin/api/login', (req, res) => {
 });
 
 // Offers CRUD
-app.get("/admin/api/offers", authOnlyAdmin, async (_req, res) => {
+app.get("/admin/api/offers", authAdmin, async (_req, res) => {
   try { res.json(await getOffers()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
