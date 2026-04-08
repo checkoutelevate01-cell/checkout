@@ -117,13 +117,28 @@ async function appendOrder(record) {
 function newId() { return crypto.randomUUID(); }
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
-const JWT_SECRET     = process.env.ADMIN_JWT_SECRET || 'elevate-jwt-secret-change-me';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD   || '';
+const JWT_SECRET            = process.env.ADMIN_JWT_SECRET       || 'elevate-jwt-secret-change-me';
+const ADMIN_PASSWORD        = process.env.ADMIN_PASSWORD         || '';
+const COLLABORATOR_PASSWORD = process.env.COLLABORATOR_PASSWORD  || '';
+
+function getTokenRole(req) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  try { return jwt.verify(token, JWT_SECRET).role || 'admin'; }
+  catch { return null; }
+}
 
 function authAdmin(req, res, next) {
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  try { jwt.verify(token, JWT_SECRET); next(); }
-  catch { res.status(401).json({ error: 'Não autorizado' }); }
+  const role = getTokenRole(req);
+  if (!role) return res.status(401).json({ error: 'Não autorizado' });
+  req.role = role;
+  next();
+}
+
+function authOnlyAdmin(req, res, next) {
+  const role = getTokenRole(req);
+  if (role !== 'admin') return res.status(403).json({ error: 'Acesso restrito ao administrador' });
+  req.role = role;
+  next();
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -612,18 +627,24 @@ app.post('/api/coupon/validate', async (req, res) => {
 app.post('/admin/api/login', (req, res) => {
   const { password } = req.body;
   if (!ADMIN_PASSWORD) return res.status(500).json({ error: 'ADMIN_PASSWORD não configurada no .env' });
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Senha incorreta' });
-  const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token });
+  if (password === ADMIN_PASSWORD) {
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ token, role: 'admin' });
+  }
+  if (COLLABORATOR_PASSWORD && password === COLLABORATOR_PASSWORD) {
+    const token = jwt.sign({ role: 'collaborator' }, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ token, role: 'collaborator' });
+  }
+  res.status(401).json({ error: 'Senha incorreta' });
 });
 
 // Offers CRUD
-app.get('/admin/api/offers', authAdmin, async (_req, res) => {
+app.get("/admin/api/offers", authOnlyAdmin, async (_req, res) => {
   try { res.json(await getOffers()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/admin/api/offers', authAdmin, async (req, res) => {
+app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
   try {
     const slug = (req.body.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     if (!slug) return res.status(400).json({ error: 'Slug inválido' });
@@ -655,7 +676,7 @@ app.post('/admin/api/offers', authAdmin, async (req, res) => {
   }
 });
 
-app.put('/admin/api/offers/:id', authAdmin, async (req, res) => {
+app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
   try {
     const updates = {};
     if (req.body.name                !== undefined) updates.name                 = req.body.name;
@@ -682,7 +703,7 @@ app.put('/admin/api/offers/:id', authAdmin, async (req, res) => {
   }
 });
 
-app.delete('/admin/api/offers/:id', authAdmin, async (req, res) => {
+app.delete('/admin/api/offers/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { error } = await supabase.from('offers').delete().eq('id', req.params.id);
     if (error) throw error;
@@ -693,12 +714,12 @@ app.delete('/admin/api/offers/:id', authAdmin, async (req, res) => {
 });
 
 // Coupons CRUD
-app.get('/admin/api/coupons', authAdmin, async (_req, res) => {
+app.get('/admin/api/coupons', authOnlyAdmin, async (_req, res) => {
   try { res.json(await getCoupons()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/admin/api/coupons', authAdmin, async (req, res) => {
+app.post('/admin/api/coupons', authOnlyAdmin, async (req, res) => {
   try {
     const code = (req.body.code || '').toUpperCase().replace(/\s/g, '');
     if (!code) return res.status(400).json({ error: 'Código obrigatório' });
@@ -723,7 +744,7 @@ app.post('/admin/api/coupons', authAdmin, async (req, res) => {
   }
 });
 
-app.put('/admin/api/coupons/:id', authAdmin, async (req, res) => {
+app.put('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
   try {
     const updates = {};
     if (req.body.type    !== undefined) updates.type      = req.body.type;
@@ -742,7 +763,7 @@ app.put('/admin/api/coupons/:id', authAdmin, async (req, res) => {
   }
 });
 
-app.delete('/admin/api/coupons/:id', authAdmin, async (req, res) => {
+app.delete('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { error } = await supabase.from('coupons').delete().eq('id', req.params.id);
     if (error) throw error;
@@ -753,7 +774,7 @@ app.delete('/admin/api/coupons/:id', authAdmin, async (req, res) => {
 });
 
 // Dashboard
-app.get('/admin/api/dashboard', authAdmin, async (req, res) => {
+app.get('/admin/api/dashboard', authOnlyAdmin, async (req, res) => {
   try {
     const { data: orders } = await supabase.from('orders').select('*');
     const all = orders || [];
@@ -795,7 +816,7 @@ app.get('/admin/api/dashboard', authAdmin, async (req, res) => {
 });
 
 // Sync — verifica pedidos PIX pendentes no Pagar.me e atualiza
-app.post('/admin/api/orders/sync', authAdmin, async (req, res) => {
+app.post('/admin/api/orders/sync', authOnlyAdmin, async (req, res) => {
   try {
     const { data: pending } = await supabase.from('orders')
       .select('id, pagarme_order_id, simulated')
@@ -844,6 +865,8 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
       );
     }
 
+    const isCollaborator = req.role === 'collaborator';
+
     // Normalize field names for frontend compatibility
     const orders = filtered.map(o => ({
       id:               o.id,
@@ -852,9 +875,9 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
       chargeStatus:     o.charge_status,
       paymentMethod:    o.payment_method,
       installments:     o.installments,
-      amountCents:      o.amount_cents,
-      discountCents:    o.discount_cents,
-      finalAmountCents: o.final_amount_cents,
+      amountCents:      isCollaborator ? null : o.amount_cents,
+      discountCents:    isCollaborator ? null : o.discount_cents,
+      finalAmountCents: isCollaborator ? null : o.final_amount_cents,
       customer:         o.customer,
       offer:            o.offer,
       coupon:           o.coupon,
@@ -911,7 +934,7 @@ app.patch('/admin/api/leads/:id', authAdmin, async (req, res) => {
   }
 });
 
-app.delete('/admin/api/leads/:id', authAdmin, async (req, res) => {
+app.delete('/admin/api/leads/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { error } = await supabase.from('leads').delete().eq('id', req.params.id);
     if (error) throw error;
@@ -921,7 +944,7 @@ app.delete('/admin/api/leads/:id', authAdmin, async (req, res) => {
   }
 });
 
-app.delete('/admin/api/orders/:id', authAdmin, async (req, res) => {
+app.delete('/admin/api/orders/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { error } = await supabase.from('orders').delete().eq('id', req.params.id);
     if (error) throw error;

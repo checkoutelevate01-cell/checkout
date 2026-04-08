@@ -961,6 +961,7 @@
    ════════════════════════════════════════════════════════ */
 
 const TOKEN_KEY = 'adminToken';
+const ROLE_KEY  = 'adminRole';
 let token = localStorage.getItem(TOKEN_KEY) || '';
 let offers  = [];
 let coupons = [];
@@ -969,9 +970,18 @@ let ordersSearchTimer = null;
 let confirmCallback = null;
 
 // ── Auth ──────────────────────────────────────────────────
-function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-function setToken(t) { localStorage.setItem(TOKEN_KEY, t); token = t; }
-function clearToken() { localStorage.removeItem(TOKEN_KEY); token = ''; }
+function getToken()    { return localStorage.getItem(TOKEN_KEY) || ''; }
+function getRole()     { return localStorage.getItem(ROLE_KEY)  || 'admin'; }
+function isCollaborator() { return getRole() === 'collaborator'; }
+function setToken(t, role) {
+  localStorage.setItem(TOKEN_KEY, t); token = t;
+  localStorage.setItem(ROLE_KEY, role || 'admin');
+}
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(ROLE_KEY);
+  token = '';
+}
 
 function authHeaders() {
   return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
@@ -1066,7 +1076,7 @@ async function doLogin() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Falha no login');
-    setToken(data.token);
+    setToken(data.token, data.role);
     showApp();
   } catch (e) {
     err.textContent = e.message;
@@ -1079,10 +1089,22 @@ async function doLogin() {
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  loadDashboard();
-  loadOffers();
-  loadCoupons();
-  loadOrders();
+
+  if (isCollaborator()) {
+    // Ocultar abas restritas
+    document.querySelectorAll('.nav-item[data-tab="dashboard"], .nav-item[data-tab="offers"], .nav-item[data-tab="coupons"], .nav-item[data-tab="config"]')
+      .forEach(el => el.style.display = 'none');
+    // Ir direto pro CRM
+    switchTab('leads');
+    loadLeads();
+    loadOffers(); // necessário pro filtro de oferta em Compras
+    loadOrders();
+  } else {
+    loadDashboard();
+    loadOffers();
+    loadCoupons();
+    loadOrders();
+  }
 }
 
 function logout() {
@@ -1517,9 +1539,10 @@ function renderOrders() {
     if (s === 'pending') return `<span class="badge badge-pending">Pendente</span>`;
     return `<span class="badge badge-failed">Falhou</span>`;
   };
+  const collab = isCollaborator();
   tbody.innerHTML = orders.map(o => {
-    const date   = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
-    const amount = `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}`;
+    const date    = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
+    const amount  = collab ? '—' : `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}`;
     const offerTd = o.offer ? escHtml(o.offer.name) : `<span style="color:var(--text3)">—</span>`;
     return `<tr>
       <td style="color:var(--text2);font-size:12px;white-space:nowrap">${date}</td>
@@ -1533,7 +1556,7 @@ function renderOrders() {
       <td>${statusBadge(o.chargeStatus || o.status)}</td>
       <td style="display:flex;gap:6px;align-items:center">
         <button class="btn-sm btn-edit" onclick="openOrderDetail('${o.id}')">Ver</button>
-        <button class="btn-sm btn-del" onclick="deleteOrder('${o.id}', '${escHtml(o.customer.name)}')">Excluir</button>
+        ${collab ? '' : `<button class="btn-sm btn-del" onclick="deleteOrder('${o.id}', '${escHtml(o.customer.name)}')">Excluir</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -1568,8 +1591,8 @@ function openOrderDetail(id) {
       <div><div class="detail-label">Data</div><div class="detail-value">${date}</div></div>
       <div><div class="detail-label">Método</div><div class="detail-value">${methodLabel[o.paymentMethod] || o.paymentMethod}${o.installments > 1 ? ` (${o.installments}x)` : ''}</div></div>
       <div><div class="detail-label">Status</div><div class="detail-value">${o.chargeStatus || o.status}</div></div>
-      <div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>
-      ${o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
+      ${!isCollaborator() ? `<div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>` : ''}
+      ${!isCollaborator() && o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
       ${o.offer  ? `<div><div class="detail-label">Oferta</div><div class="detail-value">${escHtml(o.offer.name)}</div></div>` : ''}
       ${o.coupon ? `<div><div class="detail-label">Cupom</div><div class="detail-mono">${escHtml(o.coupon.code)}</div></div>` : ''}
     </div>
