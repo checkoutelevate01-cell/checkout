@@ -963,6 +963,49 @@ body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity
   margin: 0 auto;
 }
 
+/* Guarantee block */
+.guarantee-block {
+  margin: 4px 0 16px;
+}
+.guarantee-block.hidden { display: none; }
+.guarantee-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.guarantee-icon {
+  flex-shrink: 0;
+  color: var(--gold);
+  opacity: 0.75;
+  margin-top: 2px;
+}
+.guarantee-content { flex: 1; }
+.guarantee-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  opacity: 0.9;
+  margin: 0 0 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.guarantee-text {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.55;
+  margin: 0 0 4px;
+}
+.guarantee-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .btn-back {
   display: flex;
   align-items: center;

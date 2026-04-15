@@ -19,6 +19,9 @@ create table if not exists offers (
   pix_expires_in       integer default 3600,
   boleto_due_days      integer default 3,
   show_instagram       boolean default false,
+  guarantee_title      text default '',
+  guarantee_text       text default '',
+  guarantee_sub        text default '',
   active               boolean default true,
   created_at           timestamptz default now(),
   updated_at           timestamptz
@@ -26,6 +29,11 @@ create table if not exists offers (
 
 -- Migração: adicionar show_instagram se tabela já existir
 alter table offers add column if not exists show_instagram boolean default false;
+
+-- Migração: adicionar campos de garantia
+alter table offers add column if not exists guarantee_title text default '';
+alter table offers add column if not exists guarantee_text  text default '';
+alter table offers add column if not exists guarantee_sub   text default '';
 
 -- Tabela de cupons
 create table if not exists coupons (

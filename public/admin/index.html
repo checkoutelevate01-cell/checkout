@@ -864,6 +864,23 @@
             <span class="toggle-label">Oferta ativa</span>
           </div>
         </div>
+
+        <!-- Garantia -->
+        <div class="field-group fg-full" style="margin-top:8px">
+          <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;display:block">Garantia no checkout (opcional)</label>
+        </div>
+        <div class="field-group fg-half">
+          <label class="field-label">Título da garantia</label>
+          <input type="text" id="offer-guarantee-title" placeholder="Ex: Garantia total" />
+        </div>
+        <div class="field-group fg-full">
+          <label class="field-label">Texto principal</label>
+          <textarea id="offer-guarantee-text" rows="3" placeholder="Ex: ou você sai transformado, ou sai com seu dinheiro de volta." style="resize:vertical"></textarea>
+        </div>
+        <div class="field-group fg-full">
+          <label class="field-label">Subtexto (detalhe adicional)</label>
+          <textarea id="offer-guarantee-sub" rows="2" placeholder="Ex: Se até o meio-dia do 7º dia você não estiver satisfeito, devolvemos 100%." style="resize:vertical"></textarea>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1230,6 +1247,9 @@ function openOfferModal(id) {
     document.getElementById('offer-whatsapp').value          = '';
     document.getElementById('offer-show-instagram').checked  = false;
     document.getElementById('offer-active').checked          = true;
+    document.getElementById('offer-guarantee-title').value   = '';
+    document.getElementById('offer-guarantee-text').value    = '';
+    document.getElementById('offer-guarantee-sub').value     = '';
   } else {
     const o = offers.find(x => x.id === id);
     if (!o) return;
@@ -1249,6 +1269,9 @@ function openOfferModal(id) {
     document.getElementById('offer-whatsapp').value          = o.whatsappContact || '';
     document.getElementById('offer-show-instagram').checked  = !!o.showInstagram;
     document.getElementById('offer-active').checked          = o.active !== false;
+    document.getElementById('offer-guarantee-title').value   = o.guaranteeTitle || '';
+    document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
+    document.getElementById('offer-guarantee-sub').value     = o.guaranteeSub   || '';
   }
 
   modal.classList.remove('hidden');
@@ -1274,6 +1297,9 @@ async function saveOffer() {
     whatsappContact:     document.getElementById('offer-whatsapp').value.trim(),
     showInstagram:       document.getElementById('offer-show-instagram').checked,
     active:              document.getElementById('offer-active').checked,
+    guaranteeTitle:      document.getElementById('offer-guarantee-title').value.trim(),
+    guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),
+    guaranteeSub:        document.getElementById('offer-guarantee-sub').value.trim(),
   };
 
   if (!body.name) { toast('Informe o nome da oferta', 'error'); return; }

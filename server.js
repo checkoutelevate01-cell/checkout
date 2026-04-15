@@ -40,6 +40,9 @@ function mapOffer(row) {
     pixExpiresIn:        row.pix_expires_in,
     boletoDueDays:       row.boleto_due_days,
     showInstagram:       row.show_instagram || false,
+    guaranteeTitle:      row.guarantee_title || '',
+    guaranteeText:       row.guarantee_text  || '',
+    guaranteeSub:        row.guarantee_sub   || '',
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -663,6 +666,9 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       pix_expires_in:      parseInt(req.body.pixExpiresIn, 10)     || 3600,
       boleto_due_days:     parseInt(req.body.boletoDueDays, 10)    || 3,
       show_instagram:      req.body.showInstagram === true,
+      guarantee_title:     req.body.guaranteeTitle  || '',
+      guarantee_text:      req.body.guaranteeText   || '',
+      guarantee_sub:       req.body.guaranteeSub    || '',
       active:              req.body.active !== false,
     }).select().single();
 
@@ -691,6 +697,9 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.pixExpiresIn        !== undefined) updates.pix_expires_in       = parseInt(req.body.pixExpiresIn, 10);
     if (req.body.boletoDueDays       !== undefined) updates.boleto_due_days      = parseInt(req.body.boletoDueDays, 10);
     if (req.body.showInstagram        !== undefined) updates.show_instagram        = req.body.showInstagram === true;
+    if (req.body.guaranteeTitle       !== undefined) updates.guarantee_title       = req.body.guaranteeTitle;
+    if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;
+    if (req.body.guaranteeSub         !== undefined) updates.guarantee_sub         = req.body.guaranteeSub;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

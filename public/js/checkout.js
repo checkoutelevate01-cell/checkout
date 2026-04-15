@@ -123,6 +123,21 @@ function applyConfig(cfg) {
   // Mostrar/ocultar campo Instagram conforme config da oferta
   const wrapIg = document.getElementById('wrap-instagram');
   if (wrapIg) wrapIg.classList.toggle('hidden', !cfg.showInstagram);
+
+  // Garantia configurável por oferta
+  const gBlock = document.getElementById('guarantee-block');
+  if (gBlock) {
+    const hasGuarantee = !!(cfg.guaranteeTitle || cfg.guaranteeText);
+    gBlock.classList.toggle('hidden', !hasGuarantee);
+    if (hasGuarantee) {
+      const gTitle = document.getElementById('guarantee-title');
+      const gText  = document.getElementById('guarantee-text');
+      const gSub   = document.getElementById('guarantee-sub');
+      if (gTitle) gTitle.textContent = cfg.guaranteeTitle || '';
+      if (gText)  gText.textContent  = cfg.guaranteeText  || '';
+      if (gSub)   gSub.textContent   = cfg.guaranteeSub   || '';
+    }
+  }
 }
 
 function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {
