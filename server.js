@@ -273,6 +273,9 @@ app.get('/api/config', async (req, res) => {
       interestRate,
       whatsappContact:    offer ? (offer.whatsappContact || '') : (process.env.WHATSAPP_CONTACT || ''),
       showInstagram:      offer ? (offer.showInstagram || false) : false,
+      guaranteeTitle:     offer ? (offer.guaranteeTitle || '') : '',
+      guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
+      guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
       offerSlug:          slug || null,
     });
   } catch (err) {
