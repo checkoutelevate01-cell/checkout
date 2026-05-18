@@ -660,6 +660,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             Sincronizar PIX
           </button>
+          <button class="btn-primary" id="btn-orders-export" style="padding:9px 14px;gap:6px;background:rgba(212,168,83,0.15);color:var(--gold);border:1px solid var(--gold-mid)" title="Exportar compras como CSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar CSV
+          </button>
         </div>
         <div class="table-wrap">
           <table>
@@ -667,7 +671,8 @@
               <tr>
                 <th>Data</th>
                 <th>Cliente</th>
-                <th>Oferta</th>
+                <th>CPF</th>
+                <th>Oferta / Cupom</th>
                 <th>Método</th>
                 <th>Valor</th>
                 <th>Status</th>
@@ -675,7 +680,7 @@
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="7"><div class="empty-state">Carregando…</div></td></tr>
+              <tr><td colspan="8"><div class="empty-state">Carregando…</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1547,11 +1552,24 @@ async function loadOrders() {
   } catch(e) { if (e.message !== '401') toast('Erro ao carregar compras', 'error'); }
 }
 
+function fmtCPF(d) {
+  const n = (d || '').replace(/\D/g, '');
+  if (n.length === 11) return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6,9)}-${n.slice(9)}`;
+  return d || '—';
+}
+
+function fmtPhone(p) {
+  const n = (p || '').replace(/\D/g, '');
+  if (n.length === 11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`;
+  if (n.length === 10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`;
+  return p || '—';
+}
+
 function renderOrders() {
   const tbody = document.getElementById('orders-tbody');
   if (!tbody) return;
   if (!orders.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32">
         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
         <rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/>
@@ -1569,15 +1587,19 @@ function renderOrders() {
   tbody.innerHTML = orders.map(o => {
     const date    = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
     const amount  = collab ? '—' : `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}`;
-    const offerTd = o.offer ? escHtml(o.offer.name) : `<span style="color:var(--text3)">—</span>`;
+    const offerTd = o.offer
+      ? `<div>${escHtml(o.offer.name)}</div>${o.coupon ? `<div style="font-size:11px;color:var(--gold);font-family:monospace;margin-top:2px">🏷 ${escHtml(o.coupon.code)}</div>` : ''}`
+      : `<span style="color:var(--text3)">—</span>`;
     return `<tr>
       <td style="color:var(--text2);font-size:12px;white-space:nowrap">${date}</td>
       <td>
         <div style="font-weight:500">${escHtml(o.customer.name)}</div>
         <div style="font-size:11.5px;color:var(--text2)">${escHtml(o.customer.email)}</div>
+        <div style="font-size:11px;color:var(--text2)">${escHtml(fmtPhone(o.customer.phone))}</div>
       </td>
+      <td style="font-family:monospace;font-size:12px;color:var(--text2);white-space:nowrap">${escHtml(fmtCPF(o.customer.document))}</td>
       <td style="font-size:12.5px;color:var(--text2)">${offerTd}</td>
-      <td style="color:var(--text2)">${methodLabel[o.paymentMethod] || o.paymentMethod}</td>
+      <td style="color:var(--text2)">${methodLabel[o.paymentMethod] || o.paymentMethod}${o.installments > 1 ? `<div style="font-size:11px">${o.installments}x</div>` : ''}</td>
       <td class="price-cell">${amount}</td>
       <td>${statusBadge(o.chargeStatus || o.status)}</td>
       <td style="display:flex;gap:6px;align-items:center">
@@ -1633,8 +1655,43 @@ function openOrderDetail(id) {
   document.getElementById('order-detail-modal-backdrop').classList.remove('hidden');
 }
 
+function exportOrdersCSV() {
+  if (!orders.length) { toast('Nenhuma compra para exportar', 'error'); return; }
+  const headers = ['Data', 'Nome', 'Email', 'Telefone', 'CPF', 'Oferta', 'Cupom', 'Método', 'Parcelas', 'Valor (R$)', 'Desconto (R$)', 'Status', 'ID Pagar.me'];
+  const methodLabel = { credit_card: 'Cartão', pix: 'PIX', boleto: 'Boleto' };
+  const fmt = cents => (cents != null && cents !== undefined) ? (cents / 100).toFixed(2).replace('.', ',') : '';
+  const rows = orders.map(o => [
+    new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+    o.customer?.name   || '',
+    o.customer?.email  || '',
+    fmtPhone(o.customer?.phone || ''),
+    fmtCPF(o.customer?.document || ''),
+    o.offer?.name      || '',
+    o.coupon?.code     || '',
+    methodLabel[o.paymentMethod] || o.paymentMethod || '',
+    o.installments     || 1,
+    fmt(o.finalAmountCents),
+    fmt(o.discountCents),
+    o.chargeStatus     || o.status || '',
+    o.pagarmeOrderId   || '',
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+  const csv  = [headers.map(h => `"${h}"`).join(','), ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `compras_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`${orders.length} compra(s) exportadas`, 'success');
+}
+
 // Wiring orders events
 document.getElementById('btn-orders-refresh')?.addEventListener('click', loadOrders);
+document.getElementById('btn-orders-export')?.addEventListener('click', exportOrdersCSV);
 
 document.getElementById('btn-orders-sync')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-orders-sync');
