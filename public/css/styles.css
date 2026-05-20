@@ -1361,15 +1361,23 @@ body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity
   }
 
   .summary-content {
-    padding: 28px 24px 24px;
+    padding: 20px 24px 16px;
     height: auto;
     justify-content: flex-start;
   }
 
-  .mentor-circles { margin-bottom: 20px; }
+  .mentor-circles { margin-bottom: 14px; }
   .mentor-circle  { width: 64px; height: 64px; }
+  .mentor-circle--single { width: 72px; height: 72px; }
   .pricing-value  { font-size: 28px; }
   .quick-features { gap: 9px; }
+
+  /* elementos ocultos no step-1 não devem ocupar espaço no mobile */
+  body.step-1 .pricing-block,
+  body.step-1 .quick-features,
+  body.step-1 .summary-sep:not(:first-of-type) {
+    display: none;
+  }
 
   .form-panel { border-left: none; border-top: 1px solid var(--border); }
   .form-content { padding: 28px 24px; max-width: 100%; }
@@ -1400,9 +1408,12 @@ body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity
 
 /* ─── Small tablet / large phone (600px) ─── */
 @media (max-width: 600px) {
-  .summary-content { padding: 22px 20px 20px; }
+  .summary-content { padding: 16px 18px 14px; }
 
-  .mentor-circle   { width: 58px; height: 58px; }
+  .mentor-circle        { width: 54px; height: 54px; }
+  .mentor-circle--single { width: 60px; height: 60px; }
+  .mentor-circles       { margin-bottom: 12px; }
+  .brand-lockup         { margin-bottom: 14px; }
   .pricing-value   { font-size: 26px; }
 
   .form-content    { padding: 22px 18px; }
@@ -1419,7 +1430,9 @@ body.step-2 .mobile-price { visibility: visible; opacity: 1; transition: opacity
 
 /* ─── Mobile (480px) ─── */
 @media (max-width: 480px) {
-  .mentor-circle { width: 54px; height: 54px; }
+  .mentor-circle         { width: 48px; height: 48px; }
+  .mentor-circle--single { width: 54px; height: 54px; }
+  .summary-content       { padding: 14px 16px 12px; }
 
   .form-content  { padding: 18px 16px; }
   .form-title    { font-size: 19px; }
