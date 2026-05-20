@@ -124,6 +124,14 @@ function applyConfig(cfg) {
   const wrapIg = document.getElementById('wrap-instagram');
   if (wrapIg) wrapIg.classList.toggle('hidden', !cfg.showInstagram);
 
+  // Mostrar/ocultar seção de perfil médico (especialidade + CRM)
+  const sectionMedical = document.getElementById('section-profissional');
+  if (sectionMedical) sectionMedical.classList.toggle('hidden', cfg.showMedicalFields === false);
+
+  // Mostrar/ocultar seção de cupom
+  const sectionCoupon = document.getElementById('section-coupon');
+  if (sectionCoupon) sectionCoupon.classList.toggle('hidden', cfg.showCoupon === false);
+
   // Garantia configurável por oferta
   const gBlock = document.getElementById('guarantee-block');
   if (gBlock) {

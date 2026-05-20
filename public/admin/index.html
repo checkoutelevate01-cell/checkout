@@ -863,6 +863,24 @@
         <div class="field-group fg-full">
           <div class="toggle-row">
             <label class="toggle">
+              <input type="checkbox" id="offer-show-medical-fields" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Coletar especialidade médica e CRM</span>
+          </div>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="offer-show-coupon" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Exibir campo de cupom de desconto</span>
+          </div>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
               <input type="checkbox" id="offer-active" checked />
               <span class="toggle-slider"></span>
             </label>
@@ -1250,9 +1268,11 @@ function openOfferModal(id) {
     document.getElementById('offer-pix-expires').value    = '3600';
     document.getElementById('offer-boleto-days').value  = '3';
     document.getElementById('offer-whatsapp').value          = '';
-    document.getElementById('offer-show-instagram').checked  = false;
-    document.getElementById('offer-active').checked          = true;
-    document.getElementById('offer-guarantee-title').value   = '';
+    document.getElementById('offer-show-instagram').checked      = false;
+    document.getElementById('offer-show-medical-fields').checked = true;
+    document.getElementById('offer-show-coupon').checked         = true;
+    document.getElementById('offer-active').checked              = true;
+    document.getElementById('offer-guarantee-title').value       = '';
     document.getElementById('offer-guarantee-text').value    = '';
     document.getElementById('offer-guarantee-sub').value     = '';
   } else {
@@ -1272,9 +1292,11 @@ function openOfferModal(id) {
     document.getElementById('offer-pix-expires').value    = o.pixExpiresIn || 3600;
     document.getElementById('offer-boleto-days').value   = o.boletoDueDays || 3;
     document.getElementById('offer-whatsapp').value          = o.whatsappContact || '';
-    document.getElementById('offer-show-instagram').checked  = !!o.showInstagram;
-    document.getElementById('offer-active').checked          = o.active !== false;
-    document.getElementById('offer-guarantee-title').value   = o.guaranteeTitle || '';
+    document.getElementById('offer-show-instagram').checked      = !!o.showInstagram;
+    document.getElementById('offer-show-medical-fields').checked = o.showMedicalFields !== false;
+    document.getElementById('offer-show-coupon').checked         = o.showCoupon !== false;
+    document.getElementById('offer-active').checked              = o.active !== false;
+    document.getElementById('offer-guarantee-title').value       = o.guaranteeTitle || '';
     document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
     document.getElementById('offer-guarantee-sub').value     = o.guaranteeSub   || '';
   }
@@ -1301,6 +1323,8 @@ async function saveOffer() {
     boletoDueDays:       parseInt(document.getElementById('offer-boleto-days').value) || 3,
     whatsappContact:     document.getElementById('offer-whatsapp').value.trim(),
     showInstagram:       document.getElementById('offer-show-instagram').checked,
+    showMedicalFields:   document.getElementById('offer-show-medical-fields').checked,
+    showCoupon:          document.getElementById('offer-show-coupon').checked,
     active:              document.getElementById('offer-active').checked,
     guaranteeTitle:      document.getElementById('offer-guarantee-title').value.trim(),
     guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),

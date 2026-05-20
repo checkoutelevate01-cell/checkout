@@ -40,6 +40,8 @@ function mapOffer(row) {
     pixExpiresIn:        row.pix_expires_in,
     boletoDueDays:       row.boleto_due_days,
     showInstagram:       row.show_instagram || false,
+    showMedicalFields:   row.show_medical_fields ?? true,
+    showCoupon:          row.show_coupon ?? true,
     guaranteeTitle:      row.guarantee_title || '',
     guaranteeText:       row.guarantee_text  || '',
     guaranteeSub:        row.guarantee_sub   || '',
@@ -273,6 +275,8 @@ app.get('/api/config', async (req, res) => {
       interestRate,
       whatsappContact:    offer ? (offer.whatsappContact || '') : (process.env.WHATSAPP_CONTACT || ''),
       showInstagram:      offer ? (offer.showInstagram || false) : false,
+      showMedicalFields:  offer ? (offer.showMedicalFields ?? true) : true,
+      showCoupon:         offer ? (offer.showCoupon ?? true) : true,
       guaranteeTitle:     offer ? (offer.guaranteeTitle || '') : '',
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
@@ -668,10 +672,12 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       whatsapp_contact:    req.body.whatsappContact     || '',
       pix_expires_in:      parseInt(req.body.pixExpiresIn, 10)     || 3600,
       boleto_due_days:     parseInt(req.body.boletoDueDays, 10)    || 3,
-      show_instagram:      req.body.showInstagram === true,
-      guarantee_title:     req.body.guaranteeTitle  || '',
-      guarantee_text:      req.body.guaranteeText   || '',
-      guarantee_sub:       req.body.guaranteeSub    || '',
+      show_instagram:       req.body.showInstagram === true,
+      show_medical_fields:  req.body.showMedicalFields !== false,
+      show_coupon:          req.body.showCoupon !== false,
+      guarantee_title:      req.body.guaranteeTitle  || '',
+      guarantee_text:       req.body.guaranteeText   || '',
+      guarantee_sub:        req.body.guaranteeSub    || '',
       active:              req.body.active !== false,
     }).select().single();
 
@@ -700,6 +706,8 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.pixExpiresIn        !== undefined) updates.pix_expires_in       = parseInt(req.body.pixExpiresIn, 10);
     if (req.body.boletoDueDays       !== undefined) updates.boleto_due_days      = parseInt(req.body.boletoDueDays, 10);
     if (req.body.showInstagram        !== undefined) updates.show_instagram        = req.body.showInstagram === true;
+    if (req.body.showMedicalFields    !== undefined) updates.show_medical_fields   = req.body.showMedicalFields === true;
+    if (req.body.showCoupon           !== undefined) updates.show_coupon           = req.body.showCoupon === true;
     if (req.body.guaranteeTitle       !== undefined) updates.guarantee_title       = req.body.guaranteeTitle;
     if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;
     if (req.body.guaranteeSub         !== undefined) updates.guarantee_sub         = req.body.guaranteeSub;
