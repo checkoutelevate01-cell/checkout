@@ -949,6 +949,11 @@
           </select>
         </div>
         <div class="field-group fg-full">
+          <label>Mensagem ao aplicar o cupom <span style="color:var(--text2);font-weight:400">(opcional)</span></label>
+          <textarea id="coupon-message" rows="2" placeholder="Ex: Parabéns, você ganhou acesso exclusivo como aluno Elevate!" style="resize:vertical"></textarea>
+          <small style="color:var(--text2);font-size:11px">Se preenchido, substitui a mensagem padrão "Cupom aplicado! Desconto de R$ X" no checkout.</small>
+        </div>
+        <div class="field-group fg-full">
           <div class="toggle-row">
             <label class="toggle">
               <input type="checkbox" id="coupon-active" checked />
@@ -1454,6 +1459,7 @@ function openCouponModal(id) {
     document.getElementById('coupon-value').value    = '';
     document.getElementById('coupon-max-uses').value = '';
     document.getElementById('coupon-offer-id').value = '';
+    document.getElementById('coupon-message').value  = '';
     document.getElementById('coupon-active').checked = true;
     document.getElementById('coupon-value-label').textContent = 'Valor (%)';
   } else {
@@ -1466,6 +1472,7 @@ function openCouponModal(id) {
     document.getElementById('coupon-value').value    = c.type === 'fixed' ? (c.value / 100).toFixed(2) : c.value;
     document.getElementById('coupon-max-uses').value = c.maxUses != null ? c.maxUses : '';
     document.getElementById('coupon-offer-id').value = c.offerId || '';
+    document.getElementById('coupon-message').value  = c.message || '';
     document.getElementById('coupon-active').checked = c.active !== false;
     document.getElementById('coupon-value-label').textContent = c.type === 'percent' ? 'Valor (%)' : 'Valor (R$)';
   }
@@ -1487,6 +1494,7 @@ async function saveCoupon() {
     value,
     maxUses: maxUsesRaw !== '' ? parseInt(maxUsesRaw) : null,
     offerId: document.getElementById('coupon-offer-id').value || null,
+    message: document.getElementById('coupon-message').value.trim() || null,
     active:  document.getElementById('coupon-active').checked,
   };
 

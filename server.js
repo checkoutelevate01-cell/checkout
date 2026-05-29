@@ -61,6 +61,7 @@ function mapCoupon(row) {
     maxUses:   row.max_uses,
     usedCount: row.used_count,
     offerId:   row.offer_id,
+    message:   row.message   || null,
     active:    row.active,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -620,12 +621,13 @@ app.post('/api/coupon/validate', async (req, res) => {
       : Math.min(coupon.value, basePrice);
 
     res.json({
-      valid: true,
-      code:  coupon.code,
-      type:  coupon.type,
-      value: coupon.value,
+      valid:     true,
+      code:      coupon.code,
+      type:      coupon.type,
+      value:     coupon.value,
       discount,
       finalPrice: basePrice - discount,
+      message:   coupon.message || null,
     });
   } catch (err) {
     console.error('[Coupon]', err.message);
@@ -751,6 +753,7 @@ app.post('/admin/api/coupons', authOnlyAdmin, async (req, res) => {
       max_uses:  req.body.maxUses != null && req.body.maxUses !== '' ? parseInt(req.body.maxUses, 10) : null,
       used_count: 0,
       offer_id:  req.body.offerId || null,
+      message:   req.body.message?.trim() || null,
       active:    req.body.active !== false,
     }).select().single();
 
@@ -771,6 +774,7 @@ app.put('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
     if (req.body.value   !== undefined) updates.value     = parseFloat(req.body.value);
     if (req.body.maxUses !== undefined) updates.max_uses  = req.body.maxUses === '' || req.body.maxUses == null ? null : parseInt(req.body.maxUses, 10);
     if (req.body.offerId !== undefined) updates.offer_id  = req.body.offerId || null;
+    if (req.body.message !== undefined) updates.message   = req.body.message?.trim() || null;
     if (req.body.active  !== undefined) updates.active    = req.body.active;
     updates.updated_at = new Date().toISOString();
 

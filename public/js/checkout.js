@@ -508,7 +508,7 @@ function setupCoupon() {
         state.couponCode = data.code;
         state.discount   = data.discount;
         resultEl.className = 'coupon-result success';
-        resultEl.textContent = `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
+        resultEl.textContent = data.message || `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
         applyDiscountDisplay(data.finalPrice);
         toggleFreeOrderUI();
       }
