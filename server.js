@@ -110,6 +110,7 @@ async function appendOrder(record) {
     pix:                record.pix,
     boleto:             record.boleto,
     simulated:          record.simulated || false,
+    failure_reason:     record.failureReason || null,
     created_at:         record.createdAt,
   });
   if (error) throw error;
@@ -444,6 +445,7 @@ app.post('/api/order', async (req, res) => {
         customer: { name: customerData.name.trim(), email: customerData.email.trim().toLowerCase(), document: customerData.document.replace(/\D/g,''), phone: customerData.phone.replace(/\D/g,'') },
         offer: offer ? { id: offer.id, slug: offer.slug, name: offer.name } : null,
         coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
+        failureReason: acquirerMsg,
         leadId: leadId || null,
         createdAt: new Date().toISOString(),
       }).catch(e => console.error('[Orders]', e.message));
@@ -912,6 +914,7 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
       pix:              o.pix,
       boleto:           o.boleto,
       simulated:        o.simulated,
+      failureReason:    o.failure_reason || null,
       createdAt:        o.created_at,
     }));
 

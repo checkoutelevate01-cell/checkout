@@ -102,3 +102,6 @@ alter table offers add column if not exists show_coupon         boolean default 
 -- Migração: textos personalizados do banner por cupom
 alter table coupons add column if not exists banner_title text;
 alter table coupons add column if not exists banner_text  text;
+
+-- Migração: motivo de recusa do cartão
+alter table orders add column if not exists failure_reason text;

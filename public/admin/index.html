@@ -1678,6 +1678,7 @@ function openOrderDetail(id) {
       <div><div class="detail-label">Data</div><div class="detail-value">${date}</div></div>
       <div><div class="detail-label">Método</div><div class="detail-value">${methodLabel[o.paymentMethod] || o.paymentMethod}${o.installments > 1 ? ` (${o.installments}x)` : ''}</div></div>
       <div><div class="detail-label">Status</div><div class="detail-value">${o.chargeStatus || o.status}</div></div>
+      ${o.failureReason ? `<div style="grid-column:1/-1"><div class="detail-label">Motivo da recusa</div><div class="detail-value" style="color:var(--red)">${escHtml(o.failureReason)}</div></div>` : ''}
       ${!isCollaborator() ? `<div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>` : ''}
       ${!isCollaborator() && o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
       ${o.offer  ? `<div><div class="detail-label">Oferta</div><div class="detail-value">${escHtml(o.offer.name)}</div></div>` : ''}
