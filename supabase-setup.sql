@@ -99,5 +99,6 @@ alter table leads add column if not exists instagram text;
 alter table offers add column if not exists show_medical_fields boolean default true;
 alter table offers add column if not exists show_coupon         boolean default true;
 
--- Migração: mensagem personalizada por cupom
-alter table coupons add column if not exists message text;
+-- Migração: textos personalizados do banner por cupom
+alter table coupons add column if not exists banner_title text;
+alter table coupons add column if not exists banner_text  text;

@@ -508,8 +508,16 @@ function setupCoupon() {
         state.couponCode = data.code;
         state.discount   = data.discount;
         resultEl.className = 'coupon-result success';
-        resultEl.textContent = data.message || `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
+        resultEl.textContent = `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
         applyDiscountDisplay(data.finalPrice);
+        if (data.bannerTitle) {
+          const t = document.querySelector('#free-order-banner .free-banner-title');
+          if (t) t.textContent = data.bannerTitle;
+        }
+        if (data.bannerText) {
+          const s = document.querySelector('#free-order-banner .free-banner-sub');
+          if (s) s.textContent = data.bannerText;
+        }
         toggleFreeOrderUI();
         if (isFreeOrder()) resultEl.className = 'coupon-result hidden';
       }

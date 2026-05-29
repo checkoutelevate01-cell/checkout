@@ -949,9 +949,13 @@
           </select>
         </div>
         <div class="field-group fg-full">
-          <label>Mensagem ao aplicar o cupom <span style="color:var(--text2);font-weight:400">(opcional)</span></label>
-          <textarea id="coupon-message" rows="2" placeholder="Ex: Parabéns, você ganhou acesso exclusivo como aluno Elevate!" style="resize:vertical"></textarea>
-          <small style="color:var(--text2);font-size:11px">Se preenchido, substitui a mensagem padrão "Cupom aplicado! Desconto de R$ X" no checkout.</small>
+          <label>Texto principal do banner <span style="color:var(--text2);font-weight:400">(opcional)</span></label>
+          <input type="text" id="coupon-banner-title" placeholder="Parabéns, você ganhou!" />
+          <small style="color:var(--text2);font-size:11px">Título exibido no card verde quando o cupom cobre 100% do valor.</small>
+        </div>
+        <div class="field-group fg-full">
+          <label>Texto secundário do banner <span style="color:var(--text2);font-weight:400">(opcional)</span></label>
+          <textarea id="coupon-banner-text" rows="2" placeholder="Como mentorado(a) Elevate, você tem acesso especial a este conteúdo…" style="resize:vertical"></textarea>
         </div>
         <div class="field-group fg-full">
           <div class="toggle-row">
@@ -1459,7 +1463,8 @@ function openCouponModal(id) {
     document.getElementById('coupon-value').value    = '';
     document.getElementById('coupon-max-uses').value = '';
     document.getElementById('coupon-offer-id').value = '';
-    document.getElementById('coupon-message').value  = '';
+    document.getElementById('coupon-banner-title').value = '';
+    document.getElementById('coupon-banner-text').value  = '';
     document.getElementById('coupon-active').checked = true;
     document.getElementById('coupon-value-label').textContent = 'Valor (%)';
   } else {
@@ -1472,7 +1477,8 @@ function openCouponModal(id) {
     document.getElementById('coupon-value').value    = c.type === 'fixed' ? (c.value / 100).toFixed(2) : c.value;
     document.getElementById('coupon-max-uses').value = c.maxUses != null ? c.maxUses : '';
     document.getElementById('coupon-offer-id').value = c.offerId || '';
-    document.getElementById('coupon-message').value  = c.message || '';
+    document.getElementById('coupon-banner-title').value = c.bannerTitle || '';
+    document.getElementById('coupon-banner-text').value  = c.bannerText  || '';
     document.getElementById('coupon-active').checked = c.active !== false;
     document.getElementById('coupon-value-label').textContent = c.type === 'percent' ? 'Valor (%)' : 'Valor (R$)';
   }
@@ -1493,9 +1499,10 @@ async function saveCoupon() {
     type,
     value,
     maxUses: maxUsesRaw !== '' ? parseInt(maxUsesRaw) : null,
-    offerId: document.getElementById('coupon-offer-id').value || null,
-    message: document.getElementById('coupon-message').value.trim() || null,
-    active:  document.getElementById('coupon-active').checked,
+    offerId:     document.getElementById('coupon-offer-id').value || null,
+    bannerTitle: document.getElementById('coupon-banner-title').value.trim() || null,
+    bannerText:  document.getElementById('coupon-banner-text').value.trim()  || null,
+    active:      document.getElementById('coupon-active').checked,
   };
 
   if (!body.code) { toast('Informe o código do cupom', 'error'); return; }
