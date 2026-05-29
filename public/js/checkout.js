@@ -511,6 +511,7 @@ function setupCoupon() {
         resultEl.textContent = data.message || `✓ Cupom aplicado! Desconto de ${formatCurrency(data.discount)}`;
         applyDiscountDisplay(data.finalPrice);
         toggleFreeOrderUI();
+        if (isFreeOrder()) resultEl.className = 'coupon-result hidden';
       }
     } catch (e) {
       resultEl.className = 'coupon-result error';
