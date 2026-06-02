@@ -667,6 +667,7 @@ function goToThankyou(orderId) {
     method: state.method,
     wa:     state.config?.whatsappContact || '',
     value:  (finalCents / 100).toFixed(2),
+    offer:  state.config?.offerSlug || '',
   });
   window.location.href = `/obrigado?${params.toString()}`;
 }

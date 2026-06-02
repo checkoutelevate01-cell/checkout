@@ -906,6 +906,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Página de obrigado -->
+    <div class="modal-section">
+      <div class="modal-section-title">Página de Obrigado</div>
+      <div class="form-grid full">
+        <div class="field-group fg-full">
+          <label class="field-label">Mensagem de obrigado</label>
+          <textarea id="offer-thank-you-message" rows="3" placeholder="Linha 1: título (ex: Aguarde o contato da nossa equipe)&#10;Linha 2: subtexto (ex: Nossa equipe entrará em contato em até 24 horas úteis.)" style="resize:vertical"></textarea>
+          <span class="field-hint">Primeira linha = título em destaque. Segunda linha = subtexto. Deixe vazio para usar o texto padrão.</span>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn-cancel" data-close="offer-modal-backdrop">Cancelar</button>
       <button class="btn-save" id="btn-save-offer">Salvar oferta</button>
@@ -1284,6 +1297,7 @@ function openOfferModal(id) {
     document.getElementById('offer-guarantee-title').value       = '';
     document.getElementById('offer-guarantee-text').value    = '';
     document.getElementById('offer-guarantee-sub').value     = '';
+    document.getElementById('offer-thank-you-message').value = '';
   } else {
     const o = offers.find(x => x.id === id);
     if (!o) return;
@@ -1308,6 +1322,7 @@ function openOfferModal(id) {
     document.getElementById('offer-guarantee-title').value       = o.guaranteeTitle || '';
     document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
     document.getElementById('offer-guarantee-sub').value     = o.guaranteeSub   || '';
+    document.getElementById('offer-thank-you-message').value = o.thankYouMessage || '';
   }
 
   modal.classList.remove('hidden');
@@ -1338,6 +1353,7 @@ async function saveOffer() {
     guaranteeTitle:      document.getElementById('offer-guarantee-title').value.trim(),
     guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),
     guaranteeSub:        document.getElementById('offer-guarantee-sub').value.trim(),
+    thankYouMessage:     document.getElementById('offer-thank-you-message').value.trim(),
   };
 
   if (!body.name) { toast('Informe o nome da oferta', 'error'); return; }

@@ -45,6 +45,7 @@ function mapOffer(row) {
     guaranteeTitle:      row.guarantee_title || '',
     guaranteeText:       row.guarantee_text  || '',
     guaranteeSub:        row.guarantee_sub   || '',
+    thankYouMessage:     row.thank_you_message || '',
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -283,6 +284,7 @@ app.get('/api/config', async (req, res) => {
       guaranteeTitle:     offer ? (offer.guaranteeTitle || '') : '',
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
+      thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
       offerSlug:          slug || null,
     });
   } catch (err) {
@@ -684,6 +686,7 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       guarantee_title:      req.body.guaranteeTitle  || '',
       guarantee_text:       req.body.guaranteeText   || '',
       guarantee_sub:        req.body.guaranteeSub    || '',
+      thank_you_message:    req.body.thankYouMessage || '',
       active:              req.body.active !== false,
     }).select().single();
 
@@ -717,6 +720,7 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.guaranteeTitle       !== undefined) updates.guarantee_title       = req.body.guaranteeTitle;
     if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;
     if (req.body.guaranteeSub         !== undefined) updates.guarantee_sub         = req.body.guaranteeSub;
+    if (req.body.thankYouMessage      !== undefined) updates.thank_you_message     = req.body.thankYouMessage;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

@@ -105,3 +105,6 @@ alter table coupons add column if not exists banner_text  text;
 
 -- Migração: motivo de recusa do cartão
 alter table orders add column if not exists failure_reason text;
+
+-- Migração: mensagem customizável da página de obrigado
+alter table offers add column if not exists thank_you_message text default '';

@@ -190,7 +190,7 @@
 
     .ty-row-value.accent { color: var(--accent-ty); }
 
-    /* Steps section */
+    /* Next steps section */
     .ty-steps-title {
       font-size: 10px;
       font-weight: 700;
@@ -200,45 +200,19 @@
       margin-bottom: 20px;
     }
 
-    .ty-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .ty-next-msg {
+      text-align: center;
+      padding: 8px 0 4px;
     }
 
-    .ty-step {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-
-    .ty-step-num {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--accent-dim-ty);
-      border: 1px solid rgba(199, 159, 103, 0.22);
-      color: var(--accent-ty);
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-family: var(--font-sans);
-    }
-
-    .ty-step-body { padding-top: 2px; }
-
-    .ty-step-body strong {
-      display: block;
-      font-size: 14px;
+    .ty-next-title {
+      font-size: 15px;
       font-weight: 600;
       color: var(--text-ty);
-      margin-bottom: 3px;
+      margin: 0 0 8px;
     }
 
-    .ty-step-body p {
+    .ty-next-sub {
       font-size: 13px;
       color: var(--text-mid-ty);
       line-height: 1.55;
@@ -355,40 +329,9 @@
     <!-- Próximos passos -->
     <div class="ty-card">
       <p class="ty-steps-title">Próximos passos</p>
-      <div class="ty-steps">
-
-        <div class="ty-step">
-          <div class="ty-step-num">1</div>
-          <div class="ty-step-body">
-            <strong>Verifique seu e-mail</strong>
-            <p>Enviamos as instruções de acesso e boas-vindas para o seu e-mail.</p>
-          </div>
-        </div>
-
-        <div class="ty-step">
-          <div class="ty-step-num">2</div>
-          <div class="ty-step-body">
-            <strong>Aguarde o contato da nossa equipe</strong>
-            <p>Nossa equipe entrará em contato em até 24 horas úteis.</p>
-          </div>
-        </div>
-
-        <div class="ty-step">
-          <div class="ty-step-num">3</div>
-          <div class="ty-step-body">
-            <strong>Agende sua primeira sessão</strong>
-            <p>Você receberá o link para agendar o onboarding da mentoria.</p>
-          </div>
-        </div>
-
-        <div class="ty-step">
-          <div class="ty-step-num">4</div>
-          <div class="ty-step-body">
-            <strong>Acesse o grupo VIP</strong>
-            <p>Você será adicionado(a) ao grupo exclusivo no WhatsApp da turma.</p>
-          </div>
-        </div>
-
+      <div class="ty-next-msg">
+        <p class="ty-next-title" id="ty-next-title">Aguarde o contato da nossa equipe</p>
+        <p class="ty-next-sub" id="ty-next-sub">Nossa equipe entrará em contato em até 24 horas úteis.</p>
       </div>
     </div>
 
@@ -419,6 +362,7 @@
       const order  = p.get('order')  || '';
       const method = p.get('method') || 'credit_card';
       const wa     = p.get('wa')     || '';
+      const offer  = p.get('offer')  || '';
 
       const METHODS = {
         credit_card: 'Cartão de crédito — aprovado ✓',
@@ -468,6 +412,20 @@
         btnWA.href = `https://wa.me/${clean.startsWith('55') ? clean : '55' + clean}`;
       } else {
         btnWA.style.display = 'none';
+      }
+
+      // Custom thank-you message from offer config
+      if (offer) {
+        fetch(`/api/config?offer=${encodeURIComponent(offer)}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(cfg => {
+            if (cfg && cfg.thankYouMessage) {
+              const parts = cfg.thankYouMessage.split('\n').filter(Boolean);
+              if (parts[0]) document.getElementById('ty-next-title').textContent = parts[0];
+              if (parts[1]) document.getElementById('ty-next-sub').textContent   = parts[1];
+            }
+          })
+          .catch(() => {});
       }
     })();
   </script>
