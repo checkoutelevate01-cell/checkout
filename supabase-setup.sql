@@ -108,3 +108,13 @@ alter table orders add column if not exists failure_reason text;
 
 -- Migração: mensagem customizável da página de obrigado
 alter table offers add column if not exists thank_you_message text default '';
+
+-- Migração: página de investimento (entre coleta de dados e pagamento)
+alter table offers add column if not exists pitch_enabled     boolean default false;
+alter table offers add column if not exists pitch_title       text default '';
+alter table offers add column if not exists pitch_copy        text default '';
+alter table offers add column if not exists pitch_items       jsonb default '[]'::jsonb;
+alter table offers add column if not exists pitch_entry_label text default '';
+alter table offers add column if not exists pitch_entry_value text default '';
+alter table offers add column if not exists pitch_entry_note  text default '';
+alter table offers add column if not exists pitch_cta         text default '';

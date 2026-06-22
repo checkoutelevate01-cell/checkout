@@ -914,6 +914,52 @@
           <textarea id="offer-thank-you-message" rows="3" placeholder="Linha 1: título (ex: Aguarde o contato da nossa equipe)&#10;Linha 2: subtexto (ex: Nossa equipe entrará em contato em até 24 horas úteis.)" style="resize:vertical"></textarea>
           <span class="field-hint">Primeira linha = título em destaque. Segunda linha = subtexto. Deixe vazio para usar o texto padrão.</span>
         </div>
+
+        <!-- Página de Investimento -->
+        <div class="field-group fg-full" style="margin-top:8px">
+          <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;display:block">Página de Investimento (entre dados e pagamento)</label>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="offer-pitch-enabled" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Exibir página de investimento antes do pagamento</span>
+          </div>
+        </div>
+        <div id="pitch-fields" class="fg-full" style="display:contents">
+          <div class="field-group fg-full">
+            <label class="field-label">Título</label>
+            <input type="text" id="offer-pitch-title" placeholder="Ex: Seu investimento" />
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Copy / texto de apoio (opcional)</label>
+            <textarea id="offer-pitch-copy" rows="3" placeholder="Uma decisão que muda a sua trajetória..." style="resize:vertical"></textarea>
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Linhas de investimento</label>
+            <div id="pitch-items-list" style="display:flex;flex-direction:column;gap:8px"></div>
+            <button type="button" class="btn-sm btn-edit" id="btn-add-pitch-item" style="align-self:flex-start;margin-top:8px">+ Adicionar linha</button>
+            <span class="field-hint">Ex.: Rótulo "Investimento", Valor "12x R$ 12.500", Selo "apenas hoje" (opcional).</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Entrada — rótulo (opcional)</label>
+            <input type="text" id="offer-pitch-entry-label" placeholder="Ex: Entrada" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Entrada — valor</label>
+            <input type="text" id="offer-pitch-entry-value" placeholder="Ex: R$ 10.000" />
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Entrada — descrição</label>
+            <textarea id="offer-pitch-entry-note" rows="2" placeholder="Ex: Hoje você paga apenas a entrada e garante sua vaga." style="resize:vertical"></textarea>
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Texto do botão</label>
+            <input type="text" id="offer-pitch-cta" placeholder="Ex: Quero garantir minha vaga" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1080,6 +1126,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Save buttons
   document.getElementById('btn-save-offer').addEventListener('click', saveOffer);
   document.getElementById('btn-save-coupon').addEventListener('click', saveCoupon);
+
+  // Pitch (página de investimento)
+  document.getElementById('btn-add-pitch-item').addEventListener('click', () => addPitchItem());
+  document.getElementById('offer-pitch-enabled').addEventListener('change', updatePitchFieldsVisibility);
 
   // Modal close buttons
   document.querySelectorAll('[data-close]').forEach(btn => {
@@ -1296,6 +1346,14 @@ function openOfferModal(id) {
     document.getElementById('offer-guarantee-text').value    = '';
     document.getElementById('offer-guarantee-sub').value     = '';
     document.getElementById('offer-thank-you-message').value = '';
+    document.getElementById('offer-pitch-enabled').checked      = false;
+    document.getElementById('offer-pitch-title').value          = '';
+    document.getElementById('offer-pitch-copy').value           = '';
+    document.getElementById('offer-pitch-entry-label').value    = '';
+    document.getElementById('offer-pitch-entry-value').value    = '';
+    document.getElementById('offer-pitch-entry-note').value     = '';
+    document.getElementById('offer-pitch-cta').value            = '';
+    setPitchItems([]);
   } else {
     const o = offers.find(x => x.id === id);
     if (!o) return;
@@ -1321,10 +1379,59 @@ function openOfferModal(id) {
     document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
     document.getElementById('offer-guarantee-sub').value     = o.guaranteeSub   || '';
     document.getElementById('offer-thank-you-message').value = o.thankYouMessage || '';
+    document.getElementById('offer-pitch-enabled').checked      = !!o.pitchEnabled;
+    document.getElementById('offer-pitch-title').value          = o.pitchTitle      || '';
+    document.getElementById('offer-pitch-copy').value           = o.pitchCopy       || '';
+    document.getElementById('offer-pitch-entry-label').value    = o.pitchEntryLabel || '';
+    document.getElementById('offer-pitch-entry-value').value    = o.pitchEntryValue || '';
+    document.getElementById('offer-pitch-entry-note').value     = o.pitchEntryNote  || '';
+    document.getElementById('offer-pitch-cta').value            = o.pitchCta        || '';
+    setPitchItems(o.pitchItems || []);
   }
 
+  updatePitchFieldsVisibility();
   modal.classList.remove('hidden');
   document.getElementById('offer-name').focus();
+}
+
+// ── Pitch (página de investimento) ───────────────────────
+function updatePitchFieldsVisibility() {
+  const on = document.getElementById('offer-pitch-enabled').checked;
+  document.getElementById('pitch-fields').style.display = on ? 'contents' : 'none';
+}
+
+function addPitchItem(item = {}) {
+  const list = document.getElementById('pitch-items-list');
+  const row  = document.createElement('div');
+  row.className = 'pitch-item-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input type="text" class="pitch-item-label" placeholder="Rótulo (ex: Investimento)" />
+    <input type="text" class="pitch-item-value" placeholder="Valor (ex: 12x R$ 12.500)" />
+    <input type="text" class="pitch-item-badge" placeholder="Selo (ex: apenas hoje)" />
+    <button type="button" class="btn-sm btn-del pitch-item-remove" title="Remover" style="padding:6px 10px">&times;</button>
+  `;
+  row.querySelector('.pitch-item-label').value = item.label || '';
+  row.querySelector('.pitch-item-value').value = item.value || '';
+  row.querySelector('.pitch-item-badge').value = item.badge || '';
+  row.querySelector('.pitch-item-remove').addEventListener('click', () => row.remove());
+  list.appendChild(row);
+}
+
+function setPitchItems(items) {
+  const list = document.getElementById('pitch-items-list');
+  list.innerHTML = '';
+  (Array.isArray(items) ? items : []).forEach(it => addPitchItem(it));
+}
+
+function getPitchItems() {
+  return Array.from(document.querySelectorAll('#pitch-items-list .pitch-item-row'))
+    .map(row => ({
+      label: row.querySelector('.pitch-item-label').value.trim(),
+      value: row.querySelector('.pitch-item-value').value.trim(),
+      badge: row.querySelector('.pitch-item-badge').value.trim(),
+    }))
+    .filter(it => it.label || it.value);
 }
 
 async function saveOffer() {
@@ -1352,6 +1459,14 @@ async function saveOffer() {
     guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),
     guaranteeSub:        document.getElementById('offer-guarantee-sub').value.trim(),
     thankYouMessage:     document.getElementById('offer-thank-you-message').value.trim(),
+    pitchEnabled:        document.getElementById('offer-pitch-enabled').checked,
+    pitchTitle:          document.getElementById('offer-pitch-title').value.trim(),
+    pitchCopy:           document.getElementById('offer-pitch-copy').value.trim(),
+    pitchItems:          getPitchItems(),
+    pitchEntryLabel:     document.getElementById('offer-pitch-entry-label').value.trim(),
+    pitchEntryValue:     document.getElementById('offer-pitch-entry-value').value.trim(),
+    pitchEntryNote:      document.getElementById('offer-pitch-entry-note').value.trim(),
+    pitchCta:            document.getElementById('offer-pitch-cta').value.trim(),
   };
 
   if (!body.name) { toast('Informe o nome da oferta', 'error'); return; }

@@ -22,6 +22,19 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
+// Sanitiza a lista de linhas de investimento da página de pitch
+function sanitizePitchItems(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((it) => ({
+      label: String(it?.label ?? '').slice(0, 120),
+      value: String(it?.value ?? '').slice(0, 80),
+      badge: String(it?.badge ?? '').slice(0, 40),
+    }))
+    .filter((it) => it.label || it.value)
+    .slice(0, 12);
+}
+
 // ─── Mappers (snake_case DB → camelCase app) ─────────────────────────────────
 function mapOffer(row) {
   if (!row) return null;
@@ -46,6 +59,14 @@ function mapOffer(row) {
     guaranteeText:       row.guarantee_text  || '',
     guaranteeSub:        row.guarantee_sub   || '',
     thankYouMessage:     row.thank_you_message || '',
+    pitchEnabled:        row.pitch_enabled === true,
+    pitchTitle:          row.pitch_title       || '',
+    pitchCopy:           row.pitch_copy        || '',
+    pitchItems:          Array.isArray(row.pitch_items) ? row.pitch_items : [],
+    pitchEntryLabel:     row.pitch_entry_label || '',
+    pitchEntryValue:     row.pitch_entry_value || '',
+    pitchEntryNote:      row.pitch_entry_note  || '',
+    pitchCta:            row.pitch_cta         || '',
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -285,6 +306,16 @@ app.get('/api/config', async (req, res) => {
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
       thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
+      pitch: {
+        enabled:    offer ? offer.pitchEnabled === true : false,
+        title:      offer ? (offer.pitchTitle      || '') : '',
+        copy:       offer ? (offer.pitchCopy       || '') : '',
+        items:      offer && Array.isArray(offer.pitchItems) ? offer.pitchItems : [],
+        entryLabel: offer ? (offer.pitchEntryLabel || '') : '',
+        entryValue: offer ? (offer.pitchEntryValue || '') : '',
+        entryNote:  offer ? (offer.pitchEntryNote  || '') : '',
+        cta:        offer ? (offer.pitchCta        || '') : '',
+      },
       offerSlug:          slug || null,
     });
   } catch (err) {
@@ -687,6 +718,14 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       guarantee_text:       req.body.guaranteeText   || '',
       guarantee_sub:        req.body.guaranteeSub    || '',
       thank_you_message:    req.body.thankYouMessage || '',
+      pitch_enabled:        req.body.pitchEnabled === true,
+      pitch_title:          req.body.pitchTitle      || '',
+      pitch_copy:           req.body.pitchCopy       || '',
+      pitch_items:          sanitizePitchItems(req.body.pitchItems),
+      pitch_entry_label:    req.body.pitchEntryLabel || '',
+      pitch_entry_value:    req.body.pitchEntryValue || '',
+      pitch_entry_note:     req.body.pitchEntryNote  || '',
+      pitch_cta:            req.body.pitchCta        || '',
       active:              req.body.active !== false,
     }).select().single();
 
@@ -721,6 +760,14 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;
     if (req.body.guaranteeSub         !== undefined) updates.guarantee_sub         = req.body.guaranteeSub;
     if (req.body.thankYouMessage      !== undefined) updates.thank_you_message     = req.body.thankYouMessage;
+    if (req.body.pitchEnabled         !== undefined) updates.pitch_enabled         = req.body.pitchEnabled === true;
+    if (req.body.pitchTitle           !== undefined) updates.pitch_title           = req.body.pitchTitle;
+    if (req.body.pitchCopy            !== undefined) updates.pitch_copy            = req.body.pitchCopy;
+    if (req.body.pitchItems           !== undefined) updates.pitch_items           = sanitizePitchItems(req.body.pitchItems);
+    if (req.body.pitchEntryLabel      !== undefined) updates.pitch_entry_label     = req.body.pitchEntryLabel;
+    if (req.body.pitchEntryValue      !== undefined) updates.pitch_entry_value     = req.body.pitchEntryValue;
+    if (req.body.pitchEntryNote       !== undefined) updates.pitch_entry_note      = req.body.pitchEntryNote;
+    if (req.body.pitchCta             !== undefined) updates.pitch_cta             = req.body.pitchCta;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

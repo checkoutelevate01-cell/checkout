@@ -129,6 +129,11 @@
             <div class="step-num">1</div>
             <span>Seus dados</span>
           </div>
+          <div class="step-line hidden" id="step-line-pitch"></div>
+          <div class="step hidden" id="step-ind-pitch">
+            <div class="step-num">2</div>
+            <span>Investimento</span>
+          </div>
           <div class="step-line"></div>
           <div class="step" id="step-ind-2">
             <div class="step-num">2</div>
@@ -182,6 +187,33 @@
             <svg class="btn-spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></path></svg>
           </button>
 
+        </div>
+
+        <!-- ══ ETAPA Investimento (opcional) ══ -->
+        <div id="step-pitch" class="hidden">
+          <section class="pitch-card">
+            <h2 class="pitch-title" id="pitch-title"></h2>
+            <p class="pitch-copy" id="pitch-copy"></p>
+
+            <ul class="pitch-items" id="pitch-items"></ul>
+
+            <div class="pitch-entry hidden" id="pitch-entry">
+              <div class="pitch-entry-head">
+                <span class="pitch-entry-label" id="pitch-entry-label">Entrada</span>
+                <span class="pitch-entry-value" id="pitch-entry-value"></span>
+              </div>
+              <p class="pitch-entry-note" id="pitch-entry-note"></p>
+            </div>
+          </section>
+
+          <button type="button" class="btn-submit" id="btn-pitch-continue">
+            <span class="btn-text">Continuar</span>
+          </button>
+
+          <button type="button" class="btn-back" id="btn-back-pitch-step1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Voltar e editar dados
+          </button>
         </div>
 
         <!-- ══ ETAPA 2 — Pagamento ══ -->

@@ -15,6 +15,7 @@ const state = {
   lastOrderId:      '',
   leadId:           null,
   currentStep:      1,
+  hasPitch:         false,
 };
 
 // ─── DOM refs ────────────────────────────────────────────────────
@@ -132,6 +133,9 @@ function applyConfig(cfg) {
   const sectionCoupon = document.getElementById('section-coupon');
   if (sectionCoupon) sectionCoupon.classList.toggle('hidden', cfg.showCoupon === false);
 
+  // Página de investimento (pitch) configurável por oferta
+  applyPitchConfig(cfg.pitch);
+
   // Garantia configurável por oferta
   const gBlock = document.getElementById('guarantee-block');
   if (gBlock) {
@@ -146,6 +150,75 @@ function applyConfig(cfg) {
       if (gSub)   gSub.textContent   = cfg.guaranteeSub   || '';
     }
   }
+}
+
+function applyPitchConfig(pitch) {
+  const hasContent = !!(pitch && pitch.enabled && (
+    pitch.title || pitch.copy || (pitch.items && pitch.items.length) || pitch.entryValue
+  ));
+  state.hasPitch = hasContent;
+
+  // Indicador de etapas: revela a etapa "Investimento" e renumera "Pagamento"
+  const indPitch  = document.getElementById('step-ind-pitch');
+  const linePitch = document.getElementById('step-line-pitch');
+  const indPay    = document.getElementById('step-ind-2');
+  if (indPitch)  indPitch.classList.toggle('hidden', !hasContent);
+  if (linePitch) linePitch.classList.toggle('hidden', !hasContent);
+  if (indPay) {
+    const payNum = indPay.querySelector('.step-num');
+    if (payNum) payNum.textContent = hasContent ? '3' : '2';
+  }
+
+  if (!hasContent) return;
+
+  const setText = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || ''; };
+  setText('pitch-title', pitch.title || 'Seu investimento');
+  setText('pitch-copy',  pitch.copy  || '');
+
+  // Linhas de investimento
+  const itemsEl = document.getElementById('pitch-items');
+  if (itemsEl) {
+    itemsEl.innerHTML = '';
+    (pitch.items || []).forEach((it, idx) => {
+      // A última linha é destacada quando há mais de uma (oferta especial)
+      const highlight = (pitch.items.length > 1 && idx === pitch.items.length - 1);
+      const li = document.createElement('li');
+      li.className = 'pitch-item' + (highlight ? ' pitch-item--highlight' : '');
+      const badge = it.badge ? `<span class="pitch-item-badge">${escapeHtml(it.badge)}</span>` : '';
+      li.innerHTML = `
+        <div class="pitch-item-text">
+          <span class="pitch-item-label">${escapeHtml(it.label || '')}</span>
+          ${badge}
+        </div>
+        <span class="pitch-item-value">${escapeHtml(it.value || '')}</span>`;
+      itemsEl.appendChild(li);
+    });
+  }
+
+  // Caixa de entrada (destaque)
+  const entryEl = document.getElementById('pitch-entry');
+  if (entryEl) {
+    const hasEntry = !!pitch.entryValue;
+    entryEl.classList.toggle('hidden', !hasEntry);
+    if (hasEntry) {
+      setText('pitch-entry-label', pitch.entryLabel || 'Entrada');
+      setText('pitch-entry-value', pitch.entryValue || '');
+      setText('pitch-entry-note',  pitch.entryNote  || '');
+    }
+  }
+
+  // Texto do botão de continuar
+  const btnContinue = document.getElementById('btn-pitch-continue');
+  if (btnContinue) {
+    const t = btnContinue.querySelector('.btn-text');
+    if (t) t.textContent = pitch.cta || 'Continuar para pagamento';
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {
@@ -389,31 +462,63 @@ function validateForm() {
 // ─── 2-Step flow ─────────────────────────────────────────────────
 function setupSteps() {
   document.getElementById('btn-step1')?.addEventListener('click', handleStep1);
-  document.getElementById('btn-back-step1')?.addEventListener('click', goToStep1);
+  document.getElementById('btn-back-step1')?.addEventListener('click', goBackFromPayment);
+  document.getElementById('btn-pitch-continue')?.addEventListener('click', goToStep2);
+  document.getElementById('btn-back-pitch-step1')?.addEventListener('click', goToStep1);
+}
+
+function setBodyStep(stepClass) {
+  document.body.className = document.body.className.replace(/step-(?:\d|pitch)/g, '').trim() + ' ' + stepClass;
 }
 
 function goToStep1() {
   state.currentStep = 1;
-  document.body.className = document.body.className.replace(/step-\d/g, '').trim() + ' step-1';
+  setBodyStep('step-1');
   document.getElementById('step-1').classList.remove('hidden');
+  document.getElementById('step-pitch').classList.add('hidden');
   document.getElementById('step-2').classList.add('hidden');
   document.getElementById('form-title').textContent = 'Seus dados';
   document.getElementById('step-ind-1').classList.add('active');
   document.getElementById('step-ind-1').classList.remove('done');
-  document.getElementById('step-ind-2').classList.remove('active');
+  document.getElementById('step-ind-pitch')?.classList.remove('active', 'done');
+  document.getElementById('step-ind-2').classList.remove('active', 'done');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToPitch() {
+  state.currentStep = 'pitch';
+  setBodyStep('step-pitch');
+  document.getElementById('step-1').classList.add('hidden');
+  document.getElementById('step-pitch').classList.remove('hidden');
+  document.getElementById('step-2').classList.add('hidden');
+  document.getElementById('form-title').textContent = 'Investimento';
+  document.getElementById('step-ind-1').classList.remove('active');
+  document.getElementById('step-ind-1').classList.add('done');
+  document.getElementById('step-ind-pitch')?.classList.add('active');
+  document.getElementById('step-ind-pitch')?.classList.remove('done');
+  document.getElementById('step-ind-2').classList.remove('active', 'done');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function goToStep2() {
   state.currentStep = 2;
-  document.body.className = document.body.className.replace(/step-\d/g, '').trim() + ' step-2';
+  setBodyStep('step-2');
   document.getElementById('step-1').classList.add('hidden');
+  document.getElementById('step-pitch').classList.add('hidden');
   document.getElementById('step-2').classList.remove('hidden');
   document.getElementById('form-title').textContent = 'Pagamento';
   document.getElementById('step-ind-1').classList.remove('active');
   document.getElementById('step-ind-1').classList.add('done');
+  const indPitch = document.getElementById('step-ind-pitch');
+  if (state.hasPitch && indPitch) { indPitch.classList.remove('active'); indPitch.classList.add('done'); }
   document.getElementById('step-ind-2').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Volta da etapa de pagamento: vai para a página de investimento se ela existir
+function goBackFromPayment() {
+  if (state.hasPitch) goToPitch();
+  else goToStep1();
 }
 
 async function handleStep1() {
@@ -472,7 +577,8 @@ async function handleStep1() {
   btn.querySelector('.btn-text').textContent = 'Continuar para pagamento';
   btn.querySelector('.btn-spinner')?.classList.add('hidden');
 
-  goToStep2();
+  if (state.hasPitch) goToPitch();
+  else goToStep2();
 }
 
 // ─── Coupon ──────────────────────────────────────────────────────
