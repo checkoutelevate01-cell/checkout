@@ -152,9 +152,14 @@ function applyConfig(cfg) {
   }
 }
 
+// Garante espaço após "R$" (corrige entradas tipo "R$10.000" → "R$ 10.000")
+function normalizeMoney(str) {
+  return String(str || '').replace(/R\$\s*/g, 'R$ ').trim();
+}
+
 function applyPitchConfig(pitch) {
   const hasContent = !!(pitch && pitch.enabled && (
-    pitch.title || pitch.copy || (pitch.items && pitch.items.length) || pitch.entryValue
+    pitch.todayValue || pitch.installmentValue || pitch.totalValue
   ));
   state.hasPitch = hasContent;
 
@@ -172,53 +177,47 @@ function applyPitchConfig(pitch) {
   if (!hasContent) return;
 
   const setText = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || ''; };
-  setText('pitch-title', pitch.title || 'Seu investimento');
+  const setBlock = (id, show) => { const e = document.getElementById(id); if (e) e.classList.toggle('hidden', !show); };
+
+  setText('pitch-title', pitch.title || 'Resumo do seu investimento');
   setText('pitch-copy',  pitch.copy  || '');
 
-  // Linhas de investimento
-  const itemsEl = document.getElementById('pitch-items');
-  if (itemsEl) {
-    itemsEl.innerHTML = '';
-    (pitch.items || []).forEach((it, idx) => {
-      // A última linha é destacada quando há mais de uma (oferta especial)
-      const highlight = (pitch.items.length > 1 && idx === pitch.items.length - 1);
-      const li = document.createElement('li');
-      li.className = 'pitch-item' + (highlight ? ' pitch-item--highlight' : '');
-      const badge = it.badge ? `<span class="pitch-item-badge">${escapeHtml(it.badge)}</span>` : '';
-      li.innerHTML = `
-        <div class="pitch-item-text">
-          <span class="pitch-item-label">${escapeHtml(it.label || '')}</span>
-          ${badge}
-        </div>
-        <span class="pitch-item-value">${escapeHtml(it.value || '')}</span>`;
-      itemsEl.appendChild(li);
-    });
+  // Bloco "Hoje você paga" (destaque principal)
+  const hasToday = !!pitch.todayValue;
+  setBlock('pitch-today', hasToday);
+  if (hasToday) {
+    setText('pitch-today-value', normalizeMoney(pitch.todayValue));
+    setText('pitch-today-label', pitch.todayLabel || '');
+    const badgeEl = document.getElementById('pitch-today-badge');
+    if (badgeEl) {
+      badgeEl.textContent = pitch.todayBadge || '';
+      badgeEl.classList.toggle('hidden', !pitch.todayBadge);
+    }
   }
 
-  // Caixa de entrada (destaque)
-  const entryEl = document.getElementById('pitch-entry');
-  if (entryEl) {
-    const hasEntry = !!pitch.entryValue;
-    entryEl.classList.toggle('hidden', !hasEntry);
-    if (hasEntry) {
-      setText('pitch-entry-label', pitch.entryLabel || 'Entrada');
-      setText('pitch-entry-value', pitch.entryValue || '');
-      setText('pitch-entry-note',  pitch.entryNote  || '');
-    }
+  // Bloco "Depois, parcelado em"
+  const hasLater = !!pitch.installmentValue;
+  setBlock('pitch-later', hasLater);
+  if (hasLater) setText('pitch-later-value', normalizeMoney(pitch.installmentValue));
+
+  // Linha "Total da mentoria"
+  const hasTotal = !!pitch.totalValue;
+  setBlock('pitch-total', hasTotal);
+  if (hasTotal) setText('pitch-total-value', normalizeMoney(pitch.totalValue));
+
+  // Microcopy abaixo do botão
+  const footEl = document.getElementById('pitch-footnote');
+  if (footEl) {
+    footEl.textContent = pitch.footnote || '';
+    footEl.classList.toggle('hidden', !pitch.footnote);
   }
 
   // Texto do botão de continuar
   const btnContinue = document.getElementById('btn-pitch-continue');
   if (btnContinue) {
     const t = btnContinue.querySelector('.btn-text');
-    if (t) t.textContent = pitch.cta || 'Continuar para pagamento';
+    if (t) t.textContent = pitch.cta || 'Quero garantir minha vaga';
   }
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function updateInstallDisplay(price, max, noInterestUpTo, interestRate) {

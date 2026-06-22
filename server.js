@@ -22,19 +22,6 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-// Sanitiza a lista de linhas de investimento da página de pitch
-function sanitizePitchItems(items) {
-  if (!Array.isArray(items)) return [];
-  return items
-    .map((it) => ({
-      label: String(it?.label ?? '').slice(0, 120),
-      value: String(it?.value ?? '').slice(0, 80),
-      badge: String(it?.badge ?? '').slice(0, 40),
-    }))
-    .filter((it) => it.label || it.value)
-    .slice(0, 12);
-}
-
 // ─── Mappers (snake_case DB → camelCase app) ─────────────────────────────────
 function mapOffer(row) {
   if (!row) return null;
@@ -62,11 +49,13 @@ function mapOffer(row) {
     pitchEnabled:        row.pitch_enabled === true,
     pitchTitle:          row.pitch_title       || '',
     pitchCopy:           row.pitch_copy        || '',
-    pitchItems:          Array.isArray(row.pitch_items) ? row.pitch_items : [],
-    pitchEntryLabel:     row.pitch_entry_label || '',
-    pitchEntryValue:     row.pitch_entry_value || '',
-    pitchEntryNote:      row.pitch_entry_note  || '',
     pitchCta:            row.pitch_cta         || '',
+    pitchTodayLabel:       row.pitch_today_label       ?? 'entrada',
+    pitchTodayValue:       row.pitch_today_value       || '',
+    pitchTodayBadge:       row.pitch_today_badge       || '',
+    pitchInstallmentValue: row.pitch_installment_value || '',
+    pitchTotalValue:       row.pitch_total_value       || '',
+    pitchFootnote:         row.pitch_footnote          || '',
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -307,14 +296,16 @@ app.get('/api/config', async (req, res) => {
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
       thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
       pitch: {
-        enabled:    offer ? offer.pitchEnabled === true : false,
-        title:      offer ? (offer.pitchTitle      || '') : '',
-        copy:       offer ? (offer.pitchCopy       || '') : '',
-        items:      offer && Array.isArray(offer.pitchItems) ? offer.pitchItems : [],
-        entryLabel: offer ? (offer.pitchEntryLabel || '') : '',
-        entryValue: offer ? (offer.pitchEntryValue || '') : '',
-        entryNote:  offer ? (offer.pitchEntryNote  || '') : '',
-        cta:        offer ? (offer.pitchCta        || '') : '',
+        enabled:          offer ? offer.pitchEnabled === true : false,
+        title:            offer ? (offer.pitchTitle            || '') : '',
+        copy:             offer ? (offer.pitchCopy             || '') : '',
+        cta:              offer ? (offer.pitchCta              || '') : '',
+        todayLabel:       offer ? (offer.pitchTodayLabel       ?? 'entrada') : 'entrada',
+        todayValue:       offer ? (offer.pitchTodayValue       || '') : '',
+        todayBadge:       offer ? (offer.pitchTodayBadge       || '') : '',
+        installmentValue: offer ? (offer.pitchInstallmentValue || '') : '',
+        totalValue:       offer ? (offer.pitchTotalValue       || '') : '',
+        footnote:         offer ? (offer.pitchFootnote         || '') : '',
       },
       offerSlug:          slug || null,
     });
@@ -721,11 +712,13 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       pitch_enabled:        req.body.pitchEnabled === true,
       pitch_title:          req.body.pitchTitle      || '',
       pitch_copy:           req.body.pitchCopy       || '',
-      pitch_items:          sanitizePitchItems(req.body.pitchItems),
-      pitch_entry_label:    req.body.pitchEntryLabel || '',
-      pitch_entry_value:    req.body.pitchEntryValue || '',
-      pitch_entry_note:     req.body.pitchEntryNote  || '',
       pitch_cta:            req.body.pitchCta        || '',
+      pitch_today_label:       req.body.pitchTodayLabel       ?? 'entrada',
+      pitch_today_value:       req.body.pitchTodayValue       || '',
+      pitch_today_badge:       req.body.pitchTodayBadge       || '',
+      pitch_installment_value: req.body.pitchInstallmentValue || '',
+      pitch_total_value:       req.body.pitchTotalValue       || '',
+      pitch_footnote:          req.body.pitchFootnote         || '',
       active:              req.body.active !== false,
     }).select().single();
 
@@ -763,11 +756,13 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.pitchEnabled         !== undefined) updates.pitch_enabled         = req.body.pitchEnabled === true;
     if (req.body.pitchTitle           !== undefined) updates.pitch_title           = req.body.pitchTitle;
     if (req.body.pitchCopy            !== undefined) updates.pitch_copy            = req.body.pitchCopy;
-    if (req.body.pitchItems           !== undefined) updates.pitch_items           = sanitizePitchItems(req.body.pitchItems);
-    if (req.body.pitchEntryLabel      !== undefined) updates.pitch_entry_label     = req.body.pitchEntryLabel;
-    if (req.body.pitchEntryValue      !== undefined) updates.pitch_entry_value     = req.body.pitchEntryValue;
-    if (req.body.pitchEntryNote       !== undefined) updates.pitch_entry_note      = req.body.pitchEntryNote;
     if (req.body.pitchCta             !== undefined) updates.pitch_cta             = req.body.pitchCta;
+    if (req.body.pitchTodayLabel       !== undefined) updates.pitch_today_label       = req.body.pitchTodayLabel;
+    if (req.body.pitchTodayValue       !== undefined) updates.pitch_today_value       = req.body.pitchTodayValue;
+    if (req.body.pitchTodayBadge       !== undefined) updates.pitch_today_badge       = req.body.pitchTodayBadge;
+    if (req.body.pitchInstallmentValue !== undefined) updates.pitch_installment_value = req.body.pitchInstallmentValue;
+    if (req.body.pitchTotalValue       !== undefined) updates.pitch_total_value       = req.body.pitchTotalValue;
+    if (req.body.pitchFootnote         !== undefined) updates.pitch_footnote          = req.body.pitchFootnote;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

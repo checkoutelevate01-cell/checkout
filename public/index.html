@@ -192,23 +192,37 @@
         <!-- ══ ETAPA Investimento (opcional) ══ -->
         <div id="step-pitch" class="hidden">
           <section class="pitch-card">
-            <h2 class="pitch-title" id="pitch-title"></h2>
+            <h2 class="pitch-title" id="pitch-title">Resumo do seu investimento</h2>
             <p class="pitch-copy" id="pitch-copy"></p>
 
-            <ul class="pitch-items" id="pitch-items"></ul>
-
-            <div class="pitch-entry hidden" id="pitch-entry">
-              <div class="pitch-entry-head">
-                <span class="pitch-entry-label" id="pitch-entry-label">Entrada</span>
-                <span class="pitch-entry-value" id="pitch-entry-value"></span>
+            <!-- Bloco principal: Hoje você paga -->
+            <div class="pitch-today hidden" id="pitch-today">
+              <div class="pitch-today-top">
+                <span class="pitch-today-caption">Hoje você paga</span>
+                <span class="pitch-today-badge hidden" id="pitch-today-badge"></span>
               </div>
-              <p class="pitch-entry-note" id="pitch-entry-note"></p>
+              <div class="pitch-today-value" id="pitch-today-value"></div>
+              <div class="pitch-today-label" id="pitch-today-label"></div>
+            </div>
+
+            <!-- Bloco secundário: parcelado -->
+            <div class="pitch-later hidden" id="pitch-later">
+              <span class="pitch-later-caption">Depois, parcelado em</span>
+              <span class="pitch-later-value" id="pitch-later-value"></span>
+            </div>
+
+            <!-- Total -->
+            <div class="pitch-total hidden" id="pitch-total">
+              <span class="pitch-total-caption">Total da mentoria</span>
+              <span class="pitch-total-value" id="pitch-total-value"></span>
             </div>
           </section>
 
           <button type="button" class="btn-submit" id="btn-pitch-continue">
-            <span class="btn-text">Continuar</span>
+            <span class="btn-text">Quero garantir minha vaga</span>
           </button>
+
+          <p class="pitch-footnote hidden" id="pitch-footnote"></p>
 
           <button type="button" class="btn-back" id="btn-back-pitch-step1">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>

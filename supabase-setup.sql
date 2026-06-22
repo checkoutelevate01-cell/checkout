@@ -113,8 +113,17 @@ alter table offers add column if not exists thank_you_message text default '';
 alter table offers add column if not exists pitch_enabled     boolean default false;
 alter table offers add column if not exists pitch_title       text default '';
 alter table offers add column if not exists pitch_copy        text default '';
+alter table offers add column if not exists pitch_cta         text default '';
+-- (colunas antigas do modelo de lista — mantidas por compatibilidade, não usadas)
 alter table offers add column if not exists pitch_items       jsonb default '[]'::jsonb;
 alter table offers add column if not exists pitch_entry_label text default '';
 alter table offers add column if not exists pitch_entry_value text default '';
 alter table offers add column if not exists pitch_entry_note  text default '';
-alter table offers add column if not exists pitch_cta         text default '';
+
+-- Migração: página de investimento — modelo estruturado (hoje / parcelado / total)
+alter table offers add column if not exists pitch_today_label        text default 'entrada';
+alter table offers add column if not exists pitch_today_value        text default '';
+alter table offers add column if not exists pitch_today_badge        text default '';
+alter table offers add column if not exists pitch_installment_value  text default '';
+alter table offers add column if not exists pitch_total_value        text default '';
+alter table offers add column if not exists pitch_footnote           text default '';
