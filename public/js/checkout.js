@@ -195,10 +195,18 @@ function applyPitchConfig(pitch) {
     }
   }
 
-  // Bloco "Depois, parcelado em"
+  // Bloco "Depois, parcelado em" (com ancoragem opcional "de/por")
   const hasLater = !!pitch.installmentValue;
   setBlock('pitch-later', hasLater);
-  if (hasLater) setText('pitch-later-value', normalizeMoney(pitch.installmentValue));
+  if (hasLater) {
+    setText('pitch-later-caption', pitch.installmentLabel || 'Depois, parcelado em');
+    setText('pitch-later-value', normalizeMoney(pitch.installmentValue));
+    const wasEl = document.getElementById('pitch-later-was');
+    if (wasEl) {
+      wasEl.textContent = normalizeMoney(pitch.installmentWas);
+      wasEl.classList.toggle('hidden', !pitch.installmentWas);
+    }
+  }
 
   // Linha "Total da mentoria"
   const hasTotal = !!pitch.totalValue;

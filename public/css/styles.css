@@ -977,6 +977,20 @@ body.step-pitch .mobile-price { visibility: hidden; opacity: 0; }
   font-size: 13px;
   color: var(--text-mid);
   font-weight: 500;
+  flex: 1;
+}
+.pitch-later-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  white-space: nowrap;
+}
+.pitch-later-was {
+  font-size: 12px;
+  color: var(--text-soft);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
 }
 .pitch-later-value {
   font-size: 19px;

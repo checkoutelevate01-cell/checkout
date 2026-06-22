@@ -124,6 +124,8 @@ alter table offers add column if not exists pitch_entry_note  text default '';
 alter table offers add column if not exists pitch_today_label        text default 'entrada';
 alter table offers add column if not exists pitch_today_value        text default '';
 alter table offers add column if not exists pitch_today_badge        text default '';
+alter table offers add column if not exists pitch_installment_label  text default 'Depois, parcelado em';
+alter table offers add column if not exists pitch_installment_was    text default '';
 alter table offers add column if not exists pitch_installment_value  text default '';
 alter table offers add column if not exists pitch_total_value        text default '';
 alter table offers add column if not exists pitch_footnote           text default '';

@@ -957,13 +957,23 @@
           <div class="field-group fg-full" style="margin-top:4px">
             <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Demais valores</label>
           </div>
-          <div class="field-group">
-            <label class="field-label">Depois, parcelado em</label>
-            <input type="text" id="offer-pitch-installment-value" placeholder="12× de R$ 12.500" />
+          <div class="field-group fg-full">
+            <label class="field-label">Legenda do parcelado</label>
+            <input type="text" id="offer-pitch-installment-label" placeholder="Depois, parcelado em" />
+            <span class="field-hint">Ex.: "Valor da mentoria no dia do podcast".</span>
           </div>
           <div class="field-group">
-            <label class="field-label">Total da mentoria</label>
-            <input type="text" id="offer-pitch-total-value" placeholder="R$ 160.000" />
+            <label class="field-label">Preço cheio / "de" (riscado, opcional)</label>
+            <input type="text" id="offer-pitch-installment-was" placeholder="12× R$ 12.500" />
+            <span class="field-hint">Preço após o podcast — aparece riscado para ancorar.</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Parcelado (valor real)</label>
+            <input type="text" id="offer-pitch-installment-value" placeholder="12× R$ 10.000" />
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Total da mentoria (opcional)</label>
+            <input type="text" id="offer-pitch-total-value" placeholder="R$ 120.000" />
           </div>
 
           <div class="field-group fg-full">
@@ -1368,6 +1378,8 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-today-label').value         = '';
     document.getElementById('offer-pitch-today-value').value         = '';
     document.getElementById('offer-pitch-today-badge').value         = '';
+    document.getElementById('offer-pitch-installment-label').value   = '';
+    document.getElementById('offer-pitch-installment-was').value     = '';
     document.getElementById('offer-pitch-installment-value').value   = '';
     document.getElementById('offer-pitch-total-value').value         = '';
     document.getElementById('offer-pitch-footnote').value            = '';
@@ -1403,6 +1415,8 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-today-label').value         = o.pitchTodayLabel       || '';
     document.getElementById('offer-pitch-today-value').value         = o.pitchTodayValue       || '';
     document.getElementById('offer-pitch-today-badge').value         = o.pitchTodayBadge       || '';
+    document.getElementById('offer-pitch-installment-label').value   = o.pitchInstallmentLabel || '';
+    document.getElementById('offer-pitch-installment-was').value     = o.pitchInstallmentWas   || '';
     document.getElementById('offer-pitch-installment-value').value   = o.pitchInstallmentValue || '';
     document.getElementById('offer-pitch-total-value').value         = o.pitchTotalValue       || '';
     document.getElementById('offer-pitch-footnote').value            = o.pitchFootnote         || '';
@@ -1451,6 +1465,8 @@ async function saveOffer() {
     pitchTodayLabel:       document.getElementById('offer-pitch-today-label').value.trim(),
     pitchTodayValue:       document.getElementById('offer-pitch-today-value').value.trim(),
     pitchTodayBadge:       document.getElementById('offer-pitch-today-badge').value.trim(),
+    pitchInstallmentLabel: document.getElementById('offer-pitch-installment-label').value.trim(),
+    pitchInstallmentWas:   document.getElementById('offer-pitch-installment-was').value.trim(),
     pitchInstallmentValue: document.getElementById('offer-pitch-installment-value').value.trim(),
     pitchTotalValue:       document.getElementById('offer-pitch-total-value').value.trim(),
     pitchFootnote:         document.getElementById('offer-pitch-footnote').value.trim(),
