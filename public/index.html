@@ -192,35 +192,30 @@
         <!-- ══ ETAPA Investimento (opcional) ══ -->
         <div id="step-pitch" class="hidden">
           <section class="pitch-card">
-            <h2 class="pitch-title" id="pitch-title">Resumo do seu investimento</h2>
+            <h2 class="pitch-title" id="pitch-title">Investimento da Mentoria</h2>
             <p class="pitch-copy" id="pitch-copy"></p>
 
-            <!-- Bloco 1: Entrada (protagonista) -->
-            <div class="pitch-today hidden" id="pitch-today">
-              <div class="pitch-today-top">
-                <span class="pitch-today-caption">Hoje você paga</span>
-                <span class="pitch-today-badge hidden" id="pitch-today-badge"></span>
-              </div>
-              <div class="pitch-today-label" id="pitch-today-label"></div>
-              <div class="pitch-today-value" id="pitch-today-value"></div>
+            <!-- Bloco 1: Valor oficial (âncora alta, discreto) -->
+            <div class="pitch-official hidden" id="pitch-official">
+              <span class="pitch-official-caption" id="pitch-official-caption">Valor oficial</span>
+              <span class="pitch-official-value" id="pitch-official-value"></span>
             </div>
 
-            <!-- Bloco 2: parcelamento — duas condições temporais -->
-            <div class="pitch-plans">
-              <!-- Condição 1: preço de participante (hoje) — destaque -->
-              <div class="pitch-later hidden" id="pitch-later">
-                <span class="pitch-later-caption" id="pitch-later-caption">Depois, parcelado em</span>
-                <span class="pitch-later-value" id="pitch-later-value"></span>
-              </div>
+            <!-- Bloco 2: Condição de participante (realce, médio) -->
+            <div class="pitch-participant hidden" id="pitch-participant">
+              <span class="pitch-participant-caption" id="pitch-participant-caption"></span>
+              <span class="pitch-participant-value" id="pitch-participant-value"></span>
+            </div>
 
-              <!-- Linha de incentivo (opcional) -->
-              <p class="pitch-savings hidden" id="pitch-savings"></p>
+            <!-- Linha de incentivo (opcional) -->
+            <p class="pitch-savings hidden" id="pitch-savings"></p>
 
-              <!-- Condição 2: após o evento — discreto -->
-              <div class="pitch-after hidden" id="pitch-after">
-                <span class="pitch-after-caption" id="pitch-after-caption">Após o evento</span>
-                <span class="pitch-after-value" id="pitch-after-value"></span>
-              </div>
+            <!-- Bloco 3: Entrada (protagonista, dourado) -->
+            <div class="pitch-entry hidden" id="pitch-entry">
+              <span class="pitch-entry-badge hidden" id="pitch-entry-badge"></span>
+              <p class="pitch-entry-intro" id="pitch-entry-intro"></p>
+              <div class="pitch-entry-value" id="pitch-entry-value"></div>
+              <p class="pitch-entry-note" id="pitch-entry-note"></p>
             </div>
           </section>
 

@@ -916,74 +916,48 @@ body.step-pitch .mobile-price { visibility: hidden; opacity: 0; }
 }
 .pitch-copy:empty { display: none; }
 
-/* Bloco principal — Hoje você paga (o maior número da tela) */
-.pitch-today {
-  padding: 20px 20px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--accent-glow);
-  background: linear-gradient(135deg, rgba(199,159,103,0.14) 0%, rgba(199,159,103,0.05) 100%);
-}
-.pitch-today-top {
+/* Bloco 1 — Valor oficial (âncora alta, discreta, no topo) */
+.pitch-official {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
-.pitch-today-caption {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-mid);
+.pitch-official-caption {
+  font-size: 12.5px;
+  color: var(--text-soft);
+  font-weight: 500;
 }
-.pitch-today-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #1F1F1F;
-  background: var(--accent);
-  padding: 3px 9px;
-  border-radius: 20px;
-}
-.pitch-today-label {
+.pitch-official-value {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.02em;
-  margin-bottom: 2px;
-}
-.pitch-today-label:empty { display: none; }
-.pitch-today-value {
-  font-family: var(--font-serif);
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 1.05;
-  color: var(--accent);
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  color: var(--text-mid);
+  white-space: nowrap;
 }
 
-/* Bloco 2 — parcelamento (duas condições temporais) */
-.pitch-plans { margin-top: 14px; }
-
-/* Condição 1 — preço de participante hoje (destaque, médio) */
-.pitch-later {
+/* Bloco 2 — Condição de participante (realce, médio) */
+.pitch-participant {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  margin-top: 12px;
   padding: 16px 18px;
   border-radius: 14px;
   background: var(--bg-panel);
   border: 1px solid var(--accent-glow);
 }
-.pitch-later-caption {
+.pitch-participant-caption {
   font-size: 13px;
   color: var(--text-mid);
   font-weight: 500;
   flex: 1;
 }
-.pitch-later-value {
+.pitch-participant-value {
   font-size: 20px;
   font-weight: 600;
   color: var(--text);
@@ -993,7 +967,7 @@ body.step-pitch .mobile-price { visibility: hidden; opacity: 0; }
 
 /* Linha de incentivo (economia) */
 .pitch-savings {
-  margin: 10px 2px;
+  margin: 12px 2px;
   padding: 9px 14px;
   border-radius: 10px;
   background: var(--accent-dim);
@@ -1004,25 +978,49 @@ body.step-pitch .mobile-price { visibility: hidden; opacity: 0; }
   letter-spacing: 0.01em;
 }
 
-/* Condição 2 — após o evento (discreta, cinza, sem riscado) */
-.pitch-after {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 10px;
-  padding: 4px 4px 0;
+/* Bloco 3 — Entrada (protagonista, dourado, o maior número da tela) */
+.pitch-entry {
+  margin-top: 14px;
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-glow);
+  background: linear-gradient(135deg, rgba(199,159,103,0.14) 0%, rgba(199,159,103,0.05) 100%);
 }
-.pitch-after-caption {
-  font-size: 12.5px;
-  color: var(--text-soft);
+.pitch-entry-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1F1F1F;
+  background: var(--accent);
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-bottom: 10px;
 }
-.pitch-after-value {
+.pitch-entry-intro {
   font-size: 14px;
-  font-weight: 500;
-  color: var(--text-mid);
-  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+  margin: 0 0 8px;
 }
+.pitch-entry-intro:empty { display: none; }
+.pitch-entry-value {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.pitch-entry-note {
+  font-size: 12.5px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+.pitch-entry-note:empty { display: none; }
 
 /* Microcopy abaixo do botão */
 .pitch-footnote {

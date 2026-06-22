@@ -176,7 +176,7 @@ function renderInstallment(raw) {
 
 function applyPitchConfig(pitch) {
   const hasContent = !!(pitch && pitch.enabled && (
-    pitch.todayValue || pitch.installmentValue || pitch.totalValue
+    pitch.todayValue || pitch.installmentValue || pitch.afterValue
   ));
   state.hasPitch = hasContent;
 
@@ -196,29 +196,24 @@ function applyPitchConfig(pitch) {
   const setText = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || ''; };
   const setBlock = (id, show) => { const e = document.getElementById(id); if (e) e.classList.toggle('hidden', !show); };
 
-  setText('pitch-title', pitch.title || 'Resumo do seu investimento');
+  setText('pitch-title', pitch.title || 'Investimento da Mentoria');
   setText('pitch-copy',  pitch.copy  || '');
 
-  // Bloco "Hoje você paga" (destaque principal)
-  const hasToday = !!pitch.todayValue;
-  setBlock('pitch-today', hasToday);
-  if (hasToday) {
-    setText('pitch-today-value', normalizeMoney(pitch.todayValue));
-    setText('pitch-today-label', pitch.todayLabel || '');
-    const badgeEl = document.getElementById('pitch-today-badge');
-    if (badgeEl) {
-      badgeEl.textContent = pitch.todayBadge || '';
-      badgeEl.classList.toggle('hidden', !pitch.todayBadge);
-    }
+  // Bloco 1: Valor oficial (âncora alta, discreto)
+  const hasOfficial = !!pitch.afterValue;
+  setBlock('pitch-official', hasOfficial);
+  if (hasOfficial) {
+    setText('pitch-official-caption', pitch.afterLabel || 'Valor oficial');
+    setText('pitch-official-value', normalizeInstallment(pitch.afterValue));
   }
 
-  // Condição 1: preço de participante (hoje) — destaque, "12×" dourado
-  const hasLater = !!pitch.installmentValue;
-  setBlock('pitch-later', hasLater);
-  if (hasLater) {
-    setText('pitch-later-caption', pitch.installmentLabel || 'Depois, parcelado em');
-    const laterVal = document.getElementById('pitch-later-value');
-    if (laterVal) laterVal.innerHTML = renderInstallment(pitch.installmentValue);
+  // Bloco 2: Condição de participante (realce, "12×" dourado)
+  const hasParticipant = !!pitch.installmentValue;
+  setBlock('pitch-participant', hasParticipant);
+  if (hasParticipant) {
+    setText('pitch-participant-caption', pitch.installmentLabel || '');
+    const pVal = document.getElementById('pitch-participant-value');
+    if (pVal) pVal.innerHTML = renderInstallment(pitch.installmentValue);
   }
 
   // Linha de incentivo (opcional)
@@ -228,12 +223,18 @@ function applyPitchConfig(pitch) {
     savingsEl.classList.toggle('hidden', !pitch.savings);
   }
 
-  // Condição 2: após o evento — discreto, sem riscado
-  const hasAfter = !!pitch.afterValue;
-  setBlock('pitch-after', hasAfter);
-  if (hasAfter) {
-    setText('pitch-after-caption', pitch.afterLabel || 'Após o evento');
-    setText('pitch-after-value', normalizeInstallment(pitch.afterValue));
+  // Bloco 3: Entrada (protagonista, dourado)
+  const hasEntry = !!pitch.todayValue;
+  setBlock('pitch-entry', hasEntry);
+  if (hasEntry) {
+    setText('pitch-entry-intro', pitch.todayLabel || '');
+    setText('pitch-entry-value', normalizeMoney(pitch.todayValue));
+    setText('pitch-entry-note',  pitch.todayNote || '');
+    const badgeEl = document.getElementById('pitch-entry-badge');
+    if (badgeEl) {
+      badgeEl.textContent = pitch.todayBadge || '';
+      badgeEl.classList.toggle('hidden', !pitch.todayBadge);
+    }
   }
 
   // Microcopy abaixo do botão

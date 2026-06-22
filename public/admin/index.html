@@ -931,53 +931,60 @@
         <div id="pitch-fields" class="fg-full" style="display:contents">
           <div class="field-group fg-full">
             <label class="field-label">Título</label>
-            <input type="text" id="offer-pitch-title" placeholder="Resumo do seu investimento" />
+            <input type="text" id="offer-pitch-title" placeholder="Investimento da Mentoria" />
           </div>
           <div class="field-group fg-full">
             <label class="field-label">Subtítulo / copy (opcional)</label>
-            <input type="text" id="offer-pitch-copy" placeholder="Confira os valores antes de continuar" />
+            <input type="text" id="offer-pitch-copy" placeholder="(opcional)" />
           </div>
 
           <div class="field-group fg-full" style="margin-top:4px">
-            <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Bloco "Hoje você paga" (destaque principal)</label>
+            <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Bloco 1 — Valor oficial (âncora, discreto, no topo)</label>
           </div>
           <div class="field-group">
-            <label class="field-label">Valor de hoje</label>
+            <label class="field-label">Legenda</label>
+            <input type="text" id="offer-pitch-after-label" placeholder="Valor oficial" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Valor</label>
+            <input type="text" id="offer-pitch-after-value" placeholder="12× de R$ 12.500" />
+          </div>
+
+          <div class="field-group fg-full" style="margin-top:4px">
+            <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Bloco 2 — Condição de participante (realce, meio)</label>
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Legenda</label>
+            <input type="text" id="offer-pitch-installment-label" placeholder="Condição exclusiva para participantes do podcast" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Valor</label>
+            <input type="text" id="offer-pitch-installment-value" placeholder="12× de R$ 10.000" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Linha de incentivo (opcional)</label>
+            <input type="text" id="offer-pitch-savings" placeholder="Fechando hoje, você economiza R$ 30.000." />
+          </div>
+
+          <div class="field-group fg-full" style="margin-top:4px">
+            <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Bloco 3 — Entrada (protagonista, dourado, embaixo)</label>
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-label">Texto de introdução</label>
+            <input type="text" id="offer-pitch-today-label" placeholder="Para garantir sua vaga hoje, você paga apenas a entrada:" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Valor da entrada</label>
             <input type="text" id="offer-pitch-today-value" placeholder="R$ 10.000" />
           </div>
           <div class="field-group">
-            <label class="field-label">Texto ao lado do valor</label>
-            <input type="text" id="offer-pitch-today-label" placeholder="entrada" />
-          </div>
-          <div class="field-group fg-full">
             <label class="field-label">Selo de urgência (opcional)</label>
             <input type="text" id="offer-pitch-today-badge" placeholder="APENAS HOJE" />
           </div>
-
-          <div class="field-group fg-full" style="margin-top:4px">
-            <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Demais valores</label>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Condição 1 — legenda (destaque)</label>
-            <input type="text" id="offer-pitch-installment-label" placeholder="Preço de participante · hoje" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Condição 1 — valor</label>
-            <input type="text" id="offer-pitch-installment-value" placeholder="12× R$ 10.000" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">Condição 2 — legenda (discreta)</label>
-            <input type="text" id="offer-pitch-after-label" placeholder="Após o evento" />
-            <span class="field-hint">Deixa o lead ciente do valor que fica depois.</span>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Condição 2 — valor</label>
-            <input type="text" id="offer-pitch-after-value" placeholder="12× R$ 12.500" />
-          </div>
           <div class="field-group fg-full">
-            <label class="field-label">Linha de incentivo (opcional)</label>
-            <input type="text" id="offer-pitch-savings" placeholder="Fechando hoje, você economiza R$ 30.000." />
-            <span class="field-hint">Aparece em destaque entre os preços. Use só se o tom permitir.</span>
+            <label class="field-label">Texto abaixo do valor</label>
+            <input type="text" id="offer-pitch-today-note" placeholder="O restante em até 12× sem juros no cartão." />
+            <span class="field-hint">Deixa claro que o 12× é do restante, não da entrada.</span>
           </div>
 
           <div class="field-group fg-full">
@@ -1382,6 +1389,7 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-today-label').value         = '';
     document.getElementById('offer-pitch-today-value').value         = '';
     document.getElementById('offer-pitch-today-badge').value         = '';
+    document.getElementById('offer-pitch-today-note').value          = '';
     document.getElementById('offer-pitch-installment-label').value   = '';
     document.getElementById('offer-pitch-installment-value').value   = '';
     document.getElementById('offer-pitch-after-label').value         = '';
@@ -1420,6 +1428,7 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-today-label').value         = o.pitchTodayLabel       || '';
     document.getElementById('offer-pitch-today-value').value         = o.pitchTodayValue       || '';
     document.getElementById('offer-pitch-today-badge').value         = o.pitchTodayBadge       || '';
+    document.getElementById('offer-pitch-today-note').value          = o.pitchTodayNote        || '';
     document.getElementById('offer-pitch-installment-label').value   = o.pitchInstallmentLabel || '';
     document.getElementById('offer-pitch-installment-value').value   = o.pitchInstallmentValue || '';
     document.getElementById('offer-pitch-after-label').value         = o.pitchAfterLabel       || '';
@@ -1471,6 +1480,7 @@ async function saveOffer() {
     pitchTodayLabel:       document.getElementById('offer-pitch-today-label').value.trim(),
     pitchTodayValue:       document.getElementById('offer-pitch-today-value').value.trim(),
     pitchTodayBadge:       document.getElementById('offer-pitch-today-badge').value.trim(),
+    pitchTodayNote:        document.getElementById('offer-pitch-today-note').value.trim(),
     pitchInstallmentLabel: document.getElementById('offer-pitch-installment-label').value.trim(),
     pitchInstallmentValue: document.getElementById('offer-pitch-installment-value').value.trim(),
     pitchAfterLabel:       document.getElementById('offer-pitch-after-label').value.trim(),

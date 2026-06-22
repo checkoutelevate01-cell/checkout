@@ -53,9 +53,10 @@ function mapOffer(row) {
     pitchTodayLabel:       row.pitch_today_label       ?? 'entrada',
     pitchTodayValue:       row.pitch_today_value       || '',
     pitchTodayBadge:       row.pitch_today_badge       || '',
+    pitchTodayNote:        row.pitch_today_note        || '',
     pitchInstallmentLabel: row.pitch_installment_label ?? 'Depois, parcelado em',
     pitchInstallmentValue: row.pitch_installment_value || '',
-    pitchAfterLabel:       row.pitch_after_label       ?? 'Após o evento',
+    pitchAfterLabel:       row.pitch_after_label       ?? 'Valor oficial',
     pitchAfterValue:       row.pitch_after_value       || '',
     pitchSavings:          row.pitch_savings           || '',
     pitchTotalValue:       row.pitch_total_value       || '',
@@ -307,9 +308,10 @@ app.get('/api/config', async (req, res) => {
         todayLabel:       offer ? (offer.pitchTodayLabel       ?? 'entrada') : 'entrada',
         todayValue:       offer ? (offer.pitchTodayValue       || '') : '',
         todayBadge:       offer ? (offer.pitchTodayBadge       || '') : '',
+        todayNote:        offer ? (offer.pitchTodayNote        || '') : '',
         installmentLabel: offer ? (offer.pitchInstallmentLabel ?? 'Depois, parcelado em') : 'Depois, parcelado em',
         installmentValue: offer ? (offer.pitchInstallmentValue || '') : '',
-        afterLabel:       offer ? (offer.pitchAfterLabel       ?? 'Após o evento') : 'Após o evento',
+        afterLabel:       offer ? (offer.pitchAfterLabel       ?? 'Valor oficial') : 'Valor oficial',
         afterValue:       offer ? (offer.pitchAfterValue       || '') : '',
         savings:          offer ? (offer.pitchSavings          || '') : '',
         totalValue:       offer ? (offer.pitchTotalValue       || '') : '',
@@ -724,6 +726,7 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       pitch_today_label:       req.body.pitchTodayLabel       ?? 'entrada',
       pitch_today_value:       req.body.pitchTodayValue       || '',
       pitch_today_badge:       req.body.pitchTodayBadge       || '',
+      pitch_today_note:        req.body.pitchTodayNote        || '',
       pitch_installment_label: req.body.pitchInstallmentLabel ?? 'Depois, parcelado em',
       pitch_installment_value: req.body.pitchInstallmentValue || '',
       pitch_after_label:       req.body.pitchAfterLabel       ?? 'Após o evento',
@@ -772,6 +775,7 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.pitchTodayLabel       !== undefined) updates.pitch_today_label       = req.body.pitchTodayLabel;
     if (req.body.pitchTodayValue       !== undefined) updates.pitch_today_value       = req.body.pitchTodayValue;
     if (req.body.pitchTodayBadge       !== undefined) updates.pitch_today_badge       = req.body.pitchTodayBadge;
+    if (req.body.pitchTodayNote        !== undefined) updates.pitch_today_note        = req.body.pitchTodayNote;
     if (req.body.pitchInstallmentLabel !== undefined) updates.pitch_installment_label = req.body.pitchInstallmentLabel;
     if (req.body.pitchInstallmentValue !== undefined) updates.pitch_installment_value = req.body.pitchInstallmentValue;
     if (req.body.pitchAfterLabel       !== undefined) updates.pitch_after_label       = req.body.pitchAfterLabel;
