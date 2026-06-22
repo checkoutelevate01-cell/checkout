@@ -195,17 +195,20 @@ function applyPitchConfig(pitch) {
     }
   }
 
-  // Bloco "Depois, parcelado em" (com ancoragem opcional "de/por")
+  // Bloco "parcelado de hoje"
   const hasLater = !!pitch.installmentValue;
   setBlock('pitch-later', hasLater);
   if (hasLater) {
     setText('pitch-later-caption', pitch.installmentLabel || 'Depois, parcelado em');
     setText('pitch-later-value', normalizeMoney(pitch.installmentValue));
-    const wasEl = document.getElementById('pitch-later-was');
-    if (wasEl) {
-      wasEl.textContent = normalizeMoney(pitch.installmentWas);
-      wasEl.classList.toggle('hidden', !pitch.installmentWas);
-    }
+  }
+
+  // Linha informativa "valor após"
+  const hasAfter = !!pitch.afterValue;
+  setBlock('pitch-after', hasAfter);
+  if (hasAfter) {
+    setText('pitch-after-caption', pitch.afterLabel || 'Após o podcast');
+    setText('pitch-after-value', normalizeMoney(pitch.afterValue));
   }
 
   // Linha "Total da mentoria"

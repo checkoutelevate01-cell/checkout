@@ -125,7 +125,10 @@ alter table offers add column if not exists pitch_today_label        text defaul
 alter table offers add column if not exists pitch_today_value        text default '';
 alter table offers add column if not exists pitch_today_badge        text default '';
 alter table offers add column if not exists pitch_installment_label  text default 'Depois, parcelado em';
-alter table offers add column if not exists pitch_installment_was    text default '';
 alter table offers add column if not exists pitch_installment_value  text default '';
+alter table offers add column if not exists pitch_after_label        text default 'Após o podcast';
+alter table offers add column if not exists pitch_after_value        text default '';
 alter table offers add column if not exists pitch_total_value        text default '';
 alter table offers add column if not exists pitch_footnote           text default '';
+-- (coluna do modelo de riscado/ancoragem — descontinuada, não usada)
+alter table offers add column if not exists pitch_installment_was    text default '';

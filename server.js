@@ -54,8 +54,9 @@ function mapOffer(row) {
     pitchTodayValue:       row.pitch_today_value       || '',
     pitchTodayBadge:       row.pitch_today_badge       || '',
     pitchInstallmentLabel: row.pitch_installment_label ?? 'Depois, parcelado em',
-    pitchInstallmentWas:   row.pitch_installment_was   || '',
     pitchInstallmentValue: row.pitch_installment_value || '',
+    pitchAfterLabel:       row.pitch_after_label       ?? 'Após o podcast',
+    pitchAfterValue:       row.pitch_after_value       || '',
     pitchTotalValue:       row.pitch_total_value       || '',
     pitchFootnote:         row.pitch_footnote          || '',
     active:              row.active,
@@ -306,8 +307,9 @@ app.get('/api/config', async (req, res) => {
         todayValue:       offer ? (offer.pitchTodayValue       || '') : '',
         todayBadge:       offer ? (offer.pitchTodayBadge       || '') : '',
         installmentLabel: offer ? (offer.pitchInstallmentLabel ?? 'Depois, parcelado em') : 'Depois, parcelado em',
-        installmentWas:   offer ? (offer.pitchInstallmentWas   || '') : '',
         installmentValue: offer ? (offer.pitchInstallmentValue || '') : '',
+        afterLabel:       offer ? (offer.pitchAfterLabel       ?? 'Após o podcast') : 'Após o podcast',
+        afterValue:       offer ? (offer.pitchAfterValue       || '') : '',
         totalValue:       offer ? (offer.pitchTotalValue       || '') : '',
         footnote:         offer ? (offer.pitchFootnote         || '') : '',
       },
@@ -721,8 +723,9 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
       pitch_today_value:       req.body.pitchTodayValue       || '',
       pitch_today_badge:       req.body.pitchTodayBadge       || '',
       pitch_installment_label: req.body.pitchInstallmentLabel ?? 'Depois, parcelado em',
-      pitch_installment_was:   req.body.pitchInstallmentWas   || '',
       pitch_installment_value: req.body.pitchInstallmentValue || '',
+      pitch_after_label:       req.body.pitchAfterLabel       ?? 'Após o podcast',
+      pitch_after_value:       req.body.pitchAfterValue       || '',
       pitch_total_value:       req.body.pitchTotalValue       || '',
       pitch_footnote:          req.body.pitchFootnote         || '',
       active:              req.body.active !== false,
@@ -767,8 +770,9 @@ app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
     if (req.body.pitchTodayValue       !== undefined) updates.pitch_today_value       = req.body.pitchTodayValue;
     if (req.body.pitchTodayBadge       !== undefined) updates.pitch_today_badge       = req.body.pitchTodayBadge;
     if (req.body.pitchInstallmentLabel !== undefined) updates.pitch_installment_label = req.body.pitchInstallmentLabel;
-    if (req.body.pitchInstallmentWas   !== undefined) updates.pitch_installment_was   = req.body.pitchInstallmentWas;
     if (req.body.pitchInstallmentValue !== undefined) updates.pitch_installment_value = req.body.pitchInstallmentValue;
+    if (req.body.pitchAfterLabel       !== undefined) updates.pitch_after_label       = req.body.pitchAfterLabel;
+    if (req.body.pitchAfterValue       !== undefined) updates.pitch_after_value       = req.body.pitchAfterValue;
     if (req.body.pitchTotalValue       !== undefined) updates.pitch_total_value       = req.body.pitchTotalValue;
     if (req.body.pitchFootnote         !== undefined) updates.pitch_footnote          = req.body.pitchFootnote;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
