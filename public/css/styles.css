@@ -955,9 +955,11 @@ body.step-pitch .mobile-price { visibility: hidden; opacity: 0; }
   letter-spacing: -0.01em;
 }
 .pitch-today-label {
-  font-size: 13px;
-  color: var(--text-mid);
-  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  margin-top: 7px;
 }
 .pitch-today-label:empty { display: none; }
 
