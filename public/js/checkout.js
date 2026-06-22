@@ -157,6 +157,23 @@ function normalizeMoney(str) {
   return String(str || '').replace(/R\$\s*/g, 'R$ ').trim();
 }
 
+// Padroniza parcelamento: "12 x"/"12X"/"12 ×" → "12×" e espaço após R$
+function normalizeInstallment(str) {
+  return normalizeMoney(String(str || '').replace(/(\d+)\s*[x×]\s*/i, '$1× ')).trim();
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Renderiza valor de parcela com o multiplicador "12×" em destaque dourado
+function renderInstallment(raw) {
+  const esc = escapeHtml(normalizeInstallment(raw));
+  return esc.replace(/^(\d+\s*×)/, '<strong class="pitch-mult">$1</strong>');
+}
+
 function applyPitchConfig(pitch) {
   const hasContent = !!(pitch && pitch.enabled && (
     pitch.todayValue || pitch.installmentValue || pitch.totalValue
@@ -195,26 +212,29 @@ function applyPitchConfig(pitch) {
     }
   }
 
-  // Bloco "parcelado de hoje"
+  // Condição 1: preço de participante (hoje) — destaque, "12×" dourado
   const hasLater = !!pitch.installmentValue;
   setBlock('pitch-later', hasLater);
   if (hasLater) {
     setText('pitch-later-caption', pitch.installmentLabel || 'Depois, parcelado em');
-    setText('pitch-later-value', normalizeMoney(pitch.installmentValue));
+    const laterVal = document.getElementById('pitch-later-value');
+    if (laterVal) laterVal.innerHTML = renderInstallment(pitch.installmentValue);
   }
 
-  // Linha informativa "valor após"
+  // Linha de incentivo (opcional)
+  const savingsEl = document.getElementById('pitch-savings');
+  if (savingsEl) {
+    savingsEl.textContent = pitch.savings || '';
+    savingsEl.classList.toggle('hidden', !pitch.savings);
+  }
+
+  // Condição 2: após o evento — discreto, sem riscado
   const hasAfter = !!pitch.afterValue;
   setBlock('pitch-after', hasAfter);
   if (hasAfter) {
-    setText('pitch-after-caption', pitch.afterLabel || 'Após o podcast');
-    setText('pitch-after-value', normalizeMoney(pitch.afterValue));
+    setText('pitch-after-caption', pitch.afterLabel || 'Após o evento');
+    setText('pitch-after-value', normalizeInstallment(pitch.afterValue));
   }
-
-  // Linha "Total da mentoria"
-  const hasTotal = !!pitch.totalValue;
-  setBlock('pitch-total', hasTotal);
-  if (hasTotal) setText('pitch-total-value', normalizeMoney(pitch.totalValue));
 
   // Microcopy abaixo do botão
   const footEl = document.getElementById('pitch-footnote');

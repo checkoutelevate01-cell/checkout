@@ -195,32 +195,32 @@
             <h2 class="pitch-title" id="pitch-title">Resumo do seu investimento</h2>
             <p class="pitch-copy" id="pitch-copy"></p>
 
-            <!-- Bloco principal: Hoje você paga -->
+            <!-- Bloco 1: Entrada (protagonista) -->
             <div class="pitch-today hidden" id="pitch-today">
               <div class="pitch-today-top">
                 <span class="pitch-today-caption">Hoje você paga</span>
                 <span class="pitch-today-badge hidden" id="pitch-today-badge"></span>
               </div>
-              <div class="pitch-today-value" id="pitch-today-value"></div>
               <div class="pitch-today-label" id="pitch-today-label"></div>
+              <div class="pitch-today-value" id="pitch-today-value"></div>
             </div>
 
-            <!-- Bloco secundário: parcelado (valor de hoje) -->
-            <div class="pitch-later hidden" id="pitch-later">
-              <span class="pitch-later-caption" id="pitch-later-caption">Depois, parcelado em</span>
-              <span class="pitch-later-value" id="pitch-later-value"></span>
-            </div>
+            <!-- Bloco 2: parcelamento — duas condições temporais -->
+            <div class="pitch-plans">
+              <!-- Condição 1: preço de participante (hoje) — destaque -->
+              <div class="pitch-later hidden" id="pitch-later">
+                <span class="pitch-later-caption" id="pitch-later-caption">Depois, parcelado em</span>
+                <span class="pitch-later-value" id="pitch-later-value"></span>
+              </div>
 
-            <!-- Linha informativa: valor após o podcast -->
-            <div class="pitch-after hidden" id="pitch-after">
-              <span class="pitch-after-caption" id="pitch-after-caption">Após o podcast</span>
-              <span class="pitch-after-value" id="pitch-after-value"></span>
-            </div>
+              <!-- Linha de incentivo (opcional) -->
+              <p class="pitch-savings hidden" id="pitch-savings"></p>
 
-            <!-- Total -->
-            <div class="pitch-total hidden" id="pitch-total">
-              <span class="pitch-total-caption">Total da mentoria</span>
-              <span class="pitch-total-value" id="pitch-total-value"></span>
+              <!-- Condição 2: após o evento — discreto -->
+              <div class="pitch-after hidden" id="pitch-after">
+                <span class="pitch-after-caption" id="pitch-after-caption">Após o evento</span>
+                <span class="pitch-after-value" id="pitch-after-value"></span>
+              </div>
             </div>
           </section>
 

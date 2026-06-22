@@ -958,25 +958,26 @@
             <label class="field-label" style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">Demais valores</label>
           </div>
           <div class="field-group">
-            <label class="field-label">Legenda do parcelado</label>
-            <input type="text" id="offer-pitch-installment-label" placeholder="No dia do podcast" />
+            <label class="field-label">Condição 1 — legenda (destaque)</label>
+            <input type="text" id="offer-pitch-installment-label" placeholder="Preço de participante · hoje" />
           </div>
           <div class="field-group">
-            <label class="field-label">Parcelado (valor de hoje)</label>
+            <label class="field-label">Condição 1 — valor</label>
             <input type="text" id="offer-pitch-installment-value" placeholder="12× R$ 10.000" />
           </div>
           <div class="field-group">
-            <label class="field-label">Legenda do valor após</label>
-            <input type="text" id="offer-pitch-after-label" placeholder="Após o podcast" />
+            <label class="field-label">Condição 2 — legenda (discreta)</label>
+            <input type="text" id="offer-pitch-after-label" placeholder="Após o evento" />
             <span class="field-hint">Deixa o lead ciente do valor que fica depois.</span>
           </div>
           <div class="field-group">
-            <label class="field-label">Valor após o podcast</label>
+            <label class="field-label">Condição 2 — valor</label>
             <input type="text" id="offer-pitch-after-value" placeholder="12× R$ 12.500" />
           </div>
           <div class="field-group fg-full">
-            <label class="field-label">Total da mentoria (opcional)</label>
-            <input type="text" id="offer-pitch-total-value" placeholder="R$ 120.000" />
+            <label class="field-label">Linha de incentivo (opcional)</label>
+            <input type="text" id="offer-pitch-savings" placeholder="Fechando hoje, você economiza R$ 30.000." />
+            <span class="field-hint">Aparece em destaque entre os preços. Use só se o tom permitir.</span>
           </div>
 
           <div class="field-group fg-full">
@@ -1385,7 +1386,7 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-installment-value').value   = '';
     document.getElementById('offer-pitch-after-label').value         = '';
     document.getElementById('offer-pitch-after-value').value         = '';
-    document.getElementById('offer-pitch-total-value').value         = '';
+    document.getElementById('offer-pitch-savings').value             = '';
     document.getElementById('offer-pitch-footnote').value            = '';
   } else {
     const o = offers.find(x => x.id === id);
@@ -1423,7 +1424,7 @@ function openOfferModal(id) {
     document.getElementById('offer-pitch-installment-value').value   = o.pitchInstallmentValue || '';
     document.getElementById('offer-pitch-after-label').value         = o.pitchAfterLabel       || '';
     document.getElementById('offer-pitch-after-value').value         = o.pitchAfterValue       || '';
-    document.getElementById('offer-pitch-total-value').value         = o.pitchTotalValue       || '';
+    document.getElementById('offer-pitch-savings').value             = o.pitchSavings          || '';
     document.getElementById('offer-pitch-footnote').value            = o.pitchFootnote         || '';
   }
 
@@ -1474,7 +1475,7 @@ async function saveOffer() {
     pitchInstallmentValue: document.getElementById('offer-pitch-installment-value').value.trim(),
     pitchAfterLabel:       document.getElementById('offer-pitch-after-label').value.trim(),
     pitchAfterValue:       document.getElementById('offer-pitch-after-value').value.trim(),
-    pitchTotalValue:       document.getElementById('offer-pitch-total-value').value.trim(),
+    pitchSavings:          document.getElementById('offer-pitch-savings').value.trim(),
     pitchFootnote:         document.getElementById('offer-pitch-footnote').value.trim(),
   };
 
