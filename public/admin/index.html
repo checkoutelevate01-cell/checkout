@@ -450,14 +450,17 @@
       <div class="sub">Painel de controle</div>
     </div>
     <div class="field-group" style="margin-bottom:12px">
-      <label class="login-label">E-mail</label>
-      <input type="email" id="login-email" class="login-input" placeholder="seu@email.com" autocomplete="username" />
+      <label class="login-label">E-mail ou usuário</label>
+      <input type="text" id="login-email" class="login-input" placeholder="seu@email.com" autocomplete="username" />
     </div>
     <div class="field-group" style="margin-bottom:4px">
       <label class="login-label">Senha de acesso</label>
       <input type="password" id="login-pw" class="login-input" placeholder="Digite sua senha" autocomplete="current-password" />
     </div>
     <button class="btn-login" id="btn-login">Entrar</button>
+    <p style="margin-top:14px;font-size:11.5px;color:var(--text2);text-align:center;line-height:1.5">
+      Admin: usuário <strong style="color:var(--gold)">admin</strong> + sua senha de acesso.
+    </p>
     <div id="login-err" class="login-error" style="display:none"></div>
   </div>
 </div>

@@ -157,6 +157,7 @@ function newId() { return crypto.randomUUID(); }
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
 const JWT_SECRET     = process.env.ADMIN_JWT_SECRET || 'elevate-jwt-secret-change-me';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD   || '';
+const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
 
 // Hash de senha com módulo nativo crypto (scrypt) — sem dependência extra
 function hashPassword(plain) {
@@ -710,11 +711,19 @@ app.post('/api/coupon/validate', async (req, res) => {
 app.post('/admin/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const id = String(email || '').trim().toLowerCase();
 
-    // Login por e-mail (conta em admin_users)
-    if (email) {
+    // Super-admin do env: usuário "admin" (configurável) OU e-mail em branco + senha do .env
+    if ((id === ADMIN_USERNAME || id === '') && ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
+      const payload = { userId: null, email: null, role: 'admin', name: 'Admin' };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+      return res.json({ token, ...payload });
+    }
+
+    // Conta por e-mail (admin_users)
+    if (id) {
       const { data: user } = await supabase.from('admin_users')
-        .select('*').eq('email', String(email).trim().toLowerCase()).maybeSingle();
+        .select('*').eq('email', id).maybeSingle();
       if (!user || user.active === false || !verifyPassword(password, user.password_hash)) {
         return res.status(401).json({ error: 'E-mail ou senha incorretos' });
       }
@@ -723,7 +732,7 @@ app.post('/admin/api/login', async (req, res) => {
       return res.json({ token, ...payload });
     }
 
-    // Login legado por senha do env (super-admin de emergência)
+    // Fallback legado (e-mail em branco + senha do env)
     if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
       const payload = { userId: null, email: null, role: 'admin', name: 'Admin' };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
