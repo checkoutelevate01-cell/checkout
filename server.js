@@ -61,9 +61,23 @@ function mapOffer(row) {
     pitchSavings:          row.pitch_savings           || '',
     pitchTotalValue:       row.pitch_total_value       || '',
     pitchFootnote:         row.pitch_footnote          || '',
+    createdBy:           row.created_by || null,
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
+  };
+}
+
+// Usuário do admin — nunca expõe password_hash
+function mapUser(row) {
+  if (!row) return null;
+  return {
+    id:        row.id,
+    email:     row.email,
+    name:      row.name || '',
+    role:      row.role || 'collaborator',
+    active:    row.active !== false,
+    createdAt: row.created_at,
   };
 }
 
@@ -141,27 +155,46 @@ async function appendOrder(record) {
 function newId() { return crypto.randomUUID(); }
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
-const JWT_SECRET            = process.env.ADMIN_JWT_SECRET       || 'elevate-jwt-secret-change-me';
-const ADMIN_PASSWORD        = process.env.ADMIN_PASSWORD         || '';
-const COLLABORATOR_PASSWORD = process.env.COLLABORATOR_PASSWORD  || '';
+const JWT_SECRET     = process.env.ADMIN_JWT_SECRET || 'elevate-jwt-secret-change-me';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD   || '';
 
-function getTokenRole(req) {
+// Hash de senha com módulo nativo crypto (scrypt) — sem dependência extra
+function hashPassword(plain) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(plain), salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(plain, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  const [salt, hash] = stored.split(':');
+  const hashBuf   = Buffer.from(hash, 'hex');
+  const verifyBuf = crypto.scryptSync(String(plain), salt, 64);
+  return hashBuf.length === verifyBuf.length && crypto.timingSafeEqual(hashBuf, verifyBuf);
+}
+
+// Identidade do token: { userId, email, role, name }
+function getTokenUser(req) {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
-  try { return jwt.verify(token, JWT_SECRET).role || 'admin'; }
-  catch { return null; }
+  try {
+    const p = jwt.verify(token, JWT_SECRET);
+    return { userId: p.userId || null, email: p.email || null, role: p.role || 'admin', name: p.name || '' };
+  } catch { return null; }
 }
 
 function authAdmin(req, res, next) {
-  const role = getTokenRole(req);
-  if (!role) return res.status(401).json({ error: 'Não autorizado' });
-  req.role = role;
+  const user = getTokenUser(req);
+  if (!user) return res.status(401).json({ error: 'Não autorizado' });
+  req.user = user;
+  req.role = user.role;
   next();
 }
 
 function authOnlyAdmin(req, res, next) {
-  const role = getTokenRole(req);
-  if (role !== 'admin') return res.status(403).json({ error: 'Acesso restrito ao administrador' });
-  req.role = role;
+  const user = getTokenUser(req);
+  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Acesso restrito ao administrador' });
+  req.user = user;
+  req.role = user.role;
   next();
 }
 
@@ -674,18 +707,97 @@ app.post('/api/coupon/validate', async (req, res) => {
 });
 
 // ─── Admin API ────────────────────────────────────────────────────────────────
-app.post('/admin/api/login', (req, res) => {
-  const { password } = req.body;
-  if (!ADMIN_PASSWORD) return res.status(500).json({ error: 'ADMIN_PASSWORD não configurada no .env' });
-  if (password === ADMIN_PASSWORD) {
-    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ token, role: 'admin' });
+app.post('/admin/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Login por e-mail (conta em admin_users)
+    if (email) {
+      const { data: user } = await supabase.from('admin_users')
+        .select('*').eq('email', String(email).trim().toLowerCase()).maybeSingle();
+      if (!user || user.active === false || !verifyPassword(password, user.password_hash)) {
+        return res.status(401).json({ error: 'E-mail ou senha incorretos' });
+      }
+      const payload = { userId: user.id, email: user.email, role: user.role || 'collaborator', name: user.name || '' };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+      return res.json({ token, ...payload });
+    }
+
+    // Login legado por senha do env (super-admin de emergência)
+    if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
+      const payload = { userId: null, email: null, role: 'admin', name: 'Admin' };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+      return res.json({ token, ...payload });
+    }
+
+    res.status(401).json({ error: 'E-mail ou senha incorretos' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  if (COLLABORATOR_PASSWORD && password === COLLABORATOR_PASSWORD) {
-    const token = jwt.sign({ role: 'collaborator' }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ token, role: 'collaborator' });
-  }
-  res.status(401).json({ error: 'Senha incorreta' });
+});
+
+// Identidade do usuário logado (para o front calcular propriedade/gating)
+app.get('/admin/api/me', authAdmin, (req, res) => {
+  res.json(req.user);
+});
+
+// ─── Admin Users CRUD (somente admin) ─────────────────────────────────────────
+app.get('/admin/api/users', authOnlyAdmin, async (_req, res) => {
+  try {
+    const { data, error } = await supabase.from('admin_users')
+      .select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json((data || []).map(mapUser));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/admin/api/users', authOnlyAdmin, async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = req.body.password || '';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'E-mail inválido' });
+    if (!password || password.length < 6) return res.status(400).json({ error: 'Senha deve ter ao menos 6 caracteres' });
+    const role = req.body.role === 'admin' ? 'admin' : 'collaborator';
+
+    const { data, error } = await supabase.from('admin_users').insert({
+      email,
+      name:          req.body.name || '',
+      role,
+      password_hash: hashPassword(password),
+      active:        req.body.active !== false,
+    }).select().single();
+
+    if (error) {
+      if (error.code === '23505') return res.status(400).json({ error: 'E-mail já cadastrado' });
+      throw error;
+    }
+    res.json(mapUser(data));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/admin/api/users/:id', authOnlyAdmin, async (req, res) => {
+  try {
+    const updates = { updated_at: new Date().toISOString() };
+    if (req.body.name   !== undefined) updates.name   = req.body.name;
+    if (req.body.role   !== undefined) updates.role   = req.body.role === 'admin' ? 'admin' : 'collaborator';
+    if (req.body.active !== undefined) updates.active = req.body.active === true;
+    if (req.body.password) {
+      if (req.body.password.length < 6) return res.status(400).json({ error: 'Senha deve ter ao menos 6 caracteres' });
+      updates.password_hash = hashPassword(req.body.password);
+    }
+    const { data, error } = await supabase.from('admin_users').update(updates).eq('id', req.params.id).select().single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(mapUser(data));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/admin/api/users/:id', authOnlyAdmin, async (req, res) => {
+  try {
+    const { error } = await supabase.from('admin_users').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Offers CRUD
@@ -694,13 +806,14 @@ app.get("/admin/api/offers", authAdmin, async (_req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
+app.post("/admin/api/offers", authAdmin, async (req, res) => {
   try {
     const slug = (req.body.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     if (!slug) return res.status(400).json({ error: 'Slug inválido' });
 
     const { data, error } = await supabase.from('offers').insert({
       slug,
+      created_by:          req.user.userId || null,
       name:                req.body.name                || 'Nova Oferta',
       description:         req.body.description         || '',
       price:               parseInt(req.body.price, 10) || 350000,
@@ -747,8 +860,16 @@ app.post("/admin/api/offers", authOnlyAdmin, async (req, res) => {
   }
 });
 
-app.put("/admin/api/offers/:id", authOnlyAdmin, async (req, res) => {
+app.put("/admin/api/offers/:id", authAdmin, async (req, res) => {
   try {
+    // Colaborador só edita os links que ele mesmo criou
+    if (req.user.role === 'collaborator') {
+      const { data: owner } = await supabase.from('offers').select('created_by').eq('id', req.params.id).maybeSingle();
+      if (!owner) return res.status(404).json({ error: 'Oferta não encontrada' });
+      if (owner.created_by !== req.user.userId) {
+        return res.status(403).json({ error: 'Você só pode editar os links que criou' });
+      }
+    }
     const updates = {};
     if (req.body.name                !== undefined) updates.name                 = req.body.name;
     if (req.body.description         !== undefined) updates.description          = req.body.description;
@@ -961,9 +1082,8 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
       );
     }
 
-    const isCollaborator = req.role === 'collaborator';
-
     // Normalize field names for frontend compatibility
+    // (colaborador vê os pedidos com valores, porém só leitura — sem editar/excluir)
     const orders = filtered.map(o => ({
       id:               o.id,
       pagarmeOrderId:   o.pagarme_order_id,
@@ -971,9 +1091,9 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
       chargeStatus:     o.charge_status,
       paymentMethod:    o.payment_method,
       installments:     o.installments,
-      amountCents:      isCollaborator ? null : o.amount_cents,
-      discountCents:    isCollaborator ? null : o.discount_cents,
-      finalAmountCents: isCollaborator ? null : o.final_amount_cents,
+      amountCents:      o.amount_cents,
+      discountCents:    o.discount_cents,
+      finalAmountCents: o.final_amount_cents,
       customer:         o.customer,
       offer:            o.offer,
       coupon:           o.coupon,
@@ -992,7 +1112,7 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
 });
 
 // ─── Admin Leads (CRM) ────────────────────────────────────────────────────────
-app.get('/admin/api/leads', authAdmin, async (req, res) => {
+app.get('/admin/api/leads', authOnlyAdmin, async (req, res) => {
   try {
     const { status, q, specialty } = req.query;
     let query = supabase.from('leads')
@@ -1017,7 +1137,7 @@ app.get('/admin/api/leads', authAdmin, async (req, res) => {
   }
 });
 
-app.patch('/admin/api/leads/:id', authAdmin, async (req, res) => {
+app.patch('/admin/api/leads/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { status, notes } = req.body;
     const updates = { updated_at: new Date().toISOString() };

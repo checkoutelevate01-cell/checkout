@@ -449,6 +449,10 @@
       <div class="name">Elevate Admin</div>
       <div class="sub">Painel de controle</div>
     </div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="login-label">E-mail</label>
+      <input type="email" id="login-email" class="login-input" placeholder="seu@email.com" autocomplete="username" />
+    </div>
     <div class="field-group" style="margin-bottom:4px">
       <label class="login-label">Senha de acesso</label>
       <input type="password" id="login-pw" class="login-input" placeholder="Digite sua senha" autocomplete="current-password" />
@@ -508,6 +512,15 @@
         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
       CRM / Leads
+    </div>
+
+    <div class="nav-item" data-tab="users">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 11l-3 3-1.5-1.5"/>
+      </svg>
+      Usuários
     </div>
 
     <div class="sidebar-footer">
@@ -787,6 +800,89 @@
       </div>
     </div>
 
+    <!-- ── Usuários tab ── -->
+    <div id="tab-users" class="tab-section">
+      <div class="top-bar">
+        <div>
+          <h1>Usuários</h1>
+          <div class="hint">Dê acesso por e-mail. Colaboradores criam/editam só os próprios links e veem as compras (leitura).</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <span style="color:var(--text2);font-size:13px" id="users-count"></span>
+          <button class="btn-primary" id="btn-new-user">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Usuário
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>E-mail</th>
+                <th>Nome</th>
+                <th>Papel</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5"><div class="empty-state">Carregando…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── User Modal ── -->
+<div class="modal-backdrop hidden" id="user-modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:460px">
+    <div class="modal-header">
+      <h2 id="user-modal-title">Novo Usuário</h2>
+      <button class="modal-close" data-close="user-modal-backdrop">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="user-id" />
+      <div class="form-grid full">
+        <div class="field-group">
+          <label>E-mail</label>
+          <input type="email" id="user-email" placeholder="pessoa@email.com" autocomplete="off" />
+        </div>
+        <div class="field-group">
+          <label>Nome</label>
+          <input type="text" id="user-name" placeholder="Nome da pessoa" autocomplete="off" />
+        </div>
+        <div class="field-group">
+          <label id="user-password-label">Senha</label>
+          <input type="text" id="user-password" placeholder="Mínimo 6 caracteres" autocomplete="off" />
+          <span class="field-hint" id="user-password-hint">Defina uma senha e passe pra pessoa. Ela usa o e-mail + essa senha pra entrar.</span>
+        </div>
+        <div class="field-group">
+          <label>Papel</label>
+          <select id="user-role">
+            <option value="collaborator">Colaborador (acesso restrito)</option>
+            <option value="admin">Administrador (acesso total)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="user-active" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Usuário ativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" data-close="user-modal-backdrop">Cancelar</button>
+      <button class="btn-save" id="btn-save-user">Salvar usuário</button>
+    </div>
   </div>
 </div>
 
@@ -1113,16 +1209,21 @@ let ordersSearchTimer = null;
 let confirmCallback = null;
 
 // ── Auth ──────────────────────────────────────────────────
+const USERID_KEY = 'adminUserId';
 function getToken()    { return localStorage.getItem(TOKEN_KEY) || ''; }
 function getRole()     { return localStorage.getItem(ROLE_KEY)  || 'admin'; }
+function getUserId()   { return localStorage.getItem(USERID_KEY) || ''; }
 function isCollaborator() { return getRole() === 'collaborator'; }
-function setToken(t, role) {
-  localStorage.setItem(TOKEN_KEY, t); token = t;
-  localStorage.setItem(ROLE_KEY, role || 'admin');
+function isAdmin()     { return getRole() === 'admin'; }
+function setSession(data) {
+  localStorage.setItem(TOKEN_KEY, data.token); token = data.token;
+  localStorage.setItem(ROLE_KEY, data.role || 'admin');
+  localStorage.setItem(USERID_KEY, data.userId || '');
 }
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(USERID_KEY);
   token = '';
 }
 
@@ -1147,6 +1248,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Login
   document.getElementById('btn-login').addEventListener('click', doLogin);
   document.getElementById('login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
   // Nav tabs
   document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
@@ -1163,6 +1265,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Save buttons
   document.getElementById('btn-save-offer').addEventListener('click', saveOffer);
   document.getElementById('btn-save-coupon').addEventListener('click', saveCoupon);
+
+  // Usuários
+  document.getElementById('btn-new-user').addEventListener('click', () => openUserModal(null));
+  document.getElementById('btn-save-user').addEventListener('click', saveUser);
 
   // Pitch (página de investimento)
   document.getElementById('offer-pitch-enabled').addEventListener('change', updatePitchFieldsVisibility);
@@ -1208,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
   const pw  = document.getElementById('login-pw').value;
   const err = document.getElementById('login-err');
   const btn = document.getElementById('btn-login');
@@ -1218,11 +1325,11 @@ async function doLogin() {
     const res  = await fetch('/admin/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
+      body: JSON.stringify({ email: email || undefined, password: pw }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Falha no login');
-    setToken(data.token, data.role);
+    setSession(data);
     showApp();
   } catch (e) {
     err.textContent = e.message;
@@ -1236,20 +1343,27 @@ function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
 
+  const syncBtn = document.getElementById('btn-orders-sync');
   if (isCollaborator()) {
-    // Ocultar abas restritas
-    document.querySelectorAll('.nav-item[data-tab="dashboard"], .nav-item[data-tab="offers"], .nav-item[data-tab="coupons"], .nav-item[data-tab="config"]')
-      .forEach(el => el.style.display = 'none');
-    // Ir direto pro CRM
-    switchTab('leads');
-    loadLeads();
-    loadOffers(); // necessário pro filtro de oferta em Compras
+    // Colaborador: só Ofertas (Links) + Compras
+    document.querySelectorAll('.nav-item[data-tab]').forEach(el => {
+      const tab = el.dataset.tab;
+      el.style.display = (tab === 'offers' || tab === 'orders') ? '' : 'none';
+    });
+    if (syncBtn) syncBtn.style.display = 'none';   // sync de pagamentos é ação de admin
+    switchTab('offers');
+    loadOffers();
     loadOrders();
   } else {
+    // Admin: tudo visível (restaura caso a sessão anterior fosse colaborador)
+    document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.style.display = '');
+    if (syncBtn) syncBtn.style.display = '';
+    switchTab('dashboard');
     loadDashboard();
     loadOffers();
     loadCoupons();
     loadOrders();
+    loadUsers();
   }
 }
 
@@ -1258,6 +1372,7 @@ function logout() {
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-pw').value = '';
+  const em = document.getElementById('login-email'); if (em) em.value = '';
 }
 
 // ── Tabs ─────────────────────────────────────────────────
@@ -1267,6 +1382,7 @@ function switchTab(tab) {
   if (tab === 'orders')    loadOrders();
   if (tab === 'dashboard') loadDashboard();
   if (tab === 'leads')     loadLeads();
+  if (tab === 'users')     loadUsers();
 }
 
 // ── Dashboard ────────────────────────────────────────────
@@ -1332,9 +1448,20 @@ function renderOffers() {
     return;
   }
 
+  const collab = isCollaborator();
+  const myId   = getUserId();
   tbody.innerHTML = offers.map(o => {
     const priceR = (o.price / 100).toFixed(2).replace('.', ',');
     const url    = `${location.origin}/c/${o.slug}`;
+    // Colaborador: edita só os próprios, sem excluir. Admin: edita e exclui tudo.
+    const canEdit   = !collab || (o.createdBy && o.createdBy === myId);
+    const canDelete = !collab;
+    const editBtn   = canEdit
+      ? `<button class="btn-sm btn-edit" onclick="openOfferModal('${o.id}')">Editar</button>`
+      : `<span class="btn-sm" style="opacity:.45;cursor:default" title="Somente o criador edita este link">Leitura</span>`;
+    const delBtn    = canDelete
+      ? `<button class="btn-sm btn-del"  onclick="deleteOffer('${o.id}', '${escHtml(o.name)}')">Excluir</button>`
+      : '';
     return `<tr>
       <td>
         <div class="td-mono">/c/${o.slug}</div>
@@ -1346,8 +1473,8 @@ function renderOffers() {
       <td>
         <div class="action-row">
           <a class="btn-sm btn-link" href="${url}" target="_blank" rel="noopener" title="Ver checkout">↗</a>
-          <button class="btn-sm btn-edit" onclick="openOfferModal('${o.id}')">Editar</button>
-          <button class="btn-sm btn-del"  onclick="deleteOffer('${o.id}', '${escHtml(o.name)}')">Excluir</button>
+          ${editBtn}
+          ${delBtn}
         </div>
       </td>
     </tr>`;
@@ -1525,6 +1652,112 @@ function deleteOffer(id, name) {
       toast('Oferta excluída', 'success');
       await loadOffers();
       await populateCouponOffers();
+    } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  };
+}
+
+// ── Usuários ─────────────────────────────────────────────
+let users = [];
+
+async function loadUsers() {
+  if (!isAdmin()) return;
+  try {
+    const res = await apiFetch('/admin/api/users');
+    users = await res.json();
+    renderUsers();
+  } catch(e) { if (e.message !== '401') console.error('[Users]', e); }
+}
+
+function renderUsers() {
+  const tbody = document.getElementById('users-tbody');
+  document.getElementById('users-count').textContent = `${users.length} usuário(s)`;
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Nenhum usuário cadastrado. Crie o primeiro.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td class="td-mono">${escapeHtml(u.email)}</td>
+      <td>${escapeHtml(u.name || '—')}</td>
+      <td>${u.role === 'admin' ? 'Administrador' : 'Colaborador'}</td>
+      <td><span class="badge ${u.active ? 'badge-on' : 'badge-off'}">${u.active ? 'Ativo' : 'Inativo'}</span></td>
+      <td>
+        <div class="action-row">
+          <button class="btn-sm btn-edit" onclick="openUserModal('${u.id}')">Editar</button>
+          <button class="btn-sm btn-del" onclick="deleteUser('${u.id}','${escapeHtml(u.email)}')">Excluir</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openUserModal(id) {
+  const titleEl = document.getElementById('user-modal-title');
+  const pwHint  = document.getElementById('user-password-hint');
+  const pwLabel = document.getElementById('user-password-label');
+  if (!id) {
+    titleEl.textContent = 'Novo Usuário';
+    document.getElementById('user-id').value       = '';
+    document.getElementById('user-email').value    = '';
+    document.getElementById('user-email').disabled = false;
+    document.getElementById('user-name').value     = '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-role').value     = 'collaborator';
+    document.getElementById('user-active').checked = true;
+    pwLabel.textContent = 'Senha';
+    pwHint.textContent  = 'Defina uma senha e passe pra pessoa. Ela usa o e-mail + essa senha pra entrar.';
+  } else {
+    const u = users.find(x => x.id === id);
+    if (!u) return;
+    titleEl.textContent = 'Editar Usuário';
+    document.getElementById('user-id').value       = u.id;
+    document.getElementById('user-email').value    = u.email;
+    document.getElementById('user-email').disabled = true;
+    document.getElementById('user-name').value     = u.name || '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-role').value     = u.role || 'collaborator';
+    document.getElementById('user-active').checked = u.active !== false;
+    pwLabel.textContent = 'Nova senha (opcional)';
+    pwHint.textContent  = 'Deixe em branco para manter a senha atual.';
+  }
+  document.getElementById('user-modal-backdrop').classList.remove('hidden');
+}
+
+async function saveUser() {
+  const id = document.getElementById('user-id').value;
+  const body = {
+    email:    document.getElementById('user-email').value.trim().toLowerCase(),
+    name:     document.getElementById('user-name').value.trim(),
+    password: document.getElementById('user-password').value,
+    role:     document.getElementById('user-role').value,
+    active:   document.getElementById('user-active').checked,
+  };
+  if (!id && (!body.email || !body.password)) { toast('Informe e-mail e senha', 'error'); return; }
+
+  const btn = document.getElementById('btn-save-user');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url    = id ? `/admin/api/users/${id}` : '/admin/api/users';
+    const payload = id ? { name: body.name, role: body.role, active: body.active, ...(body.password ? { password: body.password } : {}) } : body;
+    const res  = await apiFetch(url, { method, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao salvar', 'error'); return; }
+    closeModal('user-modal-backdrop');
+    toast(id ? 'Usuário atualizado!' : 'Usuário criado!', 'success');
+    await loadUsers();
+  } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar usuário'; }
+}
+
+function deleteUser(id, email) {
+  document.getElementById('confirm-msg').textContent = `Excluir o usuário "${email}"? Ele perderá o acesso ao painel.`;
+  document.getElementById('confirm-backdrop').classList.remove('hidden');
+  confirmCallback = async () => {
+    try {
+      const res = await apiFetch(`/admin/api/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast(d.error || 'Erro ao excluir', 'error'); return; }
+      toast('Usuário excluído', 'success');
+      await loadUsers();
     } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
   };
 }
@@ -1774,7 +2007,7 @@ function renderOrders() {
   const collab = isCollaborator();
   tbody.innerHTML = orders.map(o => {
     const date    = new Date(o.createdAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
-    const amount  = collab ? '—' : `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}`;
+    const amount  = o.finalAmountCents != null ? `R$ ${(o.finalAmountCents / 100).toFixed(2).replace('.', ',')}` : '—';
     const offerTd = o.offer
       ? `<div>${escHtml(o.offer.name)}</div>${o.coupon ? `<div style="font-size:11px;color:var(--gold);font-family:monospace;margin-top:2px">🏷 ${escHtml(o.coupon.code)}</div>` : ''}`
       : `<span style="color:var(--text3)">—</span>`;
@@ -1828,8 +2061,8 @@ function openOrderDetail(id) {
       <div><div class="detail-label">Método</div><div class="detail-value">${methodLabel[o.paymentMethod] || o.paymentMethod}${o.installments > 1 ? ` (${o.installments}x)` : ''}</div></div>
       <div><div class="detail-label">Status</div><div class="detail-value">${o.chargeStatus || o.status}</div></div>
       ${o.failureReason ? `<div style="grid-column:1/-1"><div class="detail-label">Motivo da recusa</div><div class="detail-value" style="color:var(--red)">${escHtml(o.failureReason)}</div></div>` : ''}
-      ${!isCollaborator() ? `<div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>` : ''}
-      ${!isCollaborator() && o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
+      ${o.finalAmountCents != null ? `<div><div class="detail-label">Valor final</div><div class="detail-value" style="font-weight:700;color:var(--green)">${fmt(o.finalAmountCents)}</div></div>` : ''}
+      ${o.discountCents > 0 ? `<div><div class="detail-label">Desconto</div><div class="detail-value" style="color:var(--gold)">- ${fmt(o.discountCents)}</div></div>` : ''}
       ${o.offer  ? `<div><div class="detail-label">Oferta</div><div class="detail-value">${escHtml(o.offer.name)}</div></div>` : ''}
       ${o.coupon ? `<div><div class="detail-label">Cupom</div><div class="detail-mono">${escHtml(o.coupon.code)}</div></div>` : ''}
     </div>
@@ -2137,6 +2370,12 @@ document.getElementById('btn-view-kanban')?.addEventListener('click', () => {
 
 // ── Modal helpers ─────────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 // ── Toast ─────────────────────────────────────────────────
 function toast(msg, type = 'success') {

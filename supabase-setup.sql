@@ -134,3 +134,23 @@ alter table offers add column if not exists pitch_total_value        text defaul
 alter table offers add column if not exists pitch_footnote           text default '';
 -- (coluna do modelo de riscado/ancoragem — descontinuada, não usada)
 alter table offers add column if not exists pitch_installment_was    text default '';
+
+-- ══════════════════════════════════════════════════════
+-- Acesso restrito por e-mail (papel "Colaborador")
+-- ══════════════════════════════════════════════════════
+
+-- Usuários do admin (login por e-mail + senha com hash)
+create table if not exists admin_users (
+  id            uuid primary key default gen_random_uuid(),
+  email         text unique not null,
+  name          text default '',
+  role          text default 'collaborator',   -- 'admin' | 'collaborator'
+  password_hash text not null,
+  active        boolean default true,
+  created_at    timestamptz default now(),
+  updated_at    timestamptz
+);
+alter table admin_users disable row level security;
+
+-- Dono da oferta (quem criou). Ofertas antigas ficam com null = só admin edita.
+alter table offers add column if not exists created_by uuid;
