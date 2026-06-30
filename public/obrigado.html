@@ -274,18 +274,7 @@
       .ty-card { padding: 22px 20px; }
     }
   </style>
-  <!-- Meta Pixel -->
-  <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '920793097431647');
-    fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=920793097431647&ev=PageView&noscript=1"/></noscript>
+  <!-- Meta Pixel é carregado dinamicamente, só para ofertas com rastreamento ativo -->
 </head>
 <body>
 
@@ -399,10 +388,18 @@
       document.getElementById('ty-order').textContent  = order || '—';
       document.getElementById('ty-method').textContent = METHODS[method] || method;
 
-      // Meta Pixel — Purchase (apenas pagamentos aprovados)
       const value = parseFloat(p.get('value') || '0');
-      if (!isPending && value > 0 && typeof fbq === 'function') {
-        fbq('track', 'Purchase', { value: value, currency: 'BRL' });
+
+      // Carrega o Meta Pixel sob demanda (snippet padrão)
+      function loadMetaPixel(id) {
+        if (!window.fbq) {
+          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+          n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+          document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        }
+        fbq('init', id);
       }
 
       // WhatsApp button
@@ -414,15 +411,27 @@
         btnWA.style.display = 'none';
       }
 
-      // Custom thank-you message from offer config
+      // Config da oferta: mensagem de obrigado + rastreamento Meta
       if (offer) {
         fetch(`/api/config?offer=${encodeURIComponent(offer)}`)
           .then(r => r.ok ? r.json() : null)
           .then(cfg => {
-            if (cfg && cfg.thankYouMessage) {
+            if (!cfg) return;
+            if (cfg.thankYouMessage) {
               const parts = cfg.thankYouMessage.split('\n').filter(Boolean);
               if (parts[0]) document.getElementById('ty-next-title').textContent = parts[0];
               if (parts[1]) document.getElementById('ty-next-sub').textContent   = parts[1];
+            }
+            // Meta Pixel — só para ofertas com rastreamento ativo
+            if (cfg.trackMeta && cfg.metaPixelId) {
+              loadMetaPixel(cfg.metaPixelId);
+              fbq('track', 'PageView');
+              // Purchase só em pagamento aprovado; eventID = pedido (dedup com a CAPI)
+              if (!isPending && value > 0) {
+                fbq('track', 'Purchase',
+                  { value: value, currency: 'BRL', content_ids: [offer], content_type: 'product' },
+                  { eventID: order });
+              }
             }
           })
           .catch(() => {});

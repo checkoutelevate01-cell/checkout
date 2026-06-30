@@ -106,6 +106,10 @@ alter table coupons add column if not exists banner_text  text;
 -- Migração: cupom vinculável a múltiplas ofertas (vazio = todas)
 alter table coupons add column if not exists offer_ids jsonb default '[]'::jsonb;
 
+-- Migração: rastreamento Meta (Pixel + Conversions API) por oferta
+alter table offers add column if not exists track_meta boolean default false;
+alter table orders add column if not exists meta jsonb default '{}'::jsonb;
+
 -- Migração: motivo de recusa do cartão
 alter table orders add column if not exists failure_reason text;
 

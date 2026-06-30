@@ -62,6 +62,7 @@ function mapOffer(row) {
     pitchTotalValue:       row.pitch_total_value       || '',
     pitchFootnote:         row.pitch_footnote          || '',
     createdBy:           row.created_by || null,
+    trackMeta:           row.track_meta === true,
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -156,6 +157,7 @@ async function appendOrder(record) {
     boleto:             record.boleto,
     simulated:          record.simulated || false,
     failure_reason:     record.failureReason || null,
+    meta:               record.meta || {},
     created_at:         record.createdAt,
   });
   if (error) throw error;
@@ -168,6 +170,89 @@ async function appendOrder(record) {
 }
 
 function newId() { return crypto.randomUUID(); }
+
+// ─── Meta — Pixel + Conversions API ───────────────────────────────────────────
+const META_PIXEL_ID    = process.env.META_PIXEL_ID    || '';
+const META_CAPI_TOKEN  = process.env.META_CAPI_TOKEN  || '';
+const META_API_VERSION = 'v21.0';
+
+function metaHash(v) {
+  return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
+}
+
+function parseCookies(header) {
+  const out = {};
+  (header || '').split(';').forEach(p => {
+    const i = p.indexOf('=');
+    if (i > -1) out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim());
+  });
+  return out;
+}
+
+// Contexto do navegador para melhorar o match da CAPI
+function extractMetaContext(req, clientMeta = {}) {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const fwd = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return {
+    ip:        fwd || req.socket?.remoteAddress || null,
+    ua:        req.headers['user-agent'] || null,
+    fbp:       clientMeta.fbp || cookies._fbp || null,
+    fbc:       clientMeta.fbc || cookies._fbc || null,
+    sourceUrl: clientMeta.sourceUrl || req.headers.referer || null,
+  };
+}
+
+// Envia o evento Purchase para a Conversions API (somente ofertas com track_meta)
+async function sendMetaPurchase(record) {
+  try {
+    if (!META_PIXEL_ID || !META_CAPI_TOKEN) return;
+    if (!record?.offer) return;
+
+    const offers = await getOffers();
+    const off = offers.find(o => o.id === record.offer.id || o.slug === record.offer.slug);
+    if (!off || off.trackMeta !== true) return;
+
+    const value = (record.finalAmountCents || 0) / 100;
+    if (value <= 0) return; // pedidos gratuitos não geram Purchase
+
+    const meta  = record.meta || {};
+    const user_data = {};
+    if (record.customer?.email) user_data.em = [metaHash(record.customer.email)];
+    const digits = (record.customer?.phone || '').replace(/\D/g, '');
+    if (digits) user_data.ph = [metaHash(digits.startsWith('55') ? digits : '55' + digits)];
+    if (meta.fbp) user_data.fbp = meta.fbp;
+    if (meta.fbc) user_data.fbc = meta.fbc;
+    if (meta.ip)  user_data.client_ip_address = meta.ip;
+    if (meta.ua)  user_data.client_user_agent = meta.ua;
+
+    const payload = {
+      data: [{
+        event_name:     'Purchase',
+        event_time:     Math.floor(Date.now() / 1000),
+        action_source:  'website',
+        event_id:       record.pagarmeOrderId,           // dedup com o Pixel (eventID)
+        ...(meta.sourceUrl ? { event_source_url: meta.sourceUrl } : {}),
+        user_data,
+        custom_data: {
+          currency:     'BRL',
+          value:        value.toFixed(2),
+          content_name: record.offer.name || off.name,
+          content_ids:  [record.offer.slug || off.slug],
+          content_type: 'product',
+        },
+      }],
+    };
+
+    await axios.post(
+      `https://graph.facebook.com/${META_API_VERSION}/${META_PIXEL_ID}/events`,
+      payload,
+      { params: { access_token: META_CAPI_TOKEN } }
+    );
+    console.log('[Meta CAPI] Purchase enviado:', record.pagarmeOrderId, off.slug);
+  } catch (e) {
+    console.error('[Meta CAPI]', e.response?.data?.error?.message || e.message);
+  }
+}
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
 const JWT_SECRET     = process.env.ADMIN_JWT_SECRET || 'elevate-jwt-secret-change-me';
@@ -349,6 +434,8 @@ app.get('/api/config', async (req, res) => {
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
       thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
+      metaPixelId:        (offer && offer.trackMeta) ? META_PIXEL_ID : '',
+      trackMeta:          offer ? offer.trackMeta === true : false,
       pitch: {
         enabled:          offer ? offer.pitchEnabled === true : false,
         title:            offer ? (offer.pitchTitle            || '') : '',
@@ -376,6 +463,7 @@ app.get('/api/config', async (req, res) => {
 
 app.post('/api/order', async (req, res) => {
   const { customer: customerData, payment, offerSlug, couponCode, leadId } = req.body;
+  const capiMeta = extractMetaContext(req, req.body.meta || {});
 
   const customerError = validateCustomer(customerData);
   if (customerError) return res.status(400).json({ error: customerError });
@@ -487,9 +575,11 @@ app.post('/api/order', async (req, res) => {
         pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
         simulated: true,
         leadId: leadId || null,
+        meta:   capiMeta,
         createdAt: new Date().toISOString(),
       };
       appendOrder(orderRecord).catch(e => console.error('[Orders]', e.message));
+      if (result.chargeStatus === 'paid') sendMetaPurchase(orderRecord).catch(() => {});
       console.log('[SIMULATE] Pedido simulado:', fakeId, payment.method);
       return res.json(result);
     }
@@ -569,9 +659,13 @@ app.post('/api/order', async (req, res) => {
       coupon: appliedCoupon ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value } : null,
       pix:    payment.method === 'pix' ? { qrCode: result.qrCode, qrCodeUrl: result.qrCodeUrl, expiresIn: result.expiresIn } : null,
       leadId: leadId || null,
+      meta:   capiMeta,
       createdAt: new Date().toISOString(),
     };
     appendOrder(orderRecord).catch(e => console.error('[Orders] Falha ao salvar:', e.message));
+
+    // Meta CAPI: cartão aprovado dispara Purchase na hora (PIX dispara ao confirmar)
+    if (charge?.status === 'paid') sendMetaPurchase(orderRecord).catch(() => {});
 
     notifyCustomerWA(customerData, result, payment.method).catch(e => console.error('[WA Cliente]', e.message));
     notifyAdminWA(customerData, result, payment.method, finalPrice, offer?.name).catch(e => console.error('[WA Admin]', e.message));
@@ -594,10 +688,25 @@ app.post('/api/order', async (req, res) => {
 
 // ─── Atualiza status do pedido no DB ─────────────────────────────────────────
 async function markOrderPaid(pagarmeOrderId) {
+  // Lê o pedido antes para disparar a CAPI só na transição para "pago" (evita duplicar)
+  const { data: row } = await supabase.from('orders')
+    .select('*').eq('pagarme_order_id', pagarmeOrderId).maybeSingle();
+  if (!row) return;
+  if (row.charge_status === 'paid') return; // já estava pago
+
   const { error } = await supabase.from('orders')
     .update({ status: 'paid', charge_status: 'paid' })
     .eq('pagarme_order_id', pagarmeOrderId);
-  if (error) console.error('[markOrderPaid]', error.message);
+  if (error) { console.error('[markOrderPaid]', error.message); return; }
+
+  // Meta CAPI (PIX/boleto confirmados)
+  sendMetaPurchase({
+    pagarmeOrderId:   row.pagarme_order_id,
+    finalAmountCents: row.final_amount_cents,
+    customer:         row.customer,
+    offer:            row.offer,
+    meta:             row.meta || {},
+  }).catch(() => {});
 }
 
 // ─── Status do pedido (polling PIX) ──────────────────────────────────────────
@@ -871,6 +980,7 @@ app.post("/admin/api/offers", authAdmin, async (req, res) => {
       pitch_savings:           req.body.pitchSavings          || '',
       pitch_total_value:       req.body.pitchTotalValue       || '',
       pitch_footnote:          req.body.pitchFootnote         || '',
+      track_meta:          req.body.trackMeta === true,
       active:              req.body.active !== false,
     }).select().single();
 
@@ -928,6 +1038,7 @@ app.put("/admin/api/offers/:id", authAdmin, async (req, res) => {
     if (req.body.pitchSavings          !== undefined) updates.pitch_savings           = req.body.pitchSavings;
     if (req.body.pitchTotalValue       !== undefined) updates.pitch_total_value       = req.body.pitchTotalValue;
     if (req.body.pitchFootnote         !== undefined) updates.pitch_footnote          = req.body.pitchFootnote;
+    if (req.body.trackMeta           !== undefined) updates.track_meta           = req.body.trackMeta === true;
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

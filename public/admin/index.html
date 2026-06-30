@@ -1014,6 +1014,16 @@
         <div class="field-group fg-full">
           <div class="toggle-row">
             <label class="toggle">
+              <input type="checkbox" id="offer-track-meta" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Rastrear conversões no Meta (Pixel + API de Conversões)</span>
+          </div>
+          <span class="field-hint">Dispara o evento Purchase no Facebook/Instagram só para esta oferta.</span>
+        </div>
+        <div class="field-group fg-full">
+          <div class="toggle-row">
+            <label class="toggle">
               <input type="checkbox" id="offer-active" checked />
               <span class="toggle-slider"></span>
             </label>
@@ -1554,6 +1564,7 @@ function openOfferModal(id) {
     document.getElementById('offer-show-instagram').checked      = false;
     document.getElementById('offer-show-medical-fields').checked = true;
     document.getElementById('offer-show-coupon').checked         = true;
+    document.getElementById('offer-track-meta').checked          = false;
     document.getElementById('offer-active').checked              = true;
     document.getElementById('offer-guarantee-title').value       = '';
     document.getElementById('offer-guarantee-text').value    = '';
@@ -1593,6 +1604,7 @@ function openOfferModal(id) {
     document.getElementById('offer-show-instagram').checked      = !!o.showInstagram;
     document.getElementById('offer-show-medical-fields').checked = o.showMedicalFields !== false;
     document.getElementById('offer-show-coupon').checked         = o.showCoupon !== false;
+    document.getElementById('offer-track-meta').checked          = o.trackMeta === true;
     document.getElementById('offer-active').checked              = o.active !== false;
     document.getElementById('offer-guarantee-title').value       = o.guaranteeTitle || '';
     document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
@@ -1645,6 +1657,7 @@ async function saveOffer() {
     showInstagram:       document.getElementById('offer-show-instagram').checked,
     showMedicalFields:   document.getElementById('offer-show-medical-fields').checked,
     showCoupon:          document.getElementById('offer-show-coupon').checked,
+    trackMeta:           document.getElementById('offer-track-meta').checked,
     active:              document.getElementById('offer-active').checked,
     guaranteeTitle:      document.getElementById('offer-guarantee-title').value.trim(),
     guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),
