@@ -426,14 +426,16 @@
             if (cfg.trackMeta && cfg.metaPixelId) {
               loadMetaPixel(cfg.metaPixelId);
               fbq('track', 'PageView');
-              // Purchase só em pagamento aprovado; eventID = pedido (dedup com a CAPI)
-              if (!isPending && value > 0) {
+              // Purchase só em pagamento aprovado; valor cheio do plano; eventID = pedido (dedup com a CAPI)
+              const planValue = (cfg.productPrice || 0) / 100;
+              if (!isPending && planValue > 0) {
                 fbq('track', 'Purchase', {
-                  value: value,
                   currency: 'BRL',
+                  value: planValue,
                   content_name: cfg.productName || '',
                   content_ids: [cfg.metaContentId || offer],
-                  content_type: 'product'
+                  content_type: 'product',
+                  order_id: order
                 }, { eventID: order });
               }
             }

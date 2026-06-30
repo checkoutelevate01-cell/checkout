@@ -259,8 +259,8 @@ async function sendMetaPurchase(record) {
     const off = offers.find(o => o.id === record.offer.id || o.slug === record.offer.slug);
     if (!off || off.trackMeta !== true) return;
 
-    const value = (record.finalAmountCents || 0) / 100;
-    if (value <= 0) return; // pedidos gratuitos não geram Purchase
+    const value = (off.price || 0) / 100; // valor cheio do plano
+    if (value <= 0) return;
 
     const meta  = record.meta || {};
     const user_data = {};
@@ -286,6 +286,7 @@ async function sendMetaPurchase(record) {
           content_name: record.offer.name || off.name,
           content_ids:  [off.metaContentId || record.offer.slug || off.slug],
           content_type: 'product',
+          order_id:     record.pagarmeOrderId,
         },
       }],
     };
