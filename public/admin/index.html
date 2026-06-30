@@ -1091,7 +1091,12 @@
             </label>
             <span class="toggle-label">Rastrear conversões no Meta (Pixel + API de Conversões)</span>
           </div>
-          <span class="field-hint">Dispara o evento Purchase no Facebook/Instagram só para esta oferta.</span>
+          <span class="field-hint">Dispara InitiateCheckout (ao abrir o checkout) e Purchase (pagamento aprovado) só para esta oferta.</span>
+        </div>
+        <div class="field-group fg-full">
+          <label class="field-label">content_id do Meta (opcional)</label>
+          <input type="text" id="offer-meta-content-id" placeholder="Ex: plano_classico" />
+          <span class="field-hint">Identificador do plano nos eventos (content_ids). Vazio = usa o slug. Ex.: plano_classico, plano_vip, plano_diamond.</span>
         </div>
         <div class="field-group fg-full">
           <div class="toggle-row">
@@ -1641,6 +1646,7 @@ function openOfferModal(id) {
     document.getElementById('offer-show-medical-fields').checked = true;
     document.getElementById('offer-show-coupon').checked         = true;
     document.getElementById('offer-track-meta').checked          = false;
+    document.getElementById('offer-meta-content-id').value       = '';
     document.getElementById('offer-active').checked              = true;
     document.getElementById('offer-guarantee-title').value       = '';
     document.getElementById('offer-guarantee-text').value    = '';
@@ -1681,6 +1687,7 @@ function openOfferModal(id) {
     document.getElementById('offer-show-medical-fields').checked = o.showMedicalFields !== false;
     document.getElementById('offer-show-coupon').checked         = o.showCoupon !== false;
     document.getElementById('offer-track-meta').checked          = o.trackMeta === true;
+    document.getElementById('offer-meta-content-id').value       = o.metaContentId || '';
     document.getElementById('offer-active').checked              = o.active !== false;
     document.getElementById('offer-guarantee-title').value       = o.guaranteeTitle || '';
     document.getElementById('offer-guarantee-text').value    = o.guaranteeText  || '';
@@ -1734,6 +1741,7 @@ async function saveOffer() {
     showMedicalFields:   document.getElementById('offer-show-medical-fields').checked,
     showCoupon:          document.getElementById('offer-show-coupon').checked,
     trackMeta:           document.getElementById('offer-track-meta').checked,
+    metaContentId:       document.getElementById('offer-meta-content-id').value.trim(),
     active:              document.getElementById('offer-active').checked,
     guaranteeTitle:      document.getElementById('offer-guarantee-title').value.trim(),
     guaranteeText:       document.getElementById('offer-guarantee-text').value.trim(),

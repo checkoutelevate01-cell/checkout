@@ -63,6 +63,7 @@ function mapOffer(row) {
     pitchFootnote:         row.pitch_footnote          || '',
     createdBy:           row.created_by || null,
     trackMeta:           row.track_meta === true,
+    metaContentId:       row.meta_content_id || '',
     active:              row.active,
     createdAt:           row.created_at,
     updatedAt:           row.updated_at,
@@ -283,7 +284,7 @@ async function sendMetaPurchase(record) {
           currency:     'BRL',
           value:        value.toFixed(2),
           content_name: record.offer.name || off.name,
-          content_ids:  [record.offer.slug || off.slug],
+          content_ids:  [off.metaContentId || record.offer.slug || off.slug],
           content_type: 'product',
         },
       }],
@@ -483,6 +484,7 @@ app.get('/api/config', async (req, res) => {
       thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
       metaPixelId:        (offer && offer.trackMeta) ? meta.pixelId : '',
       trackMeta:          offer ? offer.trackMeta === true : false,
+      metaContentId:      offer ? (offer.metaContentId || offer.slug) : '',
       pitch: {
         enabled:          offer ? offer.pitchEnabled === true : false,
         title:            offer ? (offer.pitchTitle            || '') : '',
@@ -1057,6 +1059,7 @@ app.post("/admin/api/offers", authAdmin, async (req, res) => {
       pitch_total_value:       req.body.pitchTotalValue       || '',
       pitch_footnote:          req.body.pitchFootnote         || '',
       track_meta:          req.body.trackMeta === true,
+      meta_content_id:     (req.body.metaContentId || '').trim(),
       active:              req.body.active !== false,
     }).select().single();
 
@@ -1115,6 +1118,7 @@ app.put("/admin/api/offers/:id", authAdmin, async (req, res) => {
     if (req.body.pitchTotalValue       !== undefined) updates.pitch_total_value       = req.body.pitchTotalValue;
     if (req.body.pitchFootnote         !== undefined) updates.pitch_footnote          = req.body.pitchFootnote;
     if (req.body.trackMeta           !== undefined) updates.track_meta           = req.body.trackMeta === true;
+    if (req.body.metaContentId       !== undefined) updates.meta_content_id      = (req.body.metaContentId || '').trim();
     if (req.body.active              !== undefined) updates.active               = req.body.active;
     updates.updated_at = new Date().toISOString();
 

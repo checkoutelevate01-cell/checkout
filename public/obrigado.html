@@ -428,9 +428,13 @@
               fbq('track', 'PageView');
               // Purchase só em pagamento aprovado; eventID = pedido (dedup com a CAPI)
               if (!isPending && value > 0) {
-                fbq('track', 'Purchase',
-                  { value: value, currency: 'BRL', content_ids: [offer], content_type: 'product' },
-                  { eventID: order });
+                fbq('track', 'Purchase', {
+                  value: value,
+                  currency: 'BRL',
+                  content_name: cfg.productName || '',
+                  content_ids: [cfg.metaContentId || offer],
+                  content_type: 'product'
+                }, { eventID: order });
               }
             }
           })

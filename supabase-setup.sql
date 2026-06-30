@@ -108,6 +108,7 @@ alter table coupons add column if not exists offer_ids jsonb default '[]'::jsonb
 
 -- Migração: rastreamento Meta (Pixel + Conversions API) por oferta
 alter table offers add column if not exists track_meta boolean default false;
+alter table offers add column if not exists meta_content_id text default '';
 alter table orders add column if not exists meta jsonb default '{}'::jsonb;
 
 -- Configurações globais de integração (aba Integrações no admin)

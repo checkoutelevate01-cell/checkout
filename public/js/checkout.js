@@ -136,6 +136,9 @@ function applyConfig(cfg) {
   // Página de investimento (pitch) configurável por oferta
   applyPitchConfig(cfg.pitch);
 
+  // Rastreamento Meta — InitiateCheckout ao abrir o checkout (só ofertas rastreadas)
+  applyMetaTracking(cfg);
+
   // Garantia configurável por oferta
   const gBlock = document.getElementById('guarantee-block');
   if (gBlock) {
@@ -172,6 +175,33 @@ function escapeHtml(str) {
 function renderInstallment(raw) {
   const esc = escapeHtml(normalizeInstallment(raw));
   return esc.replace(/^(\d+\s*×)/, '<strong class="pitch-mult">$1</strong>');
+}
+
+// ─── Meta Pixel (carregado sob demanda, só p/ ofertas rastreadas) ────────────
+let _metaInitiated = false;
+function loadMetaPixel(id) {
+  if (!window.fbq) {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  }
+  fbq('init', id);
+}
+function applyMetaTracking(cfg) {
+  if (_metaInitiated) return;
+  if (!cfg || !cfg.trackMeta || !cfg.metaPixelId) return;
+  _metaInitiated = true;
+  loadMetaPixel(cfg.metaPixelId);
+  fbq('track', 'PageView');
+  fbq('track', 'InitiateCheckout', {
+    currency:     'BRL',
+    value:        (cfg.productPrice || 0) / 100,
+    content_name: cfg.productName || '',
+    content_ids:  [cfg.metaContentId || cfg.offerSlug || ''],
+    content_type: 'product',
+  });
 }
 
 function applyPitchConfig(pitch) {
