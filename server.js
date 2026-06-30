@@ -141,7 +141,7 @@ async function getOrders(filters = {}) {
 }
 
 async function appendOrder(record) {
-  const { error } = await supabase.from('orders').insert({
+  const row = {
     id:                 record.id,
     pagarme_order_id:   record.pagarmeOrderId,
     status:             record.status,
@@ -160,7 +160,18 @@ async function appendOrder(record) {
     failure_reason:     record.failureReason || null,
     meta:               record.meta || {},
     created_at:         record.createdAt,
-  });
+  };
+  let { error } = await supabase.from('orders').insert(row);
+  // Resiliência: se uma coluna opcional ainda não foi migrada, salva o pedido sem ela
+  if (error && /column|schema cache/i.test(error.message || '')) {
+    const m = (error.message || '').match(/'([a-z_]+)' column/i);
+    const col = m ? m[1] : 'meta';
+    if (col in row) {
+      console.warn(`[Orders] coluna "${col}" ausente — salvando pedido sem ela. Rode a migração do Supabase.`);
+      delete row[col];
+      ({ error } = await supabase.from('orders').insert(row));
+    }
+  }
   if (error) throw error;
   // Mark lead as converted
   if (record.leadId) {
