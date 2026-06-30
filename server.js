@@ -184,7 +184,9 @@ async function appendOrder(record) {
 function newId() { return crypto.randomUUID(); }
 
 // ─── Meta — Pixel + Conversions API ───────────────────────────────────────────
-const META_PIXEL_ID    = process.env.META_PIXEL_ID    || '';
+// Pixel ID é público (já aparece no client). Token da CAPI é secreto: vem de env
+// ou da aba Integrações (app_settings), NUNCA do código (vazaria no GitHub).
+const META_PIXEL_ID    = process.env.META_PIXEL_ID    || '1810657219916478';
 const META_CAPI_TOKEN  = process.env.META_CAPI_TOKEN  || '';
 const META_API_VERSION = 'v21.0';
 
