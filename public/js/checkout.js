@@ -194,7 +194,7 @@ function applyMetaTracking(cfg) {
   if (!cfg || !cfg.trackMeta || !cfg.metaPixelId) return;
   _metaInitiated = true;
   loadMetaPixel(cfg.metaPixelId);
-  fbq('track', 'PageView');
+  // No checkout disparamos só o InitiateCheckout (sem PageView)
   fbq('track', 'InitiateCheckout', {
     currency:     'BRL',
     value:        (cfg.productPrice || 0) / 100,
