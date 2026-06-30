@@ -91,12 +91,27 @@ function mapCoupon(row) {
     maxUses:     row.max_uses,
     usedCount:   row.used_count,
     offerId:     row.offer_id,
+    offerIds:    (Array.isArray(row.offer_ids) && row.offer_ids.length) ? row.offer_ids : (row.offer_id ? [row.offer_id] : []),
     bannerTitle: row.banner_title || null,
     bannerText:  row.banner_text  || null,
     active:      row.active,
     createdAt:   row.created_at,
     updatedAt:   row.updated_at,
   };
+}
+
+// Cupom vale para a oferta? Sem ofertas vinculadas = vale para todas.
+function couponMatchesOffer(coupon, offerId) {
+  const ids = coupon.offerIds || [];
+  if (!ids.length) return true;
+  return !!offerId && ids.includes(offerId);
+}
+
+// Normaliza a lista de ofertas vinculadas (aceita array novo ou offerId legado)
+function sanitizeOfferIds(arr, legacySingle) {
+  let ids = Array.isArray(arr) ? arr : (arr ? [arr] : []);
+  if (!ids.length && legacySingle) ids = [legacySingle];
+  return [...new Set(ids.filter(x => typeof x === 'string' && x))].slice(0, 100);
 }
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -386,7 +401,7 @@ app.post('/api/order', async (req, res) => {
         c.code.toUpperCase() === couponCode.toUpperCase() &&
         c.active !== false &&
         (c.maxUses == null || c.usedCount < c.maxUses) &&
-        (c.offerId == null || c.offerId === offer?.id)
+        couponMatchesOffer(c, offer?.id)
       );
       if (coupon) {
         const basePrice = offer ? offer.price : (parseInt(process.env.PRODUCT_PRICE, 10) || 350000);
@@ -681,7 +696,7 @@ app.post('/api/coupon/validate', async (req, res) => {
       c.code.toUpperCase() === code.toUpperCase() &&
       c.active !== false &&
       (c.maxUses == null || c.usedCount < c.maxUses) &&
-      (c.offerId == null || c.offerId === offer?.id)
+      couponMatchesOffer(c, offer?.id)
     );
 
     if (!coupon) return res.status(404).json({ error: 'Cupom inválido ou expirado' });
@@ -952,7 +967,8 @@ app.post('/admin/api/coupons', authOnlyAdmin, async (req, res) => {
       value:     parseFloat(req.body.value) || 10,
       max_uses:  req.body.maxUses != null && req.body.maxUses !== '' ? parseInt(req.body.maxUses, 10) : null,
       used_count: 0,
-      offer_id:     req.body.offerId || null,
+      ...(() => { const ids = sanitizeOfferIds(req.body.offerIds, req.body.offerId);
+                  return { offer_ids: ids, offer_id: ids.length === 1 ? ids[0] : null }; })(),
       banner_title: req.body.bannerTitle?.trim() || null,
       banner_text:  req.body.bannerText?.trim()  || null,
       active:       req.body.active !== false,
@@ -974,7 +990,11 @@ app.put('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
     if (req.body.type    !== undefined) updates.type      = req.body.type;
     if (req.body.value   !== undefined) updates.value     = parseFloat(req.body.value);
     if (req.body.maxUses !== undefined) updates.max_uses  = req.body.maxUses === '' || req.body.maxUses == null ? null : parseInt(req.body.maxUses, 10);
-    if (req.body.offerId      !== undefined) updates.offer_id     = req.body.offerId || null;
+    if (req.body.offerIds !== undefined || req.body.offerId !== undefined) {
+      const ids = sanitizeOfferIds(req.body.offerIds, req.body.offerId);
+      updates.offer_ids = ids;
+      updates.offer_id  = ids.length === 1 ? ids[0] : null;
+    }
     if (req.body.bannerTitle  !== undefined) updates.banner_title = req.body.bannerTitle?.trim() || null;
     if (req.body.bannerText   !== undefined) updates.banner_text  = req.body.bannerText?.trim()  || null;
     if (req.body.active       !== undefined) updates.active       = req.body.active;

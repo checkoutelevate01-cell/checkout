@@ -103,6 +103,9 @@ alter table offers add column if not exists show_coupon         boolean default 
 alter table coupons add column if not exists banner_title text;
 alter table coupons add column if not exists banner_text  text;
 
+-- Migração: cupom vinculável a múltiplas ofertas (vazio = todas)
+alter table coupons add column if not exists offer_ids jsonb default '[]'::jsonb;
+
 -- Migração: motivo de recusa do cartão
 alter table orders add column if not exists failure_reason text;
 

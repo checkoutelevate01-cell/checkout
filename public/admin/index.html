@@ -1135,11 +1135,10 @@
           <label>Usos máximos</label>
           <input type="number" id="coupon-max-uses" placeholder="Ilimitado (deixe vazio)" min="1" />
         </div>
-        <div class="field-group">
-          <label>Válido para oferta</label>
-          <select id="coupon-offer-id">
-            <option value="">Todas as ofertas</option>
-          </select>
+        <div class="field-group fg-full">
+          <label>Válido para ofertas</label>
+          <div id="coupon-offers-list" style="display:flex;flex-direction:column;gap:7px;max-height:170px;overflow:auto;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:9px"></div>
+          <small style="color:var(--text2);font-size:11px">Marque uma ou mais ofertas. Deixe tudo desmarcado para o cupom valer em todas.</small>
         </div>
         <div class="field-group fg-full">
           <label>Texto principal do banner <span style="color:var(--text2);font-weight:400">(opcional)</span></label>
@@ -1788,7 +1787,12 @@ function renderCoupons() {
   }
 
   tbody.innerHTML = coupons.map(c => {
-    const offerName = c.offerId ? (offers.find(o => o.id === c.offerId)?.name || c.offerId) : '—';
+    const ids = c.offerIds || [];
+    const offerName = !ids.length
+      ? 'Todas'
+      : ids.length === 1
+        ? (offers.find(o => o.id === ids[0])?.name || '1 oferta')
+        : `${ids.length} ofertas`;
     const uses      = c.maxUses != null ? `${c.usedCount}/${c.maxUses}` : `${c.usedCount}/∞`;
     const valStr    = c.type === 'percent' ? `${c.value}%` : `R$ ${(c.value/100).toFixed(2).replace('.',',')}`;
     return `<tr>
@@ -1809,16 +1813,18 @@ function renderCoupons() {
 }
 
 async function populateCouponOffers() {
-  const sel = document.getElementById('coupon-offer-id');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Todas as ofertas</option>';
-  offers.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o.id;
-    opt.textContent = o.name;
-    sel.appendChild(opt);
-  });
-  sel.value = cur;
+  // Lista de ofertas como checkboxes (cupom vinculável a várias ofertas)
+  const list = document.getElementById('coupon-offers-list');
+  if (list) {
+    const checked = new Set(getCouponOffers());
+    list.innerHTML = offers.length
+      ? offers.map(o => `
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" class="coupon-offer-chk" value="${o.id}" ${checked.has(o.id) ? 'checked' : ''} style="width:auto" />
+          <span>${escHtml(o.name)} <span style="color:var(--text3);font-size:11px">/c/${escHtml(o.slug)}</span></span>
+        </label>`).join('')
+      : '<span style="color:var(--text2);font-size:12px">Nenhuma oferta criada ainda.</span>';
+  }
 
   // Também popular o filtro de ofertas em Compras
   const filterSel = document.getElementById('orders-filter-offer');
@@ -1835,6 +1841,14 @@ async function populateCouponOffers() {
   }
 }
 
+function getCouponOffers() {
+  return Array.from(document.querySelectorAll('#coupon-offers-list .coupon-offer-chk:checked')).map(c => c.value);
+}
+function setCouponOffers(ids) {
+  const set = new Set(ids || []);
+  document.querySelectorAll('#coupon-offers-list .coupon-offer-chk').forEach(c => { c.checked = set.has(c.value); });
+}
+
 function openCouponModal(id) {
   const modal = document.getElementById('coupon-modal-backdrop');
   const title = document.getElementById('coupon-modal-title');
@@ -1847,7 +1861,7 @@ function openCouponModal(id) {
     document.getElementById('coupon-type').value     = 'percent';
     document.getElementById('coupon-value').value    = '';
     document.getElementById('coupon-max-uses').value = '';
-    document.getElementById('coupon-offer-id').value = '';
+    setCouponOffers([]);
     document.getElementById('coupon-banner-title').value = '';
     document.getElementById('coupon-banner-text').value  = '';
     document.getElementById('coupon-active').checked = true;
@@ -1861,7 +1875,7 @@ function openCouponModal(id) {
     document.getElementById('coupon-type').value     = c.type;
     document.getElementById('coupon-value').value    = c.type === 'fixed' ? (c.value / 100).toFixed(2) : c.value;
     document.getElementById('coupon-max-uses').value = c.maxUses != null ? c.maxUses : '';
-    document.getElementById('coupon-offer-id').value = c.offerId || '';
+    setCouponOffers(c.offerIds || []);
     document.getElementById('coupon-banner-title').value = c.bannerTitle || '';
     document.getElementById('coupon-banner-text').value  = c.bannerText  || '';
     document.getElementById('coupon-active').checked = c.active !== false;
@@ -1884,7 +1898,7 @@ async function saveCoupon() {
     type,
     value,
     maxUses: maxUsesRaw !== '' ? parseInt(maxUsesRaw) : null,
-    offerId:     document.getElementById('coupon-offer-id').value || null,
+    offerIds:    getCouponOffers(),
     bannerTitle: document.getElementById('coupon-banner-title').value.trim() || null,
     bannerText:  document.getElementById('coupon-banner-text').value.trim()  || null,
     active:      document.getElementById('coupon-active').checked,
