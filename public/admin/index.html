@@ -560,6 +560,14 @@
       Usuários
     </div>
 
+    <div class="nav-item" data-tab="integracoes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Integrações
+    </div>
+
     <div class="sidebar-footer">
       <button class="btn-logout" id="btn-logout">Sair da conta</button>
     </div>
@@ -868,6 +876,70 @@
               <tr><td colspan="5"><div class="empty-state">Carregando…</div></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Integrações tab ── -->
+    <div id="tab-integracoes" class="tab-section">
+      <div class="top-bar">
+        <div>
+          <h1>Integrações</h1>
+          <div class="hint">Rastreamento e CRM. As credenciais ficam salvas aqui — não precisa mexer no servidor.</div>
+        </div>
+      </div>
+      <div class="content">
+        <div style="max-width:640px;display:flex;flex-direction:column;gap:22px">
+
+          <!-- Meta -->
+          <div class="dash-panel">
+            <h3 class="dash-panel__title" style="display:flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Meta — Pixel + API de Conversões
+            </h3>
+            <div class="form-grid full" style="gap:14px">
+              <div class="field-group">
+                <label>Pixel ID</label>
+                <input type="text" id="set-meta-pixel" placeholder="Ex: 1810657219916478" autocomplete="off" />
+              </div>
+              <div class="field-group">
+                <label>Token da API de Conversões (CAPI)</label>
+                <input type="password" id="set-meta-token" placeholder="EAAxxxxxxxx…" autocomplete="off" />
+                <span class="field-hint">Gerado no Gerenciador de Eventos do Meta. Fica oculto por segurança.</span>
+              </div>
+              <div class="field-group">
+                <span class="field-hint">O disparo só acontece nas ofertas com o toggle “Rastrear conversões no Meta” ligado.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clint -->
+          <div class="dash-panel">
+            <h3 class="dash-panel__title" style="display:flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Clint — Webhook de leads
+            </h3>
+            <div class="form-grid full" style="gap:14px">
+              <div class="field-group">
+                <div class="toggle-row">
+                  <label class="toggle">
+                    <input type="checkbox" id="set-clint-enabled" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span class="toggle-label">Enviar leads para a Clint</span>
+                </div>
+              </div>
+              <div class="field-group">
+                <label>URL do webhook da Clint</label>
+                <input type="text" id="set-clint-url" placeholder="https://app.clint.digital/webhook/…" autocomplete="off" />
+                <span class="field-hint">Cada lead capturado (etapa 1 do checkout) é enviado via POST JSON pra essa URL.</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <button class="btn-primary" id="btn-save-settings">Salvar integrações</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1323,6 +1395,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-user').addEventListener('click', () => openUserModal(null));
   document.getElementById('btn-save-user').addEventListener('click', saveUser);
 
+  // Integrações
+  document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+
   // Multi-select de ofertas no cupom
   document.getElementById('coupon-offers-trigger').addEventListener('click', (e) => { e.stopPropagation(); toggleCouponOffersPanel(); });
   document.getElementById('coupon-offers-search').addEventListener('input', (e) => filterCouponOffers(e.target.value));
@@ -1443,6 +1518,7 @@ function switchTab(tab) {
   if (tab === 'dashboard') loadDashboard();
   if (tab === 'leads')     loadLeads();
   if (tab === 'users')     loadUsers();
+  if (tab === 'integracoes') loadSettings();
 }
 
 // ── Dashboard ────────────────────────────────────────────
@@ -1823,6 +1899,37 @@ function deleteUser(id, email) {
       await loadUsers();
     } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
   };
+}
+
+// ── Integrações (settings) ───────────────────────────────
+async function loadSettings() {
+  if (!isAdmin()) return;
+  try {
+    const res = await apiFetch('/admin/api/settings');
+    const s = await res.json();
+    document.getElementById('set-meta-pixel').value    = s.metaPixelId || '';
+    document.getElementById('set-meta-token').value    = s.metaCapiToken || '';
+    document.getElementById('set-clint-enabled').checked = s.clintEnabled === true;
+    document.getElementById('set-clint-url').value     = s.clintWebhookUrl || '';
+  } catch(e) { if (e.message !== '401') console.error('[Settings]', e); }
+}
+
+async function saveSettings() {
+  const body = {
+    metaPixelId:     document.getElementById('set-meta-pixel').value.trim(),
+    metaCapiToken:   document.getElementById('set-meta-token').value.trim(),
+    clintEnabled:    document.getElementById('set-clint-enabled').checked,
+    clintWebhookUrl: document.getElementById('set-clint-url').value.trim(),
+  };
+  const btn = document.getElementById('btn-save-settings');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    const res  = await apiFetch('/admin/api/settings', { method: 'PUT', body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao salvar', 'error'); return; }
+    toast('Integrações salvas!', 'success');
+  } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Salvar integrações'; }
 }
 
 // ── Coupons ──────────────────────────────────────────────

@@ -110,6 +110,18 @@ alter table coupons add column if not exists offer_ids jsonb default '[]'::jsonb
 alter table offers add column if not exists track_meta boolean default false;
 alter table orders add column if not exists meta jsonb default '{}'::jsonb;
 
+-- Configurações globais de integração (aba Integrações no admin)
+create table if not exists app_settings (
+  id                text primary key default 'global',
+  meta_pixel_id     text default '',
+  meta_capi_token   text default '',
+  clint_enabled     boolean default false,
+  clint_webhook_url text default '',
+  updated_at        timestamptz default now()
+);
+alter table app_settings disable row level security;
+insert into app_settings (id) values ('global') on conflict (id) do nothing;
+
 -- Migração: motivo de recusa do cartão
 alter table orders add column if not exists failure_reason text;
 

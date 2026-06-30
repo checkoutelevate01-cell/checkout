@@ -180,6 +180,51 @@ function metaHash(v) {
   return crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
 }
 
+// ─── Configurações globais (aba Integrações) — cache curto ────────────────────
+let _settingsCache = null, _settingsCacheAt = 0;
+async function getSettings() {
+  if (_settingsCache && Date.now() - _settingsCacheAt < 30000) return _settingsCache;
+  try {
+    const { data } = await supabase.from('app_settings').select('*').eq('id', 'global').maybeSingle();
+    _settingsCache = data || {};
+  } catch { _settingsCache = {}; }
+  _settingsCacheAt = Date.now();
+  return _settingsCache;
+}
+function invalidateSettings() { _settingsCache = null; }
+
+// Credenciais Meta: settings do banco têm prioridade; env é fallback
+async function metaCreds() {
+  const s = await getSettings();
+  return {
+    pixelId: s.meta_pixel_id  || META_PIXEL_ID   || '',
+    token:   s.meta_capi_token || META_CAPI_TOKEN || '',
+  };
+}
+
+// Envia o lead capturado para o webhook da Clint (se configurado)
+async function sendClintLead(lead) {
+  try {
+    const s = await getSettings();
+    if (!s.clint_enabled || !s.clint_webhook_url) return;
+    await axios.post(s.clint_webhook_url, {
+      event:      'lead',
+      name:       lead.name,
+      email:      lead.email,
+      phone:      lead.phone,
+      specialty:  lead.specialty || null,
+      crm:        lead.crm || null,
+      instagram:  lead.instagram || null,
+      offer:      lead.offer_slug || null,
+      status:     lead.status || 'lead',
+      created_at: lead.created_at,
+    }, { timeout: 8000 });
+    console.log('[Clint] Lead enviado:', lead.email);
+  } catch (e) {
+    console.error('[Clint]', e.response?.status || e.message);
+  }
+}
+
 function parseCookies(header) {
   const out = {};
   (header || '').split(';').forEach(p => {
@@ -205,7 +250,8 @@ function extractMetaContext(req, clientMeta = {}) {
 // Envia o evento Purchase para a Conversions API (somente ofertas com track_meta)
 async function sendMetaPurchase(record) {
   try {
-    if (!META_PIXEL_ID || !META_CAPI_TOKEN) return;
+    const { pixelId, token } = await metaCreds();
+    if (!pixelId || !token) return;
     if (!record?.offer) return;
 
     const offers = await getOffers();
@@ -244,9 +290,9 @@ async function sendMetaPurchase(record) {
     };
 
     await axios.post(
-      `https://graph.facebook.com/${META_API_VERSION}/${META_PIXEL_ID}/events`,
+      `https://graph.facebook.com/${META_API_VERSION}/${pixelId}/events`,
       payload,
-      { params: { access_token: META_CAPI_TOKEN } }
+      { params: { access_token: token } }
     );
     console.log('[Meta CAPI] Purchase enviado:', record.pagarmeOrderId, off.slug);
   } catch (e) {
@@ -417,6 +463,7 @@ app.get('/api/config', async (req, res) => {
     const maxInstall     = offer ? offer.maxInstallments : (parseInt(process.env.MAX_INSTALLMENTS, 10) || 12);
     const noInterestUpTo = offer ? offer.noInterestUpTo  : (parseInt(process.env.MAX_INSTALLMENTS_NO_INTEREST, 10) || 12);
     const interestRate   = offer ? offer.interestRate : 1.99;
+    const meta           = await metaCreds();
 
     res.json({
       productName:        offer ? offer.name        : (process.env.PRODUCT_NAME        || 'Mentoria Estratégica Premium'),
@@ -434,7 +481,7 @@ app.get('/api/config', async (req, res) => {
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
       thankYouMessage:    offer ? (offer.thankYouMessage || '') : '',
-      metaPixelId:        (offer && offer.trackMeta) ? META_PIXEL_ID : '',
+      metaPixelId:        (offer && offer.trackMeta) ? meta.pixelId : '',
       trackMeta:          offer ? offer.trackMeta === true : false,
       pitch: {
         enabled:          offer ? offer.pitchEnabled === true : false,
@@ -781,6 +828,7 @@ app.post('/api/lead', async (req, res) => {
       status:     'lead',
     }).select().single();
     if (error) throw error;
+    sendClintLead(data).catch(() => {}); // webhook Clint (captura do lead)
     res.json({ id: data.id });
   } catch (err) {
     console.error('[Lead]', err.message);
@@ -929,6 +977,34 @@ app.delete('/admin/api/users/:id', authOnlyAdmin, async (req, res) => {
   try {
     const { error } = await supabase.from('admin_users').delete().eq('id', req.params.id);
     if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── Integrações (configurações globais) — somente admin ──────────────────────
+app.get('/admin/api/settings', authOnlyAdmin, async (_req, res) => {
+  try {
+    const s = await getSettings();
+    res.json({
+      metaPixelId:     s.meta_pixel_id     || '',
+      metaCapiToken:   s.meta_capi_token   || '',
+      clintEnabled:    s.clint_enabled === true,
+      clintWebhookUrl: s.clint_webhook_url || '',
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/admin/api/settings', authOnlyAdmin, async (req, res) => {
+  try {
+    const updates = { id: 'global', updated_at: new Date().toISOString() };
+    if (req.body.metaPixelId     !== undefined) updates.meta_pixel_id     = (req.body.metaPixelId || '').trim();
+    if (req.body.metaCapiToken   !== undefined) updates.meta_capi_token   = (req.body.metaCapiToken || '').trim();
+    if (req.body.clintEnabled    !== undefined) updates.clint_enabled     = req.body.clintEnabled === true;
+    if (req.body.clintWebhookUrl !== undefined) updates.clint_webhook_url = (req.body.clintWebhookUrl || '').trim();
+
+    const { error } = await supabase.from('app_settings').upsert(updates, { onConflict: 'id' });
+    if (error) throw error;
+    invalidateSettings();
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
