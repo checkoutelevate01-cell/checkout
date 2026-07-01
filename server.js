@@ -217,8 +217,10 @@ async function metaCreds() {
 }
 
 // Monta o payload enviado à Clint (chaves em EN e PT p/ facilitar o mapeamento)
-function buildClintPayload(lead, origin) {
+function buildClintPayload(lead, origin, offerName) {
   const phone = lead.phone || '';
+  const slug  = lead.offer_slug || null;
+  const oName = offerName || slug || null;
   return {
     event:        'lead',
     origin:       origin || 'Checkout',
@@ -233,8 +235,10 @@ function buildClintPayload(lead, origin) {
     especialidade:lead.specialty || null,
     crm:          lead.crm || null,
     instagram:    lead.instagram || null,
-    offer:        lead.offer_slug || null,
-    oferta:       lead.offer_slug || null,
+    offer:        slug,
+    oferta:       slug,
+    offer_name:   oName,
+    oferta_nome:  oName,
     status:       lead.status || 'lead',
     created_at:   lead.created_at,
   };
@@ -245,11 +249,16 @@ async function sendClintLead(lead) {
   try {
     const s = await getSettings();
     if (!s.clint_enabled || !s.clint_webhook_url) return;
-    await axios.post(s.clint_webhook_url, buildClintPayload(lead, s.clint_origin), {
+    let offerName = null;
+    if (lead.offer_slug) {
+      const offers = await getOffers();
+      offerName = offers.find(o => o.slug === lead.offer_slug)?.name || null;
+    }
+    await axios.post(s.clint_webhook_url, buildClintPayload(lead, s.clint_origin, offerName), {
       timeout: 8000,
       headers: { 'Content-Type': 'application/json' },
     });
-    console.log('[Clint] Lead enviado:', lead.email);
+    console.log('[Clint] Lead enviado:', lead.email, '| oferta:', offerName || lead.offer_slug || '—');
   } catch (e) {
     console.error('[Clint]', e.response?.status || e.message);
   }
@@ -1052,7 +1061,7 @@ app.post('/admin/api/settings/test-clint', authOnlyAdmin, async (req, res) => {
       name: 'Lead de Teste', email: 'teste@exemplo.com', phone: '11999999999',
       specialty: 'Cardiologia', crm: '123456', instagram: '@teste',
       offer_slug: 'teste', status: 'lead', created_at: new Date().toISOString(),
-    }, (req.body.clintOrigin || '').trim());
+    }, (req.body.clintOrigin || '').trim(), 'Oferta de Teste');
     const r = await axios.post(url, sample, { timeout: 8000, headers: { 'Content-Type': 'application/json' }, validateStatus: () => true });
     res.json({ ok: r.status >= 200 && r.status < 300, status: r.status });
   } catch (err) {
