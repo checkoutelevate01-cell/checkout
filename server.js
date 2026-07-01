@@ -216,23 +216,39 @@ async function metaCreds() {
   };
 }
 
+// Monta o payload enviado à Clint (chaves em EN e PT p/ facilitar o mapeamento)
+function buildClintPayload(lead, origin) {
+  const phone = lead.phone || '';
+  return {
+    event:        'lead',
+    origin:       origin || 'Checkout',
+    origem:       origin || 'Checkout',
+    name:         lead.name,
+    nome:         lead.name,
+    email:        lead.email,
+    phone,
+    telefone:     phone,
+    whatsapp:     phone,
+    specialty:    lead.specialty || null,
+    especialidade:lead.specialty || null,
+    crm:          lead.crm || null,
+    instagram:    lead.instagram || null,
+    offer:        lead.offer_slug || null,
+    oferta:       lead.offer_slug || null,
+    status:       lead.status || 'lead',
+    created_at:   lead.created_at,
+  };
+}
+
 // Envia o lead capturado para o webhook da Clint (se configurado)
 async function sendClintLead(lead) {
   try {
     const s = await getSettings();
     if (!s.clint_enabled || !s.clint_webhook_url) return;
-    await axios.post(s.clint_webhook_url, {
-      event:      'lead',
-      name:       lead.name,
-      email:      lead.email,
-      phone:      lead.phone,
-      specialty:  lead.specialty || null,
-      crm:        lead.crm || null,
-      instagram:  lead.instagram || null,
-      offer:      lead.offer_slug || null,
-      status:     lead.status || 'lead',
-      created_at: lead.created_at,
-    }, { timeout: 8000 });
+    await axios.post(s.clint_webhook_url, buildClintPayload(lead, s.clint_origin), {
+      timeout: 8000,
+      headers: { 'Content-Type': 'application/json' },
+    });
     console.log('[Clint] Lead enviado:', lead.email);
   } catch (e) {
     console.error('[Clint]', e.response?.status || e.message);
@@ -1006,6 +1022,7 @@ app.get('/admin/api/settings', authOnlyAdmin, async (_req, res) => {
       metaCapiToken:   s.meta_capi_token   || '',
       clintEnabled:    s.clint_enabled === true,
       clintWebhookUrl: s.clint_webhook_url || '',
+      clintOrigin:     s.clint_origin      || '',
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -1017,12 +1034,30 @@ app.put('/admin/api/settings', authOnlyAdmin, async (req, res) => {
     if (req.body.metaCapiToken   !== undefined) updates.meta_capi_token   = (req.body.metaCapiToken || '').trim();
     if (req.body.clintEnabled    !== undefined) updates.clint_enabled     = req.body.clintEnabled === true;
     if (req.body.clintWebhookUrl !== undefined) updates.clint_webhook_url = (req.body.clintWebhookUrl || '').trim();
+    if (req.body.clintOrigin     !== undefined) updates.clint_origin      = (req.body.clintOrigin || '').trim();
 
     const { error } = await supabase.from('app_settings').upsert(updates, { onConflict: 'id' });
     if (error) throw error;
     invalidateSettings();
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Envia um lead de exemplo para a URL informada (testar/conectar a Clint)
+app.post('/admin/api/settings/test-clint', authOnlyAdmin, async (req, res) => {
+  try {
+    const url = (req.body.clintWebhookUrl || '').trim();
+    if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Informe uma URL de webhook válida' });
+    const sample = buildClintPayload({
+      name: 'Lead de Teste', email: 'teste@exemplo.com', phone: '11999999999',
+      specialty: 'Cardiologia', crm: '123456', instagram: '@teste',
+      offer_slug: 'teste', status: 'lead', created_at: new Date().toISOString(),
+    }, (req.body.clintOrigin || '').trim());
+    const r = await axios.post(url, sample, { timeout: 8000, headers: { 'Content-Type': 'application/json' }, validateStatus: () => true });
+    res.json({ ok: r.status >= 200 && r.status < 300, status: r.status });
+  } catch (err) {
+    res.status(200).json({ ok: false, error: err.code || err.message });
+  }
 });
 
 // Offers CRUD

@@ -930,9 +930,18 @@
                 </div>
               </div>
               <div class="field-group">
+                <label>Nome / Origem</label>
+                <input type="text" id="set-clint-origin" placeholder="Ex: Checkout Mentoria" autocomplete="off" />
+                <span class="field-hint">Enviado no campo <code style="color:var(--gold)">origin/origem</code> pra identificar a fonte do lead na Clint.</span>
+              </div>
+              <div class="field-group">
                 <label>URL do webhook da Clint</label>
                 <input type="text" id="set-clint-url" placeholder="https://app.clint.digital/webhook/…" autocomplete="off" />
                 <span class="field-hint">Cada lead capturado (etapa 1 do checkout) é enviado via POST JSON pra essa URL.</span>
+              </div>
+              <div class="field-group">
+                <button class="btn-primary" id="btn-test-clint" style="background:rgba(212,168,83,0.15);color:var(--gold);border:1px solid var(--gold-mid)">Enviar lead de teste</button>
+                <span class="field-hint">Manda um lead de exemplo pra URL acima. Use isso pra a Clint “aprender” os campos e você mapeá-los lá.</span>
               </div>
             </div>
           </div>
@@ -1402,6 +1411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Integrações
   document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+  document.getElementById('btn-test-clint').addEventListener('click', testClint);
 
   // Multi-select de ofertas no cupom
   document.getElementById('coupon-offers-trigger').addEventListener('click', (e) => { e.stopPropagation(); toggleCouponOffersPanel(); });
@@ -1919,7 +1929,25 @@ async function loadSettings() {
     document.getElementById('set-meta-token').value    = s.metaCapiToken || '';
     document.getElementById('set-clint-enabled').checked = s.clintEnabled === true;
     document.getElementById('set-clint-url').value     = s.clintWebhookUrl || '';
+    document.getElementById('set-clint-origin').value  = s.clintOrigin || '';
   } catch(e) { if (e.message !== '401') console.error('[Settings]', e); }
+}
+
+async function testClint() {
+  const btn = document.getElementById('btn-test-clint');
+  const url = document.getElementById('set-clint-url').value.trim();
+  if (!url) { toast('Informe a URL do webhook da Clint', 'error'); return; }
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {
+    const res = await apiFetch('/admin/api/settings/test-clint', {
+      method: 'POST',
+      body: JSON.stringify({ clintWebhookUrl: url, clintOrigin: document.getElementById('set-clint-origin').value.trim() }),
+    });
+    const data = await res.json();
+    if (data.ok) toast(`Enviado! A Clint respondeu ${data.status}. Agora mapeie os campos lá.`, 'success');
+    else toast(`Falhou (${data.status || data.error || 'sem resposta'}). Confira a URL.`, 'error');
+  } catch(e) { if (e.message !== '401') toast('Erro de conexão', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Enviar lead de teste'; }
 }
 
 async function saveSettings() {
@@ -1928,6 +1956,7 @@ async function saveSettings() {
     metaCapiToken:   document.getElementById('set-meta-token').value.trim(),
     clintEnabled:    document.getElementById('set-clint-enabled').checked,
     clintWebhookUrl: document.getElementById('set-clint-url').value.trim(),
+    clintOrigin:     document.getElementById('set-clint-origin').value.trim(),
   };
   const btn = document.getElementById('btn-save-settings');
   btn.disabled = true; btn.textContent = 'Salvando…';

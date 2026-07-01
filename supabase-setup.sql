@@ -122,6 +122,8 @@ create table if not exists app_settings (
 );
 alter table app_settings disable row level security;
 insert into app_settings (id) values ('global') on conflict (id) do nothing;
+-- Nome/origem enviado à Clint junto do lead
+alter table app_settings add column if not exists clint_origin text default '';
 
 -- Migração: motivo de recusa do cartão
 alter table orders add column if not exists failure_reason text;
