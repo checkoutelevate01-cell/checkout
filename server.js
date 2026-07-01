@@ -1045,7 +1045,17 @@ app.put('/admin/api/settings', authOnlyAdmin, async (req, res) => {
     if (req.body.clintWebhookUrl !== undefined) updates.clint_webhook_url = (req.body.clintWebhookUrl || '').trim();
     if (req.body.clintOrigin     !== undefined) updates.clint_origin      = (req.body.clintOrigin || '').trim();
 
-    const { error } = await supabase.from('app_settings').upsert(updates, { onConflict: 'id' });
+    let { error } = await supabase.from('app_settings').upsert(updates, { onConflict: 'id' });
+    // Resiliência: se uma coluna nova ainda não foi migrada, salva o resto
+    if (error && /column|schema cache/i.test(error.message || '')) {
+      const m = (error.message || '').match(/'([a-z_]+)' column/i);
+      const col = m ? m[1] : null;
+      if (col && col in updates) {
+        console.warn(`[Settings] coluna "${col}" ausente — salvando sem ela. Rode a migração.`);
+        delete updates[col];
+        ({ error } = await supabase.from('app_settings').upsert(updates, { onConflict: 'id' }));
+      }
+    }
     if (error) throw error;
     invalidateSettings();
     res.json({ ok: true });
