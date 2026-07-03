@@ -173,6 +173,8 @@ create table if not exists admin_users (
   updated_at    timestamptz
 );
 alter table admin_users disable row level security;
+-- Permissões por colaborador (quais áreas do admin ele acessa)
+alter table admin_users add column if not exists permissions jsonb default '{}'::jsonb;
 
 -- Dono da oferta (quem criou). Ofertas antigas ficam com null = só admin edita.
 alter table offers add column if not exists created_by uuid;

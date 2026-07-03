@@ -70,16 +70,55 @@ function mapOffer(row) {
   };
 }
 
+// Áreas do admin que podem ser liberadas por colaborador
+const PERM_KEYS = ['dashboard', 'offers', 'coupons', 'orders', 'leads'];
+// Colaborador sem permissões definidas mantém o acesso padrão (links + compras)
+const DEFAULT_PERMS = { dashboard: false, offers: true, coupons: false, orders: true, leads: false };
+
+function normalizePerms(p) {
+  const src = (p && typeof p === 'object' && Object.keys(p).length) ? p : DEFAULT_PERMS;
+  const out = {};
+  PERM_KEYS.forEach(k => { out[k] = src[k] === true; });
+  return out;
+}
+
 // Usuário do admin — nunca expõe password_hash
 function mapUser(row) {
   if (!row) return null;
   return {
-    id:        row.id,
-    email:     row.email,
-    name:      row.name || '',
-    role:      row.role || 'collaborator',
-    active:    row.active !== false,
-    createdAt: row.created_at,
+    id:          row.id,
+    email:       row.email,
+    name:        row.name || '',
+    role:        row.role || 'collaborator',
+    permissions: normalizePerms(row.permissions),
+    active:      row.active !== false,
+    createdAt:   row.created_at,
+  };
+}
+
+// Permissões efetivas do usuário logado (admin = tudo)
+async function getEffectivePerms(user) {
+  if (!user) return null;
+  if (user.role === 'admin') {
+    const all = {}; PERM_KEYS.forEach(k => all[k] = true); return all;
+  }
+  if (!user.userId) return normalizePerms(null);
+  try {
+    const { data } = await supabase.from('admin_users').select('permissions').eq('id', user.userId).maybeSingle();
+    return normalizePerms(data?.permissions);
+  } catch { return normalizePerms(null); }
+}
+
+// Middleware: exige uma permissão específica (admin passa sempre)
+function authPerm(area) {
+  return async (req, res, next) => {
+    const user = getTokenUser(req);
+    if (!user) return res.status(401).json({ error: 'Não autorizado' });
+    req.user = user; req.role = user.role;
+    if (user.role === 'admin') return next();
+    const perms = await getEffectivePerms(user);
+    if (perms && perms[area]) return next();
+    return res.status(403).json({ error: 'Sem permissão para esta área' });
   };
 }
 
@@ -959,8 +998,9 @@ app.post('/admin/api/login', async (req, res) => {
 });
 
 // Identidade do usuário logado (para o front calcular propriedade/gating)
-app.get('/admin/api/me', authAdmin, (req, res) => {
-  res.json(req.user);
+app.get('/admin/api/me', authAdmin, async (req, res) => {
+  const permissions = await getEffectivePerms(req.user);
+  res.json({ ...req.user, permissions });
 });
 
 // ─── Admin Users CRUD (somente admin) ─────────────────────────────────────────
@@ -986,6 +1026,7 @@ app.post('/admin/api/users', authOnlyAdmin, async (req, res) => {
       name:          req.body.name || '',
       role,
       password_hash: hashPassword(password),
+      permissions:   role === 'admin' ? {} : normalizePerms(req.body.permissions),
       active:        req.body.active !== false,
     }).select().single();
 
@@ -1003,6 +1044,7 @@ app.put('/admin/api/users/:id', authOnlyAdmin, async (req, res) => {
     if (req.body.name   !== undefined) updates.name   = req.body.name;
     if (req.body.role   !== undefined) updates.role   = req.body.role === 'admin' ? 'admin' : 'collaborator';
     if (req.body.active !== undefined) updates.active = req.body.active === true;
+    if (req.body.permissions !== undefined) updates.permissions = normalizePerms(req.body.permissions);
     if (req.body.password) {
       if (req.body.password.length < 6) return res.status(400).json({ error: 'Senha deve ter ao menos 6 caracteres' });
       updates.password_hash = hashPassword(req.body.password);
@@ -1085,7 +1127,7 @@ app.get("/admin/api/offers", authAdmin, async (_req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post("/admin/api/offers", authAdmin, async (req, res) => {
+app.post("/admin/api/offers", authPerm('offers'), async (req, res) => {
   try {
     const slug = (req.body.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     if (!slug) return res.status(400).json({ error: 'Slug inválido' });
@@ -1141,7 +1183,7 @@ app.post("/admin/api/offers", authAdmin, async (req, res) => {
   }
 });
 
-app.put("/admin/api/offers/:id", authAdmin, async (req, res) => {
+app.put("/admin/api/offers/:id", authPerm('offers'), async (req, res) => {
   try {
     // Colaborador só edita os links que ele mesmo criou
     if (req.user.role === 'collaborator') {
@@ -1210,12 +1252,12 @@ app.delete('/admin/api/offers/:id', authOnlyAdmin, async (req, res) => {
 });
 
 // Coupons CRUD
-app.get('/admin/api/coupons', authOnlyAdmin, async (_req, res) => {
+app.get('/admin/api/coupons', authPerm('coupons'), async (_req, res) => {
   try { res.json(await getCoupons()); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/admin/api/coupons', authOnlyAdmin, async (req, res) => {
+app.post('/admin/api/coupons', authPerm('coupons'), async (req, res) => {
   try {
     const code = (req.body.code || '').toUpperCase().replace(/\s/g, '');
     if (!code) return res.status(400).json({ error: 'Código obrigatório' });
@@ -1243,7 +1285,7 @@ app.post('/admin/api/coupons', authOnlyAdmin, async (req, res) => {
   }
 });
 
-app.put('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
+app.put('/admin/api/coupons/:id', authPerm('coupons'), async (req, res) => {
   try {
     const updates = {};
     if (req.body.type    !== undefined) updates.type      = req.body.type;
@@ -1268,7 +1310,7 @@ app.put('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
   }
 });
 
-app.delete('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
+app.delete('/admin/api/coupons/:id', authPerm('coupons'), async (req, res) => {
   try {
     const { error } = await supabase.from('coupons').delete().eq('id', req.params.id);
     if (error) throw error;
@@ -1279,7 +1321,7 @@ app.delete('/admin/api/coupons/:id', authOnlyAdmin, async (req, res) => {
 });
 
 // Dashboard
-app.get('/admin/api/dashboard', authOnlyAdmin, async (req, res) => {
+app.get('/admin/api/dashboard', authPerm('dashboard'), async (req, res) => {
   try {
     const { data: orders } = await supabase.from('orders').select('*');
     const all = orders || [];
@@ -1353,7 +1395,7 @@ app.post('/admin/api/orders/sync', authOnlyAdmin, async (req, res) => {
 });
 
 // Orders — somente leitura
-app.get('/admin/api/orders', authAdmin, async (req, res) => {
+app.get('/admin/api/orders', authPerm('orders'), async (req, res) => {
   try {
     const { method, status, q, from, to, offerSlug } = req.query;
     const all = await getOrders({ method, from, to });
@@ -1400,14 +1442,15 @@ app.get('/admin/api/orders', authAdmin, async (req, res) => {
 });
 
 // ─── Admin Leads (CRM) ────────────────────────────────────────────────────────
-app.get('/admin/api/leads', authOnlyAdmin, async (req, res) => {
+app.get('/admin/api/leads', authPerm('leads'), async (req, res) => {
   try {
-    const { status, q, specialty } = req.query;
+    const { status, q, specialty, offer } = req.query;
     let query = supabase.from('leads')
       .select('*, orders(id, payment_method, final_amount_cents, installments, status, charge_status, created_at)')
       .order('created_at', { ascending: false });
     if (status)    query = query.eq('status', status);
     if (specialty) query = query.ilike('specialty', `%${specialty}%`);
+    if (offer)     query = query.eq('offer_slug', offer);
     const { data, error } = await query;
     if (error) throw error;
     let leads = data || [];
@@ -1419,13 +1462,19 @@ app.get('/admin/api/leads', authOnlyAdmin, async (req, res) => {
         (l.phone   || '').includes(lq)
       );
     }
+    // Resolve o nome amigável da oferta pelo slug (pra exibir/filtrar no CRM)
+    const offers = await getOffers();
+    const nameBySlug = {};
+    offers.forEach(o => { nameBySlug[o.slug] = o.name; });
+    leads = leads.map(l => ({ ...l, offer_name: l.offer_slug ? (nameBySlug[l.offer_slug] || l.offer_slug) : null }));
+
     res.json({ total: leads.length, leads });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.patch('/admin/api/leads/:id', authOnlyAdmin, async (req, res) => {
+app.patch('/admin/api/leads/:id', authPerm('leads'), async (req, res) => {
   try {
     const { status, notes } = req.body;
     const updates = { updated_at: new Date().toISOString() };
