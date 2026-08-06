@@ -8,7 +8,7 @@ const state = {
   couponCode:       null,
   discount:         0,
   config:           null,
-  method:           'credit_card',
+  method:           'pix',
   pixCountdownTimer:null,
   pixPollTimer:     null,
   customerName:     '',
