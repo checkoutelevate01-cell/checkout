@@ -125,6 +125,14 @@ function applyConfig(cfg) {
   const wrapIg = document.getElementById('wrap-instagram');
   if (wrapIg) wrapIg.classList.toggle('hidden', !cfg.showInstagram);
 
+  // Mostrar/ocultar e-mail, telefone e CPF conforme config da oferta
+  const wrapEmail = document.getElementById('wrap-email');
+  if (wrapEmail) wrapEmail.classList.toggle('hidden', cfg.showEmail === false);
+  const wrapPhone = document.getElementById('wrap-phone');
+  if (wrapPhone) wrapPhone.classList.toggle('hidden', cfg.showPhone === false);
+  const sectionCpf = document.getElementById('section-cpf');
+  if (sectionCpf) sectionCpf.classList.toggle('hidden', cfg.showCpf === false);
+
   // Mostrar/ocultar seção de perfil médico (especialidade + CRM)
   const sectionMedical = document.getElementById('section-profissional');
   if (sectionMedical) sectionMedical.classList.toggle('hidden', cfg.showMedicalFields === false);
@@ -486,7 +494,8 @@ function validateForm() {
   let valid = true;
 
   // CPF (step 2)
-  if (!validateCPF(el.cpf.value)) {
+  const cpfVisible = !document.getElementById('section-cpf')?.classList.contains('hidden');
+  if (cpfVisible && !validateCPF(el.cpf.value)) {
     setError(el.cpf, 'CPF inválido'); valid = false;
   }
 
@@ -596,10 +605,12 @@ async function handleStep1() {
   if (!nameEl.value.trim() || nameEl.value.trim().length < 3) {
     setError(nameEl, 'Informe seu nome completo'); valid = false;
   }
-  if (!validateEmail(emailEl.value)) {
+  const emailVisible = !document.getElementById('wrap-email')?.classList.contains('hidden');
+  if (emailVisible && !validateEmail(emailEl.value)) {
     setError(emailEl, 'E-mail inválido'); valid = false;
   }
-  if (phoneEl.value.replace(/\D/g, '').length < 10) {
+  const phoneVisible = !document.getElementById('wrap-phone')?.classList.contains('hidden');
+  if (phoneVisible && phoneEl.value.replace(/\D/g, '').length < 10) {
     setError(phoneEl, 'Telefone inválido'); valid = false;
   }
   const igEl = document.getElementById('f-instagram');

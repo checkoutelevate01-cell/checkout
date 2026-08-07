@@ -42,6 +42,9 @@ function mapOffer(row) {
     showInstagram:       row.show_instagram || false,
     showMedicalFields:   row.show_medical_fields ?? true,
     showCoupon:          row.show_coupon ?? true,
+    showEmail:           row.show_email ?? true,
+    showCpf:             row.show_cpf   ?? true,
+    showPhone:           row.show_phone ?? true,
     guaranteeTitle:      row.guarantee_title || '',
     guaranteeText:       row.guarantee_text  || '',
     guaranteeSub:        row.guarantee_sub   || '',
@@ -433,24 +436,34 @@ function pagarmeHeaders() {
   };
 }
 
+// Monta o customer só com os campos que o lead de fato informou —
+// email/CPF/telefone podem estar desligados por oferta (ver showEmail/showCpf/showPhone)
 function buildCustomer(data) {
-  let phone = data.phone.replace(/\D/g, '');
-  // Remove country code 55 se vier na frente (ex: 5511999999999 → 11999999999)
-  if (phone.length >= 12 && phone.startsWith('55')) phone = phone.slice(2);
-  return {
-    name:          data.name.trim(),
-    email:         data.email.trim().toLowerCase(),
-    document:      data.document.replace(/\D/g, ''),
-    document_type: 'CPF',
-    type:          'individual',
-    phones: {
-      mobile_phone: {
-        country_code: '55',
-        area_code:    phone.slice(0, 2),
-        number:       phone.slice(2),
-      },
-    },
-  };
+  const customer = { name: data.name.trim(), type: 'individual' };
+
+  if (data.email) customer.email = data.email.trim().toLowerCase();
+
+  if (data.document) {
+    customer.document      = data.document.replace(/\D/g, '');
+    customer.document_type = 'CPF';
+  }
+
+  if (data.phone) {
+    let phone = data.phone.replace(/\D/g, '');
+    // Remove country code 55 se vier na frente (ex: 5511999999999 → 11999999999)
+    if (phone.length >= 12 && phone.startsWith('55')) phone = phone.slice(2);
+    if (phone) {
+      customer.phones = {
+        mobile_phone: {
+          country_code: '55',
+          area_code:    phone.slice(0, 2),
+          number:       phone.slice(2),
+        },
+      };
+    }
+  }
+
+  return customer;
 }
 
 function buildItems(offer) {
@@ -505,11 +518,15 @@ function buildPayment(payment, offer) {
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
-function validateCustomer(data) {
+function validateCustomer(data, offer) {
+  const showEmail = offer ? (offer.showEmail ?? true) : true;
+  const showCpf   = offer ? (offer.showCpf   ?? true) : true;
+  const showPhone = offer ? (offer.showPhone ?? true) : true;
+
   if (!data?.name || data.name.trim().length < 3) return 'Nome inválido';
-  if (!data?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return 'E-mail inválido';
-  if (!data?.document || data.document.replace(/\D/g, '').length !== 11) return 'CPF inválido';
-  if (!data?.phone || data.phone.replace(/\D/g, '').length < 10) return 'Telefone inválido';
+  if (showEmail && (!data?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))) return 'E-mail inválido';
+  if (showCpf   && (!data?.document || data.document.replace(/\D/g, '').length !== 11)) return 'CPF inválido';
+  if (showPhone && (!data?.phone || data.phone.replace(/\D/g, '').length < 10)) return 'Telefone inválido';
   return null;
 }
 
@@ -556,6 +573,9 @@ app.get('/api/config', async (req, res) => {
       showInstagram:      offer ? (offer.showInstagram || false) : false,
       showMedicalFields:  offer ? (offer.showMedicalFields ?? true) : true,
       showCoupon:         offer ? (offer.showCoupon ?? true) : true,
+      showEmail:          offer ? (offer.showEmail ?? true) : true,
+      showCpf:            offer ? (offer.showCpf   ?? true) : true,
+      showPhone:          offer ? (offer.showPhone ?? true) : true,
       guaranteeTitle:     offer ? (offer.guaranteeTitle || '') : '',
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
       guaranteeSub:       offer ? (offer.guaranteeSub   || '') : '',
@@ -592,12 +612,6 @@ app.post('/api/order', async (req, res) => {
   const { customer: customerData, payment, offerSlug, couponCode, leadId } = req.body;
   const capiMeta = extractMetaContext(req, req.body.meta || {});
 
-  const customerError = validateCustomer(customerData);
-  if (customerError) return res.status(400).json({ error: customerError });
-
-  const paymentError = validatePayment(payment);
-  if (paymentError) return res.status(400).json({ error: paymentError });
-
   try {
     // Resolve offer
     let offer = null;
@@ -606,6 +620,12 @@ app.post('/api/order', async (req, res) => {
       offer = offers.find(o => o.slug === offerSlug && o.active !== false);
       if (!offer) return res.status(404).json({ error: 'Oferta não encontrada' });
     }
+
+    const customerError = validateCustomer(customerData, offer);
+    if (customerError) return res.status(400).json({ error: customerError });
+
+    const paymentError = validatePayment(payment);
+    if (paymentError) return res.status(400).json({ error: paymentError });
 
     // Resolve coupon
     let discount = 0;
@@ -896,11 +916,11 @@ app.post('/api/webhook/pagarme', async (req, res) => {
 app.post('/api/lead', async (req, res) => {
   try {
     const { name, email, phone, specialty, crm, instagram, offerSlug } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Nome e e-mail obrigatórios' });
+    if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
     const { data, error } = await supabase.from('leads').insert({
       name:       name.trim(),
-      email:      email.trim().toLowerCase(),
-      phone:      (phone || '').replace(/\D/g, ''),
+      email:      (email || '').trim().toLowerCase() || null,
+      phone:      (phone || '').replace(/\D/g, '') || null,
       specialty:  specialty || null,
       crm:        crm || null,
       instagram:  instagram || null,
@@ -1149,6 +1169,9 @@ app.post("/admin/api/offers", authPerm('offers'), async (req, res) => {
       show_instagram:       req.body.showInstagram === true,
       show_medical_fields:  req.body.showMedicalFields !== false,
       show_coupon:          req.body.showCoupon !== false,
+      show_email:           req.body.showEmail !== false,
+      show_cpf:             req.body.showCpf   !== false,
+      show_phone:           req.body.showPhone !== false,
       guarantee_title:      req.body.guaranteeTitle  || '',
       guarantee_text:       req.body.guaranteeText   || '',
       guarantee_sub:        req.body.guaranteeSub    || '',
@@ -1208,6 +1231,9 @@ app.put("/admin/api/offers/:id", authPerm('offers'), async (req, res) => {
     if (req.body.showInstagram        !== undefined) updates.show_instagram        = req.body.showInstagram === true;
     if (req.body.showMedicalFields    !== undefined) updates.show_medical_fields   = req.body.showMedicalFields === true;
     if (req.body.showCoupon           !== undefined) updates.show_coupon           = req.body.showCoupon === true;
+    if (req.body.showEmail            !== undefined) updates.show_email            = req.body.showEmail === true;
+    if (req.body.showCpf              !== undefined) updates.show_cpf              = req.body.showCpf === true;
+    if (req.body.showPhone            !== undefined) updates.show_phone            = req.body.showPhone === true;
     if (req.body.guaranteeTitle       !== undefined) updates.guarantee_title       = req.body.guaranteeTitle;
     if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;
     if (req.body.guaranteeSub         !== undefined) updates.guarantee_sub         = req.body.guaranteeSub;
@@ -1555,6 +1581,8 @@ const METHOD_LABEL = {
 };
 
 async function notifyCustomerWA(customerData, result, method) {
+  if (!customerData.phone) return; // oferta não coleta telefone — sem WhatsApp de confirmação
+
   const firstName  = customerData.name.trim().split(' ')[0];
   const isPending  = method !== 'credit_card';
   const statusLine = isPending
@@ -1594,8 +1622,8 @@ async function notifyAdminWA(customerData, result, method, finalPrice, offerName
     ``,
     offerName ? `📦 *Oferta:* ${offerName}` : null,
     `👤 *Cliente:* ${customerData.name}`,
-    `📧 *E-mail:* ${customerData.email}`,
-    `📱 *Telefone:* ${customerData.phone}`,
+    customerData.email ? `📧 *E-mail:* ${customerData.email}` : null,
+    customerData.phone ? `📱 *Telefone:* ${customerData.phone}` : null,
     `💰 *Valor:* ${price}`,
     `💳 *Método:* ${METHOD_LABEL[method] || method}`,
     `🗂 *Pedido:* ${result.orderId}`,

@@ -73,7 +73,7 @@ create table if not exists orders (
 create table if not exists leads (
   id         uuid primary key default gen_random_uuid(),
   name       text not null,
-  email      text not null,
+  email      text,
   phone      text,
   specialty  text,
   crm        text,
@@ -98,6 +98,14 @@ alter table leads add column if not exists instagram text;
 -- Migração: campos de controle de coleta no checkout
 alter table offers add column if not exists show_medical_fields boolean default true;
 alter table offers add column if not exists show_coupon         boolean default true;
+
+-- Migração: permitir desligar coleta de e-mail, CPF e telefone por oferta
+alter table offers add column if not exists show_email boolean default true;
+alter table offers add column if not exists show_cpf   boolean default true;
+alter table offers add column if not exists show_phone boolean default true;
+
+-- Migração: leads.email deixa de ser obrigatório (oferta pode não coletar e-mail)
+alter table leads alter column email drop not null;
 
 -- Migração: textos personalizados do banner por cupom
 alter table coupons add column if not exists banner_title text;
