@@ -1126,15 +1126,6 @@
         <div class="field-group fg-full">
           <div class="toggle-row">
             <label class="toggle">
-              <input type="checkbox" id="offer-show-cpf" checked />
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Coletar CPF no pagamento</span>
-          </div>
-        </div>
-        <div class="field-group fg-full">
-          <div class="toggle-row">
-            <label class="toggle">
               <input type="checkbox" id="offer-show-coupon" checked />
               <span class="toggle-slider"></span>
             </label>
@@ -1720,7 +1711,6 @@ function openOfferModal(id) {
     document.getElementById('offer-show-medical-fields').checked = true;
     document.getElementById('offer-show-email').checked          = true;
     document.getElementById('offer-show-phone').checked          = true;
-    document.getElementById('offer-show-cpf').checked            = true;
     document.getElementById('offer-show-coupon').checked         = true;
     document.getElementById('offer-track-meta').checked          = false;
     document.getElementById('offer-meta-content-id').value       = '';
@@ -1764,7 +1754,6 @@ function openOfferModal(id) {
     document.getElementById('offer-show-medical-fields').checked = o.showMedicalFields !== false;
     document.getElementById('offer-show-email').checked          = o.showEmail !== false;
     document.getElementById('offer-show-phone').checked          = o.showPhone !== false;
-    document.getElementById('offer-show-cpf').checked            = o.showCpf !== false;
     document.getElementById('offer-show-coupon').checked         = o.showCoupon !== false;
     document.getElementById('offer-track-meta').checked          = o.trackMeta === true;
     document.getElementById('offer-meta-content-id').value       = o.metaContentId || '';
@@ -1821,7 +1810,6 @@ async function saveOffer() {
     showMedicalFields:   document.getElementById('offer-show-medical-fields').checked,
     showEmail:           document.getElementById('offer-show-email').checked,
     showPhone:           document.getElementById('offer-show-phone').checked,
-    showCpf:             document.getElementById('offer-show-cpf').checked,
     showCoupon:          document.getElementById('offer-show-coupon').checked,
     trackMeta:           document.getElementById('offer-track-meta').checked,
     metaContentId:       document.getElementById('offer-meta-content-id').value.trim(),

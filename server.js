@@ -43,7 +43,6 @@ function mapOffer(row) {
     showMedicalFields:   row.show_medical_fields ?? true,
     showCoupon:          row.show_coupon ?? true,
     showEmail:           row.show_email ?? true,
-    showCpf:             row.show_cpf   ?? true,
     showPhone:           row.show_phone ?? true,
     guaranteeTitle:      row.guarantee_title || '',
     guaranteeText:       row.guarantee_text  || '',
@@ -437,7 +436,7 @@ function pagarmeHeaders() {
 }
 
 // Monta o customer só com os campos que o lead de fato informou —
-// email/CPF/telefone podem estar desligados por oferta (ver showEmail/showCpf/showPhone)
+// email/telefone podem estar desligados por oferta (ver showEmail/showPhone); CPF é sempre obrigatório
 function buildCustomer(data) {
   const customer = { name: data.name.trim(), type: 'individual' };
 
@@ -520,12 +519,11 @@ function buildPayment(payment, offer) {
 // ─── Validation ───────────────────────────────────────────────────────────────
 function validateCustomer(data, offer) {
   const showEmail = offer ? (offer.showEmail ?? true) : true;
-  const showCpf   = offer ? (offer.showCpf   ?? true) : true;
   const showPhone = offer ? (offer.showPhone ?? true) : true;
 
   if (!data?.name || data.name.trim().length < 3) return 'Nome inválido';
   if (showEmail && (!data?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))) return 'E-mail inválido';
-  if (showCpf   && (!data?.document || data.document.replace(/\D/g, '').length !== 11)) return 'CPF inválido';
+  if (!data?.document || data.document.replace(/\D/g, '').length !== 11) return 'CPF inválido';
   if (showPhone && (!data?.phone || data.phone.replace(/\D/g, '').length < 10)) return 'Telefone inválido';
   return null;
 }
@@ -574,7 +572,6 @@ app.get('/api/config', async (req, res) => {
       showMedicalFields:  offer ? (offer.showMedicalFields ?? true) : true,
       showCoupon:         offer ? (offer.showCoupon ?? true) : true,
       showEmail:          offer ? (offer.showEmail ?? true) : true,
-      showCpf:            offer ? (offer.showCpf   ?? true) : true,
       showPhone:          offer ? (offer.showPhone ?? true) : true,
       guaranteeTitle:     offer ? (offer.guaranteeTitle || '') : '',
       guaranteeText:      offer ? (offer.guaranteeText  || '') : '',
@@ -1170,7 +1167,6 @@ app.post("/admin/api/offers", authPerm('offers'), async (req, res) => {
       show_medical_fields:  req.body.showMedicalFields !== false,
       show_coupon:          req.body.showCoupon !== false,
       show_email:           req.body.showEmail !== false,
-      show_cpf:             req.body.showCpf   !== false,
       show_phone:           req.body.showPhone !== false,
       guarantee_title:      req.body.guaranteeTitle  || '',
       guarantee_text:       req.body.guaranteeText   || '',
@@ -1232,7 +1228,6 @@ app.put("/admin/api/offers/:id", authPerm('offers'), async (req, res) => {
     if (req.body.showMedicalFields    !== undefined) updates.show_medical_fields   = req.body.showMedicalFields === true;
     if (req.body.showCoupon           !== undefined) updates.show_coupon           = req.body.showCoupon === true;
     if (req.body.showEmail            !== undefined) updates.show_email            = req.body.showEmail === true;
-    if (req.body.showCpf              !== undefined) updates.show_cpf              = req.body.showCpf === true;
     if (req.body.showPhone            !== undefined) updates.show_phone            = req.body.showPhone === true;
     if (req.body.guaranteeTitle       !== undefined) updates.guarantee_title       = req.body.guaranteeTitle;
     if (req.body.guaranteeText        !== undefined) updates.guarantee_text        = req.body.guaranteeText;

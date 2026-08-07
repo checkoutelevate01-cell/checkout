@@ -125,13 +125,11 @@ function applyConfig(cfg) {
   const wrapIg = document.getElementById('wrap-instagram');
   if (wrapIg) wrapIg.classList.toggle('hidden', !cfg.showInstagram);
 
-  // Mostrar/ocultar e-mail, telefone e CPF conforme config da oferta
+  // Mostrar/ocultar e-mail e telefone conforme config da oferta (CPF é sempre coletado)
   const wrapEmail = document.getElementById('wrap-email');
   if (wrapEmail) wrapEmail.classList.toggle('hidden', cfg.showEmail === false);
   const wrapPhone = document.getElementById('wrap-phone');
   if (wrapPhone) wrapPhone.classList.toggle('hidden', cfg.showPhone === false);
-  const sectionCpf = document.getElementById('section-cpf');
-  if (sectionCpf) sectionCpf.classList.toggle('hidden', cfg.showCpf === false);
 
   // Mostrar/ocultar seção de perfil médico (especialidade + CRM)
   const sectionMedical = document.getElementById('section-profissional');
@@ -493,12 +491,6 @@ function validateForm() {
   clearAllErrors();
   let valid = true;
 
-  // CPF (step 2)
-  const cpfVisible = !document.getElementById('section-cpf')?.classList.contains('hidden');
-  if (cpfVisible && !validateCPF(el.cpf.value)) {
-    setError(el.cpf, 'CPF inválido'); valid = false;
-  }
-
   // Pedido gratuito: não valida cartão
   if (isFreeOrder()) return valid;
 
@@ -612,6 +604,9 @@ async function handleStep1() {
   const phoneVisible = !document.getElementById('wrap-phone')?.classList.contains('hidden');
   if (phoneVisible && phoneEl.value.replace(/\D/g, '').length < 10) {
     setError(phoneEl, 'Telefone inválido'); valid = false;
+  }
+  if (!validateCPF(el.cpf.value)) {
+    setError(el.cpf, 'CPF inválido'); valid = false;
   }
   const igEl = document.getElementById('f-instagram');
   const igVisible = !document.getElementById('wrap-instagram')?.classList.contains('hidden');

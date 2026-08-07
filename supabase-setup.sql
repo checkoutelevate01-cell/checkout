@@ -99,9 +99,9 @@ alter table leads add column if not exists instagram text;
 alter table offers add column if not exists show_medical_fields boolean default true;
 alter table offers add column if not exists show_coupon         boolean default true;
 
--- Migração: permitir desligar coleta de e-mail, CPF e telefone por oferta
+-- Migração: permitir desligar coleta de e-mail e telefone por oferta
+-- (CPF fica sempre obrigatório — exigência do gateway de pagamento)
 alter table offers add column if not exists show_email boolean default true;
-alter table offers add column if not exists show_cpf   boolean default true;
 alter table offers add column if not exists show_phone boolean default true;
 
 -- Migração: leads.email deixa de ser obrigatório (oferta pode não coletar e-mail)
